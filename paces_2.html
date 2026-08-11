@@ -1,0 +1,906 @@
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root,:root[data-theme=light]{
+    color-scheme:light;
+    --ground:#E7EBE7; --surf:#F8FAF8; --ink:#15201B; --ink2:#55625B; --line:#C0CAC3;
+    --blue:#23417A; --blue-fg:#fff; --pine:#2F6B4F; --pine-fg:#fff;
+    --ochre:#9A6410; --ochre-fg:#fff; --red:#9C3427; --red-fg:#fff;
+    --bog:#EBD9B8; --bog-fg:#4A3405; --bog-bd:#D8BE8C;
+    --bird:#AFCCF0; --bird-fg:#0F2A55; --bird-bd:#7FA5D8;
+    --eag:#23417A; --eag-fg:#FFFFFF;
+    --r:3px;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    color-scheme:dark;
+    --ground:#0E1210; --surf:#242B26; --ink:#EDF2EE; --ink2:#A6B3AA; --line:#6E8075;
+    --blue:#8FB0DE; --blue-fg:#0A1424; --pine:#6FBE93; --pine-fg:#0B1710;
+    --ochre:#DCA648; --ochre-fg:#231702; --red:#E07A6B; --red-fg:#2A0C07;
+    --bog:#7B6838; --bog-fg:#F5EACE; --bog-bd:#A08C58;
+    --bird:#43659B; --bird-fg:#DCE8FA; --bird-bd:#6B8CC0;
+    --eag:#8FB0DE; --eag-fg:#0A1424;
+  }}
+  :root[data-theme=dark]{
+    color-scheme:dark;
+    --ground:#0E1210; --surf:#242B26; --ink:#EDF2EE; --ink2:#A6B3AA; --line:#6E8075;
+    --blue:#8FB0DE; --blue-fg:#0A1424; --pine:#6FBE93; --pine-fg:#0B1710;
+    --ochre:#DCA648; --ochre-fg:#231702; --red:#E07A6B; --red-fg:#2A0C07;
+    --bog:#7B6838; --bog-fg:#F5EACE; --bog-bd:#A08C58;
+    --bird:#43659B; --bird-fg:#DCE8FA; --bird-bd:#6B8CC0;
+    --eag:#8FB0DE; --eag-fg:#0A1424;
+  }
+  html{background:var(--ground);min-height:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);
+    font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;
+    padding:0 0 40px;max-width:520px;margin:0 auto}
+  .num{font-family:'Saira Condensed',sans-serif;font-weight:700;letter-spacing:.01em}
+  .mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+  h1,h2,h3{margin:0;font-weight:600}
+  button{font-family:inherit;font-size:inherit;cursor:pointer;border:1px solid var(--line);
+    background:var(--surf);color:var(--ink);border-radius:var(--r);padding:10px 8px;
+    transition:none}
+  button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  button.on{background:var(--ink);color:var(--surf);border-color:var(--ink)}
+  button.on-pine{background:var(--pine);color:var(--pine-fg);border-color:var(--pine)}
+  button.on-red{background:var(--red);color:var(--red-fg);border-color:var(--red)}
+  button.on-ochre{background:var(--ochre);color:var(--ochre-fg);border-color:var(--ochre)}
+  input,select{font-family:'IBM Plex Mono',monospace;font-size:16px;padding:9px 10px;
+    border:1px solid var(--line);border-radius:var(--r);background:var(--surf);color:var(--ink);width:100%}
+  input:focus,select:focus{outline:2px solid var(--blue);outline-offset:-1px}
+  .wrap{padding:0 14px}
+  header{padding:14px 14px 10px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);font-weight:600}
+  nav{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-bottom:1px solid var(--line);background:var(--surf)}
+  nav button{border:0;border-right:1px solid var(--line);border-radius:0;padding:13px 4px;
+    font-size:10px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:var(--ink2);background:var(--surf)}
+  nav button:last-child{border-right:0}
+  nav button.on{background:var(--ink);color:var(--surf)}
+  .strip{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;margin:12px 0 4px}
+  .cell{aspect-ratio:1/1.15;border:1px solid var(--line);border-radius:2px;background:var(--surf);
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;
+    font-family:'IBM Plex Mono',monospace;color:var(--ink2);padding:0;min-width:0}
+  .cell.cur{outline:2px solid var(--blue);outline-offset:1px}
+  .cell.e{background:var(--eag);color:var(--eag-fg);border-color:var(--eag)}
+  .cell.bi{background:var(--bird);color:var(--bird-fg);border-color:var(--bird-bd)}
+  .cell.g{background:var(--pine);color:var(--pine-fg);border-color:var(--pine)}
+  .cell.b{background:var(--bog);color:var(--bog-fg);border-color:var(--bog-bd)}
+  .cell.d{background:var(--red);color:var(--red-fg);border-color:var(--red)}
+  .row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .row .lab{flex:0 0 66px;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--ink2);font-weight:600}
+  .seg{display:flex;gap:5px;flex:1}
+  .seg button{flex:1;padding:12px 4px;font-size:13px;font-weight:500}
+  .step{display:flex;align-items:center;gap:8px;flex:1}
+  .step button{width:52px;height:48px;font-size:22px;line-height:1;padding:0}
+  .step .val{flex:1;text-align:center;font-size:30px}
+  .card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin:10px 0}
+  .kv{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .kv:last-child{border-bottom:0}
+  .kv b{font-family:'IBM Plex Mono',monospace;font-weight:500}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .met{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:10px}
+  .met .v{font-family:'Saira Condensed',sans-serif;font-weight:700;font-size:30px;line-height:1}
+  .met .l{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink2);font-weight:600;margin-top:3px}
+  .banner{border-left:3px solid var(--blue);background:var(--surf);padding:10px 12px;
+    font-size:13px;margin:10px 0;border-radius:0}
+  .banner.warn{border-left-color:var(--ochre)}
+  .banner.bad{border-left-color:var(--red)}
+  table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+  th{text-align:left;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);
+    font-family:'IBM Plex Sans',sans-serif;font-weight:600;padding:6px 4px;border-bottom:1px solid var(--line)}
+  td{padding:6px 4px;border-bottom:1px solid var(--line)}
+  .big{width:100%;padding:15px;font-size:14px;font-weight:600;letter-spacing:.04em;
+    text-transform:uppercase;background:var(--ink);color:var(--surf);border-color:var(--ink);margin:8px 0}
+  .ghost{background:var(--surf);color:var(--ink);border-color:var(--ink)}
+  .quiet{background:var(--surf);color:var(--ink2);border-color:var(--line)}
+  .hint{font-size:12px;color:var(--ink2);margin:5px 0 0}
+  .hide{display:none}
+  textarea{font-family:'IBM Plex Sans',sans-serif;font-size:16px;padding:9px 10px;width:100%;
+    border:1px solid var(--line);border-radius:var(--r);background:var(--surf);color:var(--ink);min-height:90px}
+  textarea:focus{outline:2px solid var(--blue);outline-offset:-1px}
+  .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .chips button{flex:0 0 auto;padding:9px 11px;font-size:13px}
+  details summary{cursor:pointer;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+    font-weight:600;color:var(--blue);padding:12px 0;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  .navrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 0}
+  .navrow button{padding:15px;font-weight:600}
+  .pill{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    font-weight:600;padding:3px 7px;border-radius:2px;background:var(--ground);color:var(--ink2)}
+  @media (prefers-reduced-motion:no-preference){button{transition:background .1s}}
+</style>
+
+<header>
+  <div class="eyebrow">Paces · Jan Sun</div>
+  <h1 class="num" style="font-size:27px;line-height:1.1;margin-top:2px">10 → 5</h1>
+  <div id="hdr" style="font-size:11.5px;font-weight:600;margin-top:4px">Paced, not guessed.</div>
+</header>
+
+<nav>
+  <button id="t-play" class="on" onclick="go('play')">Play</button>
+  <button id="t-practice" onclick="go('practice')">Practice</button>
+  <button id="t-rounds" onclick="go('rounds')">Rounds</button>
+  <button id="t-stats" onclick="go('stats')">Stats</button>
+  <button id="t-data" onclick="go('data')">Data</button>
+</nav>
+
+<div id="errbox" class="wrap hide"></div>
+<div id="v-play" class="wrap"></div>
+<div id="v-practice" class="wrap hide"></div>
+<div id="v-rounds" class="wrap hide"></div>
+<div id="v-stats" class="wrap hide"></div>
+<div id="v-data" class="wrap hide"></div>
+
+<script>
+const CLUBS=['LW','SW','GW','PW','9i','8i','7i','6i','5i','4H','5W','3W','Dr'];
+const PUTT_B=['0-1','2-3','4-6','7-10','11+'];
+const KEY='golf:v1';
+var STMODE='none';
+var ST={
+  get:function(k){
+    if(window.storage&&window.storage.get)return window.storage.get(k);
+    try{var v=localStorage.getItem(k);
+      if(v===null)return Promise.reject(new Error('not found'));
+      return Promise.resolve({key:k,value:v});}
+    catch(e){return Promise.reject(e);}
+  },
+  set:function(k,v){
+    if(window.storage&&window.storage.set)return window.storage.set(k,v);
+    try{localStorage.setItem(k,v);return Promise.resolve({key:k,value:v});}
+    catch(e){return Promise.reject(e);}
+  }
+};
+function detectStore(){
+  if(window.storage&&window.storage.set){STMODE='app';return;}
+  try{localStorage.setItem('golf:probe','1');localStorage.removeItem('golf:probe');STMODE='browser';}
+  catch(e){STMODE='none';}
+}
+const GENERIC=[4,4,3,5,4,4,4,3,5,4,4,5,4,3,4,4,3,5];
+const CD={
+ 'Stolpe Ost':{par:[4,4,3,5,4,4,4,3,5,4,4,5,4,3,4,4,3,5],
+   tees:{'Weiss 6403 m':[74.3,129],'Gelb 6025 m':[72.2,129],'Blau 5563 m':[69.9,121]}},
+ 'Stolpe West':{par:[5,4,4,3,5,3,5,3,4,4,5,3,4,3,4,5,4,4],
+   tees:{'Schwarz 6496 m':[74.8,128],'Weiss 6171 m':[73.1,127],'Gelb 5898 m':[71.7,126],'Blau 5419 m':[69.3,118]}},
+ 'GC Gatow':{par:[4,4,5,3,4,5,3,4,4,4,4,3,4,4,5,3,5,4],
+   tees:{'Gelb 5825 m':[71.3,126],'Blau 5508 m':[69.4,124]}},
+ 'Other':{par:null,tees:{}}
+};
+const COURSES=Object.keys(CD);
+const CLABEL={'GC Gatow':'Gatow'};
+const CFIX={'Stolper Heide Ost':'Stolpe Ost','Stolper Heide West':'Stolpe West'};
+
+let db={rounds:[],sessions:[],stride:null};
+let cur=null, sess=null, hole=0, view='play', storeOk=true, t2Open=true, flash='', finishing=false;
+const TEE_CLUBS=['Dr','3W','5W','4H','5i','6i','7i'];
+const AREAS=['Range','Clubs','Short game','Putting','Bunker'];
+function blankSess(){return{id:Date.now(),date:new Date().toISOString().slice(0,10),
+  areas:[],clubs:[],balls:'',mins:'',wrist:0,note:''};}
+
+function blankHole(p){return{par:p,score:p,putts:2,tee:null,gir:null,pen:null,
+  penTee:null,rec:null,teeClub:null,appDist:'',appClub:'',appD:null,appL:null,appAlt:null,fp:null,chip:null};}
+function migrate(){
+  (db.rounds||[]).forEach(function(r){(r.holes||[]).forEach(function(h){h.done=true;});});
+  var FPMAP={'2-4':'2-3','5-9':'7-10','10+':'11+'};
+  var CHIPMAP={'0-1':'0-1','2-4':'2-3','5+':'7-10'};
+  (db.rounds||[]).forEach(function(r){(r.holes||[]).forEach(function(h){
+    if(h.fp&&FPMAP[h.fp])h.fp=FPMAP[h.fp];
+    if(h.bunker===true&&!h.rec)h.rec='bunker';
+    if(h.chip!==undefined&&h.chip!==null){
+      if(!h.fp&&CHIPMAP[h.chip])h.fp=CHIPMAP[h.chip];
+      delete h.chip;}
+  });});
+  (db.rounds||[]).forEach(r=>{if(CFIX[r.course])r.course=CFIX[r.course];});
+  if(cur&&CFIX[cur.course])cur.course=CFIX[cur.course];
+  if(CFIX[db.lastCourse])db.lastCourse=CFIX[db.lastCourse];
+  if(db.lastTee&&!COURSES.some(c=>teeList(c).includes(db.lastTee)))db.lastTee=null;
+  if(!db.lastTee)db.lastTee=defaultTee(db.lastCourse||COURSES[0]);
+  const M={hit:['pin','ctr'],short:['short',null],long:['long',null],
+           left:[null,'left'],right:[null,'right']};
+  (db.rounds||[]).forEach(r=>(r.holes||[]).forEach(h=>{
+    if(h.appRes&&M[h.appRes]){h.appD=h.appD||M[h.appRes][0];h.appL=h.appL||M[h.appRes][1];delete h.appRes;}}));
+  if(cur)(cur.holes||[]).forEach(h=>{
+    if(h.appRes&&M[h.appRes]){h.appD=h.appD||M[h.appRes][0];h.appL=h.appL||M[h.appRes][1];delete h.appRes;}});
+}
+
+function newRound(n,course){
+  const base=(CD[course]&&CD[course].par)||GENERIC;
+  const pars=n===9?base.slice(0,9):base.slice();
+  return{id:Date.now(),date:new Date().toISOString().slice(0,10),course:course,
+    tees:'',cr:null,slope:null,n:n,tier2:true,t2open:true,wind:null,wristPre:0,wristPost:null,note:'',
+    holes:pars.map(blankHole)};
+}
+function teeList(c){return Object.keys((CD[c]&&CD[c].tees)||{});}
+function setTee(t){const T=CD[cur.course]&&CD[cur.course].tees[t];
+  cur.tees=t;cur.cr=T?T[0]:null;cur.slope=T?T[1]:null;db.lastTee=t;save();finish();}
+
+function applyTheme(){
+  const t=db.theme||'auto';
+  const dark = t==='dark' || (t==='auto' && window.matchMedia
+    && window.matchMedia('(prefers-color-scheme:dark)').matches);
+  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+}
+function setTheme(t){db.theme=t;applyTheme();save();render();}
+
+async function load(){
+  detectStore();
+  try{const r=await ST.get(KEY);
+    if(r&&r.value){const d=JSON.parse(r.value);db.rounds=d.rounds||[];db.sessions=d.sessions||[];db.stride=d.stride??null;
+      db.theme=d.theme||'auto';db.t2default=d.t2default;db.lastCourse=d.lastCourse;db.lastTee=d.lastTee;
+      cur=d.cur||null;hole=d.hole||0;
+      t2Open=cur?(cur.t2open!==false):(db.t2default!==false);}
+  }catch(e){ if(String(e).includes('not found')||String(e).includes('404')){storeOk=true;}else{storeOk=false;} }
+  migrate();
+  applyTheme();
+  if(window.matchMedia)window.matchMedia('(prefers-color-scheme:dark)')
+    .addEventListener('change',applyTheme);
+  render();
+}
+let saveTimer=null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    try{await ST.set(KEY,JSON.stringify({rounds:db.rounds,sessions:db.sessions,stride:db.stride,theme:db.theme,t2default:db.t2default,lastCourse:db.lastCourse,lastTee:db.lastTee,cur:cur,hole:hole}));
+      storeOk=true;}
+    catch(e){storeOk=false;}
+    var h=document.getElementById('hdr');
+    if(h){h.textContent=storeOk?('\u25cf Saving \u00b7 '+db.rounds.length+' rounds logged')
+      :'\u25b2 NOT SAVING \u2014 copy the JSON from Data before you close this';
+      h.style.color=storeOk?'var(--pine)':'var(--red)';}
+  },250);
+}
+
+function go(v){view=v;flash='';saveMsg='';['play','practice','rounds','stats','data'].forEach(k=>{
+  document.getElementById('v-'+k).classList.toggle('hide',k!==v);
+  document.getElementById('t-'+k).classList.toggle('on',k===v);});render();}
+
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function set(path,val){const h=cur.holes[hole];h[path]=val;h.done=true;save();render();}
+function tog(path,val){const h=cur.holes[hole];h[path]=(h[path]===val?null:val);
+  h.done=true; if(cur)cur.t2open=t2Open; save();render();}
+function bump(f,d){const h=cur.holes[hole];h[f]=Math.max(0,Math.min(15,h[f]+d));h.done=true;save();render();}
+function meta(f,v){cur[f]=v;save();render();}
+
+function showErr(msg){
+  var e=document.getElementById('errbox'); if(!e)return;
+  e.classList.remove('hide');
+  e.innerHTML='<div class="banner bad"><b>Something broke.</b><br>'+
+    String(msg).replace(/[<>&]/g,'')+
+    '<br><br>Your saved rounds are safe. Copy this message, then use Data \u2192 Copy full JSON before doing anything else.</div>';
+}
+window.onerror=function(m,src,line){showErr(m+'  (line '+line+')');};
+
+function render(){
+  try{ renderInner(); }catch(err){ showErr(err&&err.message?err.message:err); }
+}
+function renderInner(){
+  if(view==='play')renderPlay();
+  if(view==='practice')renderPractice();
+  if(view==='rounds')renderRounds();
+  if(view==='stats')renderStats();
+  if(view==='data')renderData();
+  var h=document.getElementById('hdr');
+  if(h){h.textContent=storeOk?(db.rounds.length?'\u25cf Saving \u00b7 '+db.rounds.length+' rounds logged':'\u25cf Paced, not guessed.')
+    :'\u25b2 NOT SAVING \u2014 copy the JSON from Data before you close this';
+    h.style.color=storeOk?'var(--pine)':'var(--red)';}
+}
+
+/* ---------- PLAY ---------- */
+function renderPlay(){
+  const el=document.getElementById('v-play');
+  if(cur&&finishing){renderFinish();return;}
+  if(!cur){
+    el.innerHTML=`<div class="banner">No round open. Tier 1 takes five seconds a hole and goes in every round, including team matches.</div>
+      <div class="card"><div class="eyebrow" style="margin-bottom:6px">Course</div>
+      <div class="chips">${COURSES.map(c=>
+        `<button class="${(db.lastCourse||COURSES[0])===c?'on':''}" onclick="setCourse('${c}')">${CLABEL[c]||c}</button>`).join('')}</div>
+      <p class="hint">Stolpe Ost, Stolpe West and Gatow load their real par sequence. Others start generic — fix par per hole as you go.</p>
+      ${teePicker()}
+      <div class="eyebrow" style="margin:14px 0 6px">Tier 2 panel</div>
+      <div class="seg">
+        <button class="${db.t2default!==false?'on':''}" onclick="setT2Default(true)">Open</button>
+        <button class="${db.t2default===false?'on':''}" onclick="setT2Default(false)">Collapsed</button>
+      </div>
+      <p class="hint">Open logs approach, putt and chip detail. Collapsed is Tier 1 only — five seconds a hole, fine for a team match.</p></div>
+      <button class="big" onclick="start(18)">Start 18 holes</button>
+      <button class="big ghost" onclick="start(9)">Start 9 holes</button>`;
+    return;}
+  const h=cur.holes[hole], n=cur.n;
+  el.innerHTML=`
+  <div class="strip">${cur.holes.slice(0,9).map((x,i)=>cellHTML(x,i)).join('')}</div>
+  ${n===18?`<div class="strip">${cur.holes.slice(9).map((x,i)=>cellHTML(x,i+9)).join('')}</div>`:''}
+
+  <div style="display:flex;align-items:baseline;gap:12px;margin:16px 0 6px">
+    <div><div class="eyebrow">Hole</div><div class="num" style="font-size:46px;line-height:.9">${hole+1}</div></div>
+    <div style="flex:1">
+      <div class="eyebrow">Par</div>
+      <div class="seg">${[3,4,5].map(p=>`<button class="${h.par===p?'on':''}" onclick="setPar(${p})">${p}</button>`).join('')}</div>
+    </div>
+  </div>
+
+  <div class="row"><div class="lab">Score</div><div class="step">
+    <button onclick="bump('score',-1)">–</button><div class="val num">${h.score}</div>
+    <button onclick="bump('score',1)">+</button></div></div>
+
+  <div class="row"><div class="lab">Putts</div><div class="step">
+    <button onclick="bump('putts',-1)">–</button><div class="val num">${h.putts}</div>
+    <button onclick="bump('putts',1)">+</button></div></div>
+
+  ${h.par>3?`<div class="row"><div class="lab">Tee</div><div class="seg">
+    ${sBtn('tee','hit','Fairway','on-pine')}${sBtn('tee','L','Left','on-ochre')}${sBtn('tee','R','Right')}${sBtn('tee','other','Other')}
+  </div></div>
+  <div class="row" style="align-items:flex-start"><div class="lab" style="padding-top:9px">Club</div>
+    <div class="chips" style="flex:1">${TEE_CLUBS.map(c=>sBtn('teeClub',c,c)).join('')}</div></div>`:''}
+
+  <div class="row"><div class="lab">Green</div><div class="seg">
+    ${sBtn('gir',true,'GIR','on-pine')}${sBtn('gir',false,'Missed')}
+  </div></div>
+
+  <div class="row"><div class="lab">Penalty</div><div class="seg">
+    ${sBtn('pen','OB','OB','on-red')}${sBtn('pen','W','Water','on-red')}${sBtn('pen','O','Other','on-red')}
+  </div></div>
+  ${h.pen?`<div style="padding:9px 0;border-bottom:1px solid var(--line)">
+    <div class="chips">${sBtn('penTee',true,'It was the tee shot','on-red')}</div>
+    <p class="hint" style="margin:5px 0 0">Only tick this if the penalty came off the tee. Otherwise the tee club gets blamed for a shot it didn't hit.</p></div>`:''}
+
+  ${cur.tier2?`
+  <details ${t2Open?'open':''} ontoggle="t2Open=this.open">
+    <summary>Tier 2 detail ▾</summary>
+    <div class="row" style="border-bottom:0"><div class="lab">Play to</div>
+      <div style="display:flex;gap:6px;flex:1">
+        <input class="mono" inputmode="numeric" placeholder="yds" value="${esc(h.appDist)}"
+          onchange="set('appDist',this.value)" style="flex:0 0 76px">
+        <select onchange="set('appClub',this.value)" style="flex:1">
+          <option value="">club</option>
+          ${CLUBS.map(c=>`<option ${h.appClub===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div></div>
+    <p class="hint" style="margin:0 0 4px">The number you chose to hit — mid-green, not the flag, if that was the play.</p>
+    <div class="row"><div class="lab">Distance</div><div class="seg">
+      ${sBtn('appD','short','Short','on-ochre')}${sBtn('appD','pin','On number','on-pine')}${sBtn('appD','long','Long')}
+    </div></div>
+    <div class="row"><div class="lab">Line</div><div class="seg">
+      ${sBtn('appL','left','Left','on-ochre')}${sBtn('appL','ctr','On line','on-pine')}${sBtn('appL','right','Right')}
+    </div></div>
+    <div style="padding:9px 0;border-bottom:1px solid var(--line)">
+      <div class="chips">${sBtn('appAlt',true,'Not a stock swing','on-ochre')}</div></div>
+    <p class="hint" style="margin:5px 0 0">Both judged against your own number and line, not the pin. Flag knockdowns, punches and wind holds — they drop out of the distance column.</p>
+    <div class="row"><div class="lab">1st putt</div><div class="seg">
+      ${PUTT_B.map(b=>sBtn('fp',b,b)).join('')}
+    </div></div>
+    <p class="hint" style="margin:0 0 8px">Paced steps to the hole — never an estimate in feet. Log it whether you got there with an iron, a chip or a bunker shot.</p>
+    ${h.gir===false?`<div class="row" style="align-items:flex-start"><div class="lab" style="padding-top:9px">Recovery</div>
+      <div class="chips" style="flex:1">${sBtn('rec','chip','Chip')}${sBtn('rec','pitch','Pitch')}${sBtn('rec','bunker','Bunker','on-ochre')}${sBtn('rec','putt','Putted on')}</div></div>
+    <p class="hint" style="margin:5px 0 0">Chip is greenside and running. Pitch is a full-ish wedge that flies — roughly 25 m and up. Different skills, so they get counted separately.</p>`:''}
+  </details>`:''}
+
+  <div class="navrow">
+    <button onclick="nav(-1)" ${hole===0?'disabled style=opacity:.4':''}>‹ Prev</button>
+    ${hole===n-1?`<button class="on" style="background:var(--blue);border-color:var(--blue);color:var(--blue-fg)" onclick="finish()">Finish round</button>`
+      :`<button onclick="nav(1)">Next ›</button>`}
+  </div>
+  <div class="navrow" style="margin-top:8px">
+    <button onclick="saveNow()" style="font-weight:600">Save progress</button>
+    ${hole<n-1?`<button class="quiet" onclick="endHere()">Close out ${hole+1}</button>`:'<span></span>'}
+  </div>
+  ${saveMsg?`<div class="banner ${storeOk?'':'bad'}" style="margin:8px 0 0">${esc(saveMsg)}</div>`:''}
+  <p class="hint">${CLABEL[cur.course]||cur.course} · ${cur.n} holes · ${runningTotal()}</p>`;
+}
+function cellHTML(x,i){
+  const d=x.score-x.par; let c='';
+  if(x.done){ c = d<=-2?'e':(d===-1?'bi':(d===0?'g':(d===1?'b':'d'))); }
+  return `<button class="cell ${c} ${i===hole?'cur':''}" onclick="hole=${i};save();render()">${i+1}</button>`;
+}
+function sBtn(f,v,label,cls){const h=cur.holes[hole];
+  return `<button class="${h[f]===v?(cls||'on'):''}" onclick="tog('${f}',${typeof v==='boolean'?v:"'"+v+"'"})">${label}</button>`;}
+function setPar(p){const h=cur.holes[hole];const diff=h.score-h.par;h.par=p;h.score=Math.max(1,p+diff);h.done=true;save();render();}
+async function saveNow(){
+  clearTimeout(saveTimer);
+  try{
+    await ST.set(KEY,JSON.stringify({rounds:db.rounds,sessions:db.sessions,
+      stride:db.stride,theme:db.theme,t2default:db.t2default,lastCourse:db.lastCourse,
+      lastTee:db.lastTee,cur:cur,hole:hole}));
+    storeOk=true;
+    var d=new Date();
+    saveMsg='Saved at '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+
+      ' \u2014 hole '+(hole+1)+' of '+cur.n+'. Safe to close.';
+  }catch(e){
+    storeOk=false;
+    saveMsg='SAVE FAILED. Do not close this. Go to Data and copy the JSON now.';
+  }
+  render();
+}
+function endHere(){
+  cur.holes[hole].done=true; cur.endAt=hole+1; save(); finish();
+}
+function endCount(){return cur.endAt||cur.n;}
+function discard(){
+  if(!confirm('Discard this round completely? Everything you logged for it is lost.'))return;
+  cur=null; hole=0; finishing=false; save(); render(); window.scrollTo(0,0);
+}
+function nav(d){if(d>0)cur.holes[hole].done=true;
+  hole=Math.max(0,Math.min(cur.n-1,hole+d));save();render();window.scrollTo(0,0);}
+function played(){return cur.holes.filter(function(x){return x.done;});}
+function toPar(P){
+  var t=P.reduce(function(a,x){return a+x.score},0);
+  var p=P.reduce(function(a,x){return a+x.par},0);
+  var d=t-p; return d===0?'E':((d>0?'+':'')+d);}
+function runningTotal(){
+  var P=played();
+  if(!P.length)return 'not started';
+  return toPar(P)+' thru '+P.length;}
+function finalTotal(){
+  var P=played();
+  var t=P.reduce(function(a,x){return a+x.score},0);
+  return t+' ('+toPar(P)+')';}
+function defaultTee(c){
+  var TL=teeList(c);
+  for(var i=0;i<TL.length;i++){if(TL[i].indexOf('Gelb')===0)return TL[i];}
+  return TL[0]||null;
+}
+function teePicker(){
+  var C=db.lastCourse||COURSES[0];
+  var TL=teeList(C);
+  if(!TL.length){
+    return '<p class="hint">No ratings stored for '+(CLABEL[C]||C)+
+           ' — enter CR and slope at round close if you want a differential.</p>';}
+  var out='<div class="eyebrow" style="margin:14px 0 6px">Tee</div><div class="chips">';
+  for(var i=0;i<TL.length;i++){
+    out+='<button class="'+(db.lastTee===TL[i]?'on':'')+'" onclick="setTeeDefault(\''+TL[i]+'\')">'+TL[i]+'</button>';}
+  out+='</div>';
+  var T=(CD[C]&&CD[C].tees[db.lastTee])||null;
+  out+='<p class="hint">'+(T&&T[0]
+    ? 'CR '+T[0]+' \u00b7 slope '+T[1]+' — differential calculated automatically.'
+    : 'Pick a tee so the round gets a differential.')+
+    ' Gelb is preselected \u2014 switch only when you actually move back.</p>';
+  return out;
+}
+function setT2Default(v){db.t2default=v;save();render();}
+function setCourse(c){db.lastCourse=c;
+  if(!teeList(c).includes(db.lastTee))db.lastTee=defaultTee(c);
+  save();render();}
+function setTeeDefault(t){db.lastTee=t;save();render();}
+function start(n){
+  const C=db.lastCourse||COURSES[0];
+  cur=newRound(n,C);
+  if(db.lastTee&&CD[C]&&CD[C].tees[db.lastTee]){
+    const T=CD[C].tees[db.lastTee];
+    cur.tees=db.lastTee; cur.cr=T[0]; cur.slope=T[1];}
+  t2Open=db.t2default!==false; cur.t2open=t2Open; finishing=false;
+  hole=0;save();render();window.scrollTo(0,0);}
+function finish(){cur.holes.forEach(function(h){h.done=true;});finishing=true;save();render();}
+function renderFinish(){
+  const el=document.getElementById('v-play');
+  el.innerHTML=`<div class="card">
+    <div class="eyebrow">Close out</div>
+    <h2 class="num" style="font-size:34px;margin:4px 0 4px">${finalTotal()}</h2>
+    <p class="hint" style="margin:0 0 10px">${endCount()} holes${endCount()===18?' · counts for handicap':(endCount()===9?' · 9-hole score':' · partial round, stats only')}${cur.endAt&&cur.endAt<cur.n?' · holes '+(cur.endAt+1)+'-'+cur.n+' dropped':''}</p>
+    <div class="row"><div class="lab">Course</div><select onchange="meta('course',this.value);finish()">
+      ${COURSES.map(c=>`<option value="${c}" ${cur.course===c?'selected':''}>${CLABEL[c]||c}</option>`).join('')}</select></div>
+    ${teeList(cur.course).length?`<div class="row"><div class="lab">Tees</div><div class="seg" style="flex-wrap:wrap">
+      ${teeList(cur.course).map(t=>`<button class="${cur.tees===t?'on':''}" style="flex:1 1 44%;font-size:12px" onclick="setTee('${t}')">${t}</button>`).join('')}
+    </div></div>`:`<div class="row"><div class="lab">Tees</div><input value="${esc(cur.tees)}" placeholder="tee · CR · slope" onchange="meta('tees',this.value)"></div>`}
+    ${cur.cr?`<p class="hint" style="margin:6px 0 0">CR ${cur.cr} · slope ${cur.slope} → differential ${diffOf({holes:cur.holes,cr:cur.cr,slope:cur.slope,n:cur.n})??'—'}</p>`:''}
+    <div class="row"><div class="lab">Date</div><input type="date" value="${cur.date}" onchange="meta('date',this.value)"></div>
+    <div class="row"><div class="lab">Wind</div><div class="seg">
+      ${['calm','breezy','windy'].map(w=>`<button class="${cur.wind===w?(w==='windy'?'on-ochre':'on'):''}" onclick="meta('wind','${w}')">${w[0].toUpperCase()+w.slice(1)}</button>`).join('')}
+    </div></div>
+    <p class="hint">Distance data from a windy round isn't comparable to a calm one. One tap keeps them separable.</p>
+    <div class="row"><div class="lab">Wrist</div><div class="seg">
+      ${[0,1,2,3].map(w=>`<button class="${cur.wristPost===w?(w>1?'on-red':'on'):''}" onclick="meta('wristPost',${w})">${['None','Ache','Sore','Pain'][w]}</button>`).join('')}
+    </div></div>
+    <p class="hint">Wrist after the round. Load and symptoms in the same record, so a flare has a visible ramp.</p>
+    <div class="row" style="border-bottom:0"><div class="lab">Note</div><input value="${esc(cur.note)}" placeholder="optional" onchange="meta('note',this.value)"></div>
+  </div>
+  <button class="big" onclick="commit()">Save round</button>
+  <button class="big quiet" onclick="finishing=false;delete cur.endAt;render()">Back to holes</button>
+  <button class="big quiet" style="border-color:var(--red);color:var(--red)" onclick="discard()">Discard round</button>`;
+}
+function commit(){
+  if(cur.endAt&&cur.endAt<cur.n){cur.holes=cur.holes.slice(0,cur.endAt);cur.n=cur.endAt;}
+  delete cur.endAt;
+  db.rounds.push(cur);cur=null;hole=0;finishing=false;save();
+  flash='Round saved. Copy the JSON below now — that is the only copy of your data that you control.';
+  view='data';['play','practice','rounds','stats','data'].forEach(function(k){
+    var e=document.getElementById('v-'+k); if(e)e.classList.toggle('hide',k!=='data');
+    var t=document.getElementById('t-'+k); if(t)t.classList.toggle('on',k==='data');});
+  render();}
+
+/* ---------- PRACTICE ---------- */
+function sTog(f,v){if(!sess)sess=blankSess();
+  const a=sess[f],i=a.indexOf(v); i<0?a.push(v):a.splice(i,1); save(); render();}
+function sSet(f,v){if(!sess)sess=blankSess(); sess[f]=v; save();}
+function sSetR(f,v){if(!sess)sess=blankSess(); sess[f]=v; save(); render();}
+function saveSess(){
+  if(!sess||!sess.areas.length){alert('Tick at least one area first.');return;}
+  db.sessions.push(sess); sess=null; save(); render(); window.scrollTo(0,0);}
+function delSess(id){if(confirm('Delete this session?')){
+  db.sessions=db.sessions.filter(x=>x.id!==id);save();render();}}
+
+function renderPractice(){
+  const el=document.getElementById('v-practice');
+  if(!sess)sess=blankSess();
+  const S=sess;
+  el.innerHTML=`
+  <h3 class="eyebrow" style="margin:16px 0 6px">New session</h3>
+  <div class="card">
+    <div class="row"><div class="lab">Date</div>
+      <input type="date" value="${S.date}" onchange="sSet('date',this.value)"></div>
+
+    <div class="row" style="align-items:flex-start"><div class="lab" style="padding-top:9px">Areas</div>
+      <div class="chips">${AREAS.map(a=>
+        `<button class="${S.areas.includes(a)?'on':''}" onclick="sTog('areas','${a}')">${a}</button>`).join('')}</div></div>
+
+    <details ${S.clubs.length?'open':''}><summary>Clubs worked ▾</summary>
+      <div class="chips" style="padding-bottom:10px">${CLUBS.map(c=>
+        `<button class="${S.clubs.includes(c)?'on':''}" onclick="sTog('clubs','${c}')">${c}</button>`).join('')}</div>
+    </details>
+
+    <div class="row"><div class="lab">Load</div>
+      <div style="display:flex;gap:6px;flex:1">
+        <input class="mono" inputmode="numeric" placeholder="balls" value="${esc(S.balls)}"
+          onchange="sSet('balls',this.value)">
+        <input class="mono" inputmode="numeric" placeholder="minutes" value="${esc(S.mins)}"
+          onchange="sSet('mins',this.value)"></div></div>
+    <p class="hint" style="margin:0 0 4px">Ball count is the number that predicts a wrist flare. Estimate it if you must, but log it.</p>
+
+    <div class="row"><div class="lab">Wrist</div><div class="seg">
+      ${[0,1,2,3].map(w=>`<button class="${S.wrist===w?(w>1?'on-red':'on'):''}" onclick="sSetR('wrist',${w})">${['None','Ache','Sore','Pain'][w]}</button>`).join('')}
+    </div></div>
+
+    <div style="padding:9px 0 0"><div class="eyebrow" style="margin-bottom:5px">What happened</div>
+      <textarea placeholder="What you worked on, what changed, what didn't." onchange="sSet('note',this.value)">${esc(S.note)}</textarea></div>
+  </div>
+  <button class="big" onclick="saveSess()">Save session</button>
+
+  ${db.sessions.length?`
+  <h3 class="eyebrow" style="margin:22px 0 6px">Logged · ${db.sessions.length}</h3>
+  ${db.sessions.slice().reverse().map(x=>`
+    <div class="card" style="padding:10px 12px">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline">
+        <b class="mono" style="font-size:13px">${x.date}</b>
+        <div style="display:flex;gap:6px;align-items:baseline">
+          <span class="hint" style="margin:0">${x.balls?x.balls+' balls':''}${x.balls&&x.mins?' · ':''}${x.mins?x.mins+' min':''}${x.wrist>1?' · wrist '+['','ache','sore','pain'][x.wrist]:''}</span>
+          <button style="padding:2px 7px;font-size:11px" onclick="delSess(${x.id})">×</button></div></div>
+      <div class="hint" style="margin:4px 0 0;color:var(--ink)">${esc(x.areas.join(' · '))}${x.clubs.length?' — '+esc(x.clubs.join(' ')):''}</div>
+      ${x.note?`<div style="font-size:13.5px;margin:7px 0 0;padding-top:7px;border-top:1px solid var(--line)">${esc(x.note)}</div>`:''}
+    </div>`).join('')}`
+  :`<div class="banner" style="margin-top:18px">Nothing logged yet. Practice volume is half the wrist picture — rounds alone won't show a load ramp.</div>`}`;
+}
+
+/* ---------- ROUNDS ---------- */
+function renderRounds(){
+  const el=document.getElementById('v-rounds');
+  if(!db.rounds.length){el.innerHTML=`<div class="banner">Nothing logged yet. Your first round here is round 1 of the clean 20-round block.</div>`;return;}
+  el.innerHTML=`<table><thead><tr><th>Date</th><th>Course</th><th>Score</th><th>Diff</th><th>GIR</th><th>Putts</th><th>D+</th><th></th></tr></thead><tbody>
+  ${db.rounds.slice().reverse().map(r=>{const s=sum(r);return `<tr>
+    <td>${r.date.slice(5)}</td><td style="font-family:'IBM Plex Sans'">${esc(CLABEL[r.course]||r.course).slice(0,12)}</td>
+    <td><b>${s.score}</b></td><td>${diffOf(r)??'—'}</td><td>${s.girPct}%</td><td>${s.putts}</td>
+    <td style="color:${s.dbl?'var(--red)':'inherit'}">${s.dbl}</td>
+    <td><button style="padding:3px 7px;font-size:11px" onclick="del(${r.id})">×</button></td></tr>`;}).join('')}
+  </tbody></table>`;
+}
+function del(id){if(confirm('Delete this round?')){db.rounds=db.rounds.filter(r=>r.id!==id);save();render();}}
+
+function diffOf(r){
+  if(!r.cr||!r.slope||r.n!==18)return null;
+  const s=r.holes.reduce((a,x)=>a+x.score,0);
+  return Math.round((s-r.cr)*113/r.slope*10)/10;
+}
+function sum(r){
+  const hs=r.holes,score=hs.reduce((a,x)=>a+x.score,0),par=hs.reduce((a,x)=>a+x.par,0);
+  const putts=hs.reduce((a,x)=>a+x.putts,0);
+  const gir=hs.filter(x=>x.gir===true).length, girN=hs.filter(x=>x.gir!==null).length;
+  const l45=hs.filter(x=>x.par>3&&x.tee), fir=l45.filter(x=>x.tee==='hit').length;
+  return{score,par,putts,dbl:hs.filter(x=>x.score-x.par>=2).length,
+    gir,girN,girPct:girN?Math.round(100*gir/girN):0,
+    fir,firN:l45.length,firPct:l45.length?Math.round(100*fir/l45.length):0,
+    pen:hs.filter(x=>x.pen).length, ob:hs.filter(x=>x.pen==='OB').length,
+    birdie:hs.filter(x=>x.score<x.par).length,
+    miss:hs.filter(x=>x.gir===false).length,
+    ud:hs.filter(x=>x.gir===false&&x.putts===1).length,
+    sand:hs.filter(x=>x.rec==='bunker').length,
+    sandSave:hs.filter(x=>x.rec==='bunker'&&x.putts===1).length,
+    chipN:hs.filter(x=>x.rec==='chip').length,
+    chipUD:hs.filter(x=>x.rec==='chip'&&x.putts===1).length,
+    pitchN:hs.filter(x=>x.rec==='pitch').length,
+    pitchUD:hs.filter(x=>x.rec==='pitch'&&x.putts===1).length};
+}
+
+/* ---------- STATS ---------- */
+function renderStats(){
+  const el=document.getElementById('v-stats'), R=db.rounds;
+  if(!R.length){el.innerHTML=`<div class="banner">Stats unlock as rounds go in. Nothing to read yet.</div>`;return;}
+  const S=R.map(sum), n=R.length;
+  const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+  const per18=(v,r)=>v*18/r.n;
+  // rates pool every hole; per-18 scoring uses full rounds only
+  const girA=Math.round(100*S.reduce((a,s)=>a+s.gir,0)/Math.max(1,S.reduce((a,s)=>a+s.girN,0)));
+  const firA=Math.round(100*S.reduce((a,s)=>a+s.fir,0)/Math.max(1,S.reduce((a,s)=>a+s.firN,0)));
+  const R9=R.filter(r=>r.n>=9), S9=R9.map(sum);
+  const R18=R.filter(r=>r.n===18), S18=R18.map(sum);
+  const n9c=R.filter(r=>r.n===9).length, nOther=R.length-R18.length-n9c;
+  const puttA=avg(S9.map((s,i)=>per18(s.putts,R9[i])));
+  const dblA=avg(S9.map((s,i)=>per18(s.dbl,R9[i])));
+  const birdA=avg(S9.map((s,i)=>per18(s.birdie,R9[i])));
+  const obR=R.filter((r,i)=>S[i].ob>0).length;
+
+  const A=R.flatMap(r=>r.holes).filter(h=>h.appD||h.appL);
+  const cD=k=>A.filter(h=>h.appD===k).length, cL=k=>A.filter(h=>h.appL===k).length;
+  const sh=cD('short'),pin=cD('pin'),lo=cD('long');
+  const le=cL('left'),ct=cL('ctr'),ri=cL('right');
+  const hi=A.filter(h=>h.gir===true).length;
+  const ratio=(a,b)=>b===0?(a===0?'—':a+':0'):(a/b).toFixed(1)+':1';
+
+  const fp={};PUTT_B.forEach(b=>fp[b]=0);
+  R.flatMap(r=>r.holes).forEach(h=>{if(h.fp)fp[h.fp]++});
+  const fpN=Object.values(fp).reduce((a,b)=>a+b,0);
+
+  const byClub={};
+  A.forEach(h=>{if(!h.appClub)return;const k=h.appClub;
+    byClub[k]=byClub[k]||{n:0,d:[],pd:[],s:0,l:0};
+    const dd=+h.appDist||0; byClub[k].n++;
+    if(dd)byClub[k].d.push(dd);
+    if(dd&&h.appD==='pin'&&!h.appAlt)byClub[k].pd.push(dd);
+    if(h.appD==='short')byClub[k].s++; if(h.appD==='long')byClub[k].l++;});
+
+  const wr=R.filter(r=>r.wristPost>1).length;
+
+  el.innerHTML=`
+  ${n<20?`<div class="banner warn"><b>${n} of 20.</b> Sample too small to act on. Log, don't interpret.</div>`
+        :`<div class="banner"><b>${n} rounds.</b> Sample is now readable.</div>`}
+  <p class="hint" style="margin:0 0 8px">${R18.length} full${n9c?' · '+n9c+' nine-hole':''}${nOther?' · '+nOther+' partial':''}. Rates pool every hole logged; per-18 scoring excludes rounds under nine holes; average score uses 18-hole rounds only.</p>
+
+  <div class="grid3">
+    <div class="met"><div class="v">${R18.length?avg(S18.map(s=>s.score)).toFixed(1):'—'}</div><div class="l">Avg score · 18h</div></div>
+    <div class="met"><div class="v">${girA}%</div><div class="l">GIR</div></div>
+    <div class="met"><div class="v">${firA}%</div><div class="l">Fairway</div></div>
+  </div>
+  <div class="grid3">
+    <div class="met"><div class="v">${puttA.toFixed(1)}</div><div class="l">Putts /18</div></div>
+    <div class="met"><div class="v" style="color:${dblA>1.5?'var(--red)':'inherit'}">${dblA.toFixed(1)}</div><div class="l">Doubles+ /18</div></div>
+    <div class="met"><div class="v">${birdA.toFixed(1)}</div><div class="l">Birdies /18</div></div>
+  </div>
+
+  <h3 class="eyebrow" style="margin:20px 0 0">Watch metrics</h3>
+  <p class="hint" style="margin:2px 0 8px">Categorical, so measurement error can't touch them. These carry the diagnosis.</p>
+  ${A.length<60?`<div class="banner">${A.length} of ~60 approaches. Roughly four rounds now that both axes log on every shot.</div>`:''}
+  <div class="grid2">
+    <div class="met"><div class="v" style="color:${sh/Math.max(1,lo)>1.5?'var(--red)':'var(--pine)'}">${ratio(sh,lo)}</div>
+      <div class="l">Short : long</div></div>
+    <div class="met"><div class="v" style="color:${le/Math.max(1,ri)>1.5?'var(--red)':'var(--pine)'}">${ratio(le,ri)}</div>
+      <div class="l">Left : right</div></div>
+  </div>
+  <div class="card"><div class="kv"><span>Greens hit on approach</span><b>${A.length?Math.round(100*hi/A.length):0}%</b></div>
+    <div class="kv"><span>Short / on number / long</span><b>${sh} · ${pin} · ${lo}</b></div>
+    <div class="kv"><span>Left / on line / right</span><b>${le} · ${ct} · ${ri}</b></div>
+    <div class="kv"><span>Hit your number</span><b>${A.length?Math.round(100*pin/A.length):0}%</b></div>
+    <div class="kv"><span>Up and down</span><b>${S.reduce((a,s)=>a+s.miss,0)?Math.round(100*S.reduce((a,s)=>a+s.ud,0)/S.reduce((a,s)=>a+s.miss,0))+'%':'—'} (${S.reduce((a,s)=>a+s.ud,0)}/${S.reduce((a,s)=>a+s.miss,0)})</b></div>
+    <div class="kv"><span>&nbsp;&nbsp;from a chip</span><b>${S.reduce((a,s)=>a+s.chipN,0)?S.reduce((a,s)=>a+s.chipUD,0)+' of '+S.reduce((a,s)=>a+s.chipN,0):'—'}</b></div>
+    <div class="kv"><span>&nbsp;&nbsp;from a pitch</span><b>${S.reduce((a,s)=>a+s.pitchN,0)?S.reduce((a,s)=>a+s.pitchUD,0)+' of '+S.reduce((a,s)=>a+s.pitchN,0):'—'}</b></div>
+    <div class="kv"><span>&nbsp;&nbsp;from a bunker</span><b>${S.reduce((a,s)=>a+s.sand,0)?S.reduce((a,s)=>a+s.sandSave,0)+' of '+S.reduce((a,s)=>a+s.sand,0):'—'}</b></div>
+    <div class="kv"><span>Rounds with an OB</span><b>${obR} of ${n}</b></div>
+    <div class="kv"><span>Rounds with wrist soreness+</span><b>${wr} of ${n}</b></div></div>
+
+  ${teeBlock(R)}
+
+  ${loadBlock()}
+
+  ${Object.keys(byClub).length?`
+  <h3 class="eyebrow" style="margin:20px 0 6px">Club log · your real carry chart</h3>
+  <table><thead><tr><th>Club</th><th>n</th><th>Plays</th><th>True</th><th>Short</th></tr></thead><tbody>
+  ${CLUBS.filter(k=>byClub[k]).map(k=>{const b=byClub[k];
+    const d=b.d.slice().sort((x,y)=>x-y), pd=b.pd.slice().sort((x,y)=>x-y);
+    const med=d.length?d[Math.floor(d.length/2)]:'—';
+    const carry=pd.length>=3?pd[Math.floor(pd.length/2)]:'—';
+    return `<tr><td><b>${k}</b></td><td>${b.n}</td><td>${med}</td>
+      <td><b>${carry}</b></td>
+      <td style="color:${b.s/b.n>.35?'var(--red)':'inherit'}">${Math.round(100*b.s/b.n)}%</td></tr>`;}).join('')}
+  </tbody></table>
+  <p class="hint"><b>Plays</b> is the median number you choose with that club — what you currently believe. <b>True</b> is the median of stock swings that came out on your number, and appears once a club has three. If Plays sits above True you are clubbing yourself short. If True never appears at all, no shot with that club has come out right and the number in your head is wrong.</p>`:''}
+
+  ${fpN?`<h3 class="eyebrow" style="margin:20px 0 6px">First putt · paced steps</h3>
+  <div class="card">${PUTT_B.map(b=>{
+    const hs=R.flatMap(r=>r.holes).filter(h=>h.fp===b);
+    const made=hs.filter(h=>h.putts===1).length, three=hs.filter(h=>h.putts>=3).length;
+    return `<div class="kv"><span>${b} steps &nbsp;<span style="color:var(--ink2)">n=${hs.length}</span></span><b>${hs.length?Math.round(100*made/hs.length)+'% made':'—'}${three?' · '+three+' three-putt':''}</b></div>`;}).join('')}</div>
+  <p class="hint">Bucket edges sit where make rate roughly halves, so 4-6 and 7-10 are genuinely different skills. Needs ~10 rounds per bucket.</p>`:''}`;
+}
+
+function teeBlock(R){
+  const T={}; R.flatMap(r=>r.holes).forEach(h=>{
+    if(h.par<=3||!h.teeClub)return; const k=h.teeClub;
+    T[k]=T[k]||{n:0,fw:0,pen:0,ob:0,dbl:0};
+    T[k].n++; if(h.tee==='hit')T[k].fw++;
+    if(h.pen&&h.penTee)T[k].pen++; if(h.pen==='OB'&&h.penTee)T[k].ob++;
+    if(h.score-h.par>=2)T[k].dbl++;});
+  const keys=TEE_CLUBS.filter(k=>T[k]);
+  if(!keys.length)return '';
+  return `
+  <h3 class="eyebrow" style="margin:20px 0 6px">Tee club</h3>
+  <table><thead><tr><th>Club</th><th>n</th><th>Fairway</th><th>Pen</th><th>OB</th><th>Dbl+</th></tr></thead><tbody>
+  ${keys.map(k=>{const b=T[k];return `<tr><td><b>${k}</b></td><td>${b.n}</td>
+    <td>${Math.round(100*b.fw/b.n)}%</td>
+    <td style="color:${b.pen?'var(--ochre)':'inherit'}">${b.pen}</td>
+    <td style="color:${b.ob?'var(--red)':'inherit'}">${b.ob}</td>
+    <td style="color:${b.dbl/b.n>0.2?'var(--red)':'inherit'}">${b.dbl}</td></tr>`;}).join('')}
+  </tbody></table>
+  <p class="hint"><b>Pen</b> and <b>OB</b> count only penalties you marked as coming off the tee. <b>Dbl+</b> is every double-or-worse on holes where you used that club, which includes damage done by later shots — read it as context, not blame. Needs ten rounds before it argues either way.</p>`;
+}
+
+function loadBlock(){
+  const SS=db.sessions||[]; if(!SS.length&&!db.rounds.length)return '';
+  const day=86400000, now=Date.now();
+  const inWin=(d,n)=>{const t=Date.parse(d); return !isNaN(t)&&(now-t)<=n*day;};
+  const ballsIn=n=>SS.filter(x=>inWin(x.date,n)).reduce((a,x)=>a+(+x.balls||0),0);
+  const roundsIn=n=>db.rounds.filter(r=>inWin(r.date,n)).length;
+  const acute=ballsIn(7), chronicWk=ballsIn(28)/4;
+  const acwr=chronicWk>0?(acute/chronicWk):null;
+  const flags=SS.filter(x=>x.wrist>1).length;
+  const areaCount={}; AREAS.forEach(a=>areaCount[a]=0);
+  SS.forEach(x=>x.areas.forEach(a=>{if(areaCount[a]!==undefined)areaCount[a]++}));
+  const ts=SS.concat(db.rounds).map(x=>Date.parse(x.date)).filter(t=>!isNaN(t));
+  const oldest=ts.length?Math.min.apply(null,ts):0;
+  const weeks=oldest?Math.floor((now-oldest)/(7*day)):0;
+  return `
+  <h3 class="eyebrow" style="margin:20px 0 0">Load</h3>
+  <p class="hint" style="margin:2px 0 8px">Practice volume and rounds together. Your two prior flares both followed a ramp.</p>
+  <div class="grid3">
+    <div class="met"><div class="v">${acute}</div><div class="l">Balls · 7 d</div></div>
+    <div class="met"><div class="v">${Math.round(chronicWk)}</div><div class="l">Balls · 28 d avg</div></div>
+    <div class="met"><div class="v" style="color:${acwr&&acwr>1.5?'var(--red)':'inherit'}">${acwr?acwr.toFixed(2):'—'}</div><div class="l">Acute : chronic</div></div>
+  </div>
+  ${acwr&&acwr>1.5
+    ?`<div class="banner bad">This week is ${acwr.toFixed(1)}× your recent average${weeks<4?' — short baseline, treat as indicative':''}. Around 1.5 is where both prior flares started.</div>`
+    :(weeks<4?`<div class="banner">${weeks} weeks of history. The ratio firms up after four.</div>`:'')}
+  <div class="card">
+    <div class="kv"><span>Rounds · 7 d / 28 d</span><b>${roundsIn(7)} / ${roundsIn(28)}</b></div>
+    <div class="kv"><span>Sessions logged</span><b>${SS.length}</b></div>
+    <div class="kv"><span>Sessions with wrist soreness+</span><b style="color:${flags?'var(--red)':'inherit'}">${flags}</b></div>
+    ${AREAS.map(a=>`<div class="kv"><span>${a}</span><b>${areaCount[a]}</b></div>`).join('')}
+  </div>`;
+}
+
+/* ---------- DATA ---------- */
+let impMsg='', saveMsg='';
+function importData(){
+  var ta=document.getElementById('imp');
+  var raw=ta&&ta.value?String(ta.value).trim():'';
+  if(!raw){impMsg='Paste the JSON block first.';render();return;}
+  var d=null;
+  try{d=JSON.parse(raw);}catch(e){
+    impMsg='That is not valid JSON. Copy the whole block including the outer braces.';render();return;}
+  if(!d||(!d.rounds&&!d.sessions)){impMsg='No rounds or sessions found in that JSON.';render();return;}
+  var have={},haveS={},aR=0,aS=0;
+  (db.rounds||[]).forEach(function(r){have[r.id]=1;});
+  (db.sessions||[]).forEach(function(x){haveS[x.id]=1;});
+  (d.rounds||[]).forEach(function(r){if(r&&r.id&&!have[r.id]){db.rounds.push(r);aR++;}});
+  (d.sessions||[]).forEach(function(x){if(x&&x.id&&!haveS[x.id]){db.sessions.push(x);aS++;}});
+  if(d.stride&&!db.stride)db.stride=d.stride;
+  db.rounds.sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''))||(a.id-b.id);});
+  migrate(); save();
+  impMsg='Imported '+aR+' round'+(aR===1?'':'s')+' and '+aS+' session'+(aS===1?'':'s')+'. Duplicates skipped. Total now '+db.rounds.length+' rounds.';
+  render();
+}
+function renderData(){
+  const el=document.getElementById('v-data');
+  el.innerHTML=`
+  ${!storeOk?`<div class="banner bad">Storage isn't responding. Copy the export below before you close this.</div>`:''}
+  ${flash?`<div class="banner"><b>${esc(flash)}</b></div>`:''}
+
+  <div class="card" style="margin-top:14px">
+    <div class="kv"><span>Storage</span><b style="color:${STMODE==='none'?'var(--red)':'var(--pine)'}">${
+      STMODE==='app'?'Claude app':(STMODE==='browser'?'this browser':'NONE')}</b></div>
+    <div class="kv"><span>Rounds held</span><b>${db.rounds.length}</b></div>
+  </div>
+  <p class="hint">${STMODE==='app'
+    ?'Saving through the Claude app. If I hand you an updated file, the new copy may start empty — export first, import after.'
+    :(STMODE==='browser'
+      ?'Saving to this browser. Survives restarts as long as you open the same file in the same browser and do not clear site data.'
+      :'Nothing is being saved. Export after every round.')}</p>
+
+  <h3 class="eyebrow" style="margin:20px 0 6px">Restore from backup</h3>
+  <p class="hint" style="margin:0 0 8px">Paste a previously exported JSON block. Existing rounds are kept — anything already here is skipped, so importing twice does no harm.</p>
+  <textarea id="imp" placeholder='{"rounds":[...],"sessions":[...]}' style="min-height:70px;font-family:'IBM Plex Mono',monospace;font-size:11px"></textarea>
+  <button class="big ghost" onclick="importData()">Import</button>
+  <p class="hint" id="imsg">${esc(impMsg)}</p>
+
+  <h3 class="eyebrow" style="margin:22px 0 6px">Appearance</h3>
+  <div class="seg">${['auto','light','dark'].map(t=>
+    `<button class="${(db.theme||'auto')===t?'on':''}" onclick="setTheme('${t}')">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div>
+  <p class="hint">Auto follows your phone. Force Light in bright sun — dark screens wash out on the tee.</p>
+
+  <h3 class="eyebrow" style="margin:20px 0 6px">Stride</h3>
+  <div class="card">
+    <p class="hint" style="margin:0 0 8px">Pace 20 steps along a measured 20 m once. Divide. Enter the result so step counts convert later.</p>
+    <input class="mono" inputmode="decimal" placeholder="m per step, e.g. 0.88" value="${db.stride??''}"
+      onchange="db.stride=this.value?+this.value:null;save()">
+  </div>
+
+  <h3 class="eyebrow" style="margin:20px 0 6px">Export</h3>
+  <p class="hint" style="margin:0 0 8px">Copy and paste into chat. Summary for a read; full JSON to move the data.</p>
+  <button class="big" onclick="copy(summaryText())">Copy summary</button>
+  <button class="big ghost" onclick="copy(JSON.stringify({rounds:db.rounds,sessions:db.sessions,stride:db.stride}))">Copy full JSON</button>
+  <textarea id="out" readonly style="width:100%;height:190px;font-family:'IBM Plex Mono',monospace;
+    font-size:11px;border:1px solid var(--line);border-radius:3px;padding:9px;background:var(--surf);color:var(--ink)"
+    >${esc(summaryText())}</textarea>
+  <p class="hint" id="cmsg"></p>`;
+}
+function copy(t){
+  const ta=document.getElementById('out');ta.value=t;ta.select();
+  let ok=false;
+  try{ok=document.execCommand('copy');}catch(e){}
+  if(navigator.clipboard){navigator.clipboard.writeText(t).catch(()=>{});ok=true;}
+  document.getElementById('cmsg').textContent=ok?'Copied.':'Select the text above and copy manually.';
+}
+function summaryText(){
+  const R=db.rounds;if(!R.length)return'No rounds logged yet.';
+  const S=R.map(sum);
+  let o='JAN — ROUND LOG · '+R.length+' rounds\n';
+  o+='stride: '+(db.stride?db.stride+' m/step':'not calibrated')+'\n\n';
+  o+='date       course              n  score  diff  gir   fir   putts d+  ob  wrist  wind\n';
+  R.forEach((r,i)=>{const s=S[i];
+    o+=r.date+' '+((CLABEL[r.course]||r.course)+'                    ').slice(0,19)+' '+String(r.n).padStart(2)+
+      String(s.score).padStart(7)+String(diffOf(r)??'-').padStart(6)+
+      String(s.girPct+'%').padStart(6)+String(s.firPct+'%').padStart(6)+
+      String(s.putts).padStart(6)+String(s.dbl).padStart(4)+String(s.ob).padStart(4)+
+      '  '+['none','ache','sore','pain'][r.wristPost??0]+'  '+(r.wind||'-')+'\n';});
+  const A=R.flatMap(r=>r.holes).filter(h=>h.appD||h.appL);
+  const cD=k=>A.filter(h=>h.appD===k).length, cL=k=>A.filter(h=>h.appL===k).length;
+  o+='\napproaches logged: '+A.length+'  (greens hit '+A.filter(h=>h.gir===true).length+')\n';
+  o+='vs own number   short '+cD('short')+' | on '+cD('pin')+' | long '+cD('long')+'\n';
+  o+='vs own line     left '+cL('left')+' | on '+cL('ctr')+' | right '+cL('right')+'\n';
+  o+='non-stock swings flagged: '+A.filter(h=>h.appAlt).length+'\n';
+  const bc={},pc={};
+  A.forEach(h=>{const d=+h.appDist||0; if(!h.appClub||!d)return;
+    (bc[h.appClub]=bc[h.appClub]||[]).push(d);
+    if(h.appD==='pin'&&!h.appAlt)(pc[h.appClub]=pc[h.appClub]||[]).push(d);});
+  if(Object.keys(bc).length){o+='\nclub  n  plays-to  true (stock swings, on number)\n';
+    CLUBS.filter(k=>bc[k]).forEach(k=>{const a=bc[k].slice().sort((x,y)=>x-y),b=(pc[k]||[]).slice().sort((x,y)=>x-y);
+      o+=(k+'    ').slice(0,5)+String(a.length).padStart(3)+String(a[Math.floor(a.length/2)]).padStart(12)+
+        String(b.length?b[Math.floor(b.length/2)]:'-').padStart(17)+'\n';});}
+  const T={};R.flatMap(r=>r.holes).forEach(h=>{if(h.par<=3||!h.teeClub)return;const k=h.teeClub;
+    T[k]=T[k]||{n:0,fw:0,pen:0,ob:0,dbl:0};T[k].n++;if(h.tee==='hit')T[k].fw++;
+    if(h.pen&&h.penTee)T[k].pen++;if(h.pen==='OB'&&h.penTee)T[k].ob++;if(h.score-h.par>=2)T[k].dbl++;});
+  if(Object.keys(T).length){o+='\ntee club  n  fw%  pen  ob  dbl+\n';
+    TEE_CLUBS.filter(k=>T[k]).forEach(k=>{const b=T[k];
+      o+=(k+'      ').slice(0,9)+String(b.n).padStart(2)+String(Math.round(100*b.fw/b.n)+'%').padStart(6)+
+        String(b.pen).padStart(5)+String(b.ob).padStart(4)+String(b.dbl).padStart(6)+'\n';});}
+  const fp={};PUTT_B.forEach(b=>fp[b]=0);R.flatMap(r=>r.holes).forEach(h=>{if(h.fp)fp[h.fp]++});
+  o+='\nfirst putt (paced steps)\n';
+  PUTT_B.forEach(function(b){
+    var hs=R.flatMap(function(r){return r.holes}).filter(function(h){return h.fp===b});
+    if(!hs.length)return;
+    var made=hs.filter(function(h){return h.putts===1}).length;
+    var three=hs.filter(function(h){return h.putts>=3}).length;
+    o+='  '+(b+'      ').slice(0,7)+'n='+String(hs.length).padStart(3)+
+       '  made '+String(made).padStart(3)+' ('+Math.round(100*made/hs.length)+'%)'+
+       (three?'  3-putts '+three:'')+'\n';});
+  var ms=R.flatMap(function(r){return r.holes}).filter(function(h){return h.gir===false});
+  var uds=ms.filter(function(h){return h.putts===1});
+  o+='\nup and down: '+uds.length+' of '+ms.length+
+     (ms.length?' ('+Math.round(100*uds.length/ms.length)+'%)':'')+'\n';
+  ['chip','pitch','bunker','putt'].forEach(function(k){
+    var g=R.flatMap(function(r){return r.holes}).filter(function(h){return h.rec===k});
+    if(g.length)o+='  '+(k+'      ').slice(0,7)+g.filter(function(h){return h.putts===1}).length+' of '+g.length+'\n';});
+  const notes=R.filter(r=>r.note);
+  if(notes.length){o+='\nround notes\n'+notes.map(r=>r.date+': '+r.note).join('\n')+'\n';}
+  const SS=db.sessions||[];
+  if(SS.length){
+    o+='\n\nPRACTICE · '+SS.length+' sessions\n';
+    o+='date        balls  min  wrist  areas / clubs\n';
+    SS.forEach(x=>{o+=x.date+String(x.balls||'-').padStart(7)+String(x.mins||'-').padStart(5)+
+      '  '+(['none','ache','sore','pain'][x.wrist||0]+'   ').slice(0,5)+'  '+
+      x.areas.join(', ')+(x.clubs.length?' | '+x.clubs.join(' '):'')+'\n';});
+    const sn=SS.filter(x=>x.note);
+    if(sn.length){o+='\nsession notes\n'+sn.map(x=>x.date+': '+x.note).join('\n')+'\n';}
+    const tb=SS.reduce((a,x)=>a+(+x.balls||0),0);
+    o+='\ntotal balls logged: '+tb+'\n';}
+  return o;
+}
+
+load();
+</script>
