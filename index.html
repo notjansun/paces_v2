@@ -182,7 +182,7 @@ function blankSess(){return{id:Date.now(),date:new Date().toISOString().slice(0,
   areas:[],clubs:[],balls:'',mins:'',wrist:0,note:''};}
 
 function blankHole(p){return{par:p,score:p,putts:2,pu:null,tee:null,gir:null,pen:null,
-  penTee:null,rec:null,teeClub:null,appDist:'',appClub:'',appD:null,appL:null,appAlt:null,fp:null,chip:null};}
+  penTee:null,rec:null,teeClub:null,teeOut:null,appDist:'',appClub:'',appD:null,appL:null,appAlt:null,fp:null,chip:null};}
 function migrate(){
   (db.rounds||[]).forEach(function(r){(r.holes||[]).forEach(function(h){h.done=true;});});
   var FPMAP={'2-4':'2-3','5-9':'7-10','10+':'11+'};
@@ -361,7 +361,10 @@ function renderPlay(){
     ${sBtn('tee','hit','Fairway','on-pine')}${sBtn('tee','L','Left','on-ochre')}${sBtn('tee','R','Right')}${sBtn('tee','other','Other')}
   </div></div>
   <div class="row" style="align-items:flex-start"><div class="lab" style="padding-top:9px">Club</div>
-    <div class="chips" style="flex:1">${TEE_CLUBS.map(c=>sBtn('teeClub',c,c)).join('')}</div></div>`:''}
+    <div class="chips" style="flex:1">${TEE_CLUBS.map(c=>sBtn('teeClub',c,c)).join('')}</div></div>
+  ${h.tee&&h.tee!=='hit'?`<div style="padding:9px 0;border-bottom:1px solid var(--line)">
+    <div class="chips">${sBtn('teeOut',true,'Next shot was just back in play','on-ochre')}</div>
+    <p class="hint" style="margin:5px 0 0">Only if you could not go at the green. Not whether the lie felt bad.</p></div>`:''}`:''}
 
   <div class="row"><div class="lab">Green</div><div class="seg">
     ${sBtn('gir',true,'GIR','on-pine')}${sBtn('gir',false,'Missed')}
@@ -815,22 +818,22 @@ function bagBlock(R){
 function teeBlock(R){
   const T={}; R.flatMap(r=>r.holes).forEach(h=>{
     if(h.par<=3||!h.teeClub)return; const k=h.teeClub;
-    T[k]=T[k]||{n:0,fw:0,pen:0,ob:0,dbl:0};
-    T[k].n++; if(h.tee==='hit')T[k].fw++;
+    T[k]=T[k]||{n:0,fw:0,pen:0,ob:0,dbl:0,out:0};
+    T[k].n++; if(h.tee==='hit')T[k].fw++; if(h.teeOut)T[k].out++;
     if(h.pen&&h.penTee)T[k].pen++; if(h.pen==='OB'&&h.penTee)T[k].ob++;
-    if(h.score-h.par>=2)T[k].dbl++;});
+    if(h.tee&&h.tee!=='hit'&&!h.pu&&h.score-h.par>=2)T[k].dbl++;});
   const keys=TEE_CLUBS.filter(k=>T[k]);
   if(!keys.length)return '';
   return `
   <h3 class="eyebrow" style="margin:20px 0 6px">Tee club</h3>
-  <table><thead><tr><th>Club</th><th>n</th><th>Fairway</th><th>Pen</th><th>OB</th><th>Dbl+</th></tr></thead><tbody>
+  <table><thead><tr><th>Club</th><th>n</th><th>Fairway</th><th>Blocked</th><th>Pen</th><th>Cost</th></tr></thead><tbody>
   ${keys.map(k=>{const b=T[k];return `<tr><td><b>${k}</b></td><td>${b.n}</td>
     <td>${Math.round(100*b.fw/b.n)}%</td>
-    <td style="color:${b.pen?'var(--ochre)':'inherit'}">${b.pen}</td>
-    <td style="color:${b.ob?'var(--red)':'inherit'}">${b.ob}</td>
+    <td style="color:${b.out/b.n>0.15?'var(--red)':'inherit'}">${Math.round(100*b.out/b.n)}%</td>
+    <td style="color:${b.pen?'var(--ochre)':'inherit'}">${b.pen}${b.ob?' ('+b.ob+' OB)':''}</td>
     <td style="color:${b.dbl/b.n>0.2?'var(--red)':'inherit'}">${b.dbl}</td></tr>`;}).join('')}
   </tbody></table>
-  <p class="hint"><b>Pen</b> and <b>OB</b> count only penalties you marked as coming off the tee. <b>Dbl+</b> is every double-or-worse on holes where you used that club, which includes damage done by later shots — read it as context, not blame. Needs ten rounds before it argues either way.</p>`;
+  <p class="hint"><b>Blocked</b> is the share of tee shots after which you could not go at the green — the difference between a miss and a real miss. <b>Pen</b> counts only penalties off the tee. <b>Cost</b> counts doubles-or-worse only where the tee shot missed the fairway. Fairway rate alone will flatter your driver; Blocked is the column that decides whether it is worth hitting.</p>`;
 }
 
 function loadBlock(){
@@ -969,12 +972,15 @@ function summaryText(){
       o+=(k+'    ').slice(0,5)+String(a.length).padStart(3)+String(a[Math.floor(a.length/2)]).padStart(12)+
         String(b.length?b[Math.floor(b.length/2)]:'-').padStart(17)+'\n';});}
   const T={};R.flatMap(r=>r.holes).forEach(h=>{if(h.par<=3||!h.teeClub)return;const k=h.teeClub;
-    T[k]=T[k]||{n:0,fw:0,pen:0,ob:0,dbl:0};T[k].n++;if(h.tee==='hit')T[k].fw++;
-    if(h.pen&&h.penTee)T[k].pen++;if(h.pen==='OB'&&h.penTee)T[k].ob++;if(h.score-h.par>=2)T[k].dbl++;});
-  if(Object.keys(T).length){o+='\ntee club  n  fw%  pen  ob  dbl+\n';
+    T[k]=T[k]||{n:0,fw:0,pen:0,ob:0,dbl:0,out:0};T[k].n++;if(h.tee==='hit')T[k].fw++;
+    if(h.teeOut)T[k].out++;
+    if(h.pen&&h.penTee)T[k].pen++;if(h.pen==='OB'&&h.penTee)T[k].ob++;
+    if(h.tee&&h.tee!=='hit'&&!h.pu&&h.score-h.par>=2)T[k].dbl++;});
+  if(Object.keys(T).length){o+='\ntee club  n  fw%  blocked%  pen  ob  cost\n';
     TEE_CLUBS.filter(k=>T[k]).forEach(k=>{const b=T[k];
       o+=(k+'      ').slice(0,9)+String(b.n).padStart(2)+String(Math.round(100*b.fw/b.n)+'%').padStart(6)+
-        String(b.pen).padStart(5)+String(b.ob).padStart(4)+String(b.dbl).padStart(6)+'\n';});}
+        String(Math.round(100*b.out/b.n)+'%').padStart(9)+
+        String(b.pen).padStart(6)+String(b.ob).padStart(4)+String(b.dbl).padStart(6)+'\n';});}
   const fp={};PUTT_B.forEach(b=>fp[b]=0);R.flatMap(r=>r.holes).forEach(h=>{if(h.fp)fp[h.fp]++});
   o+='\nfirst putt (paced steps)\n';
   PUTT_B.forEach(function(b){
