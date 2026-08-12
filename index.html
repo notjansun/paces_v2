@@ -1,4 +1,4 @@
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
@@ -35,7 +35,7 @@
   html{background:var(--ground);min-height:100%}
   body{margin:0;background:var(--ground);color:var(--ink);
     font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;
-    padding:0 0 40px;max-width:520px;margin:0 auto}
+    padding:0 0 calc(56px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
   .num{font-family:'Saira Condensed',sans-serif;font-weight:700;letter-spacing:.01em}
   .mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
   h1,h2,h3{margin:0;font-weight:600}
@@ -63,6 +63,7 @@
     display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;
     font-family:'IBM Plex Mono',monospace;color:var(--ink2);padding:0;min-width:0}
   .cell.cur{outline:2px solid var(--blue);outline-offset:1px}
+  .cell.p{background:var(--surf);color:var(--ink2);border-style:dashed;border-color:var(--ink2)}
   .cell.e{background:var(--eag);color:var(--eag-fg);border-color:var(--eag)}
   .cell.bi{background:var(--bird);color:var(--bird-fg);border-color:var(--bird-bd)}
   .cell.g{background:var(--pine);color:var(--pine-fg);border-color:var(--pine)}
@@ -180,7 +181,7 @@ const AREAS=['Range','Clubs','Short game','Putting','Bunker'];
 function blankSess(){return{id:Date.now(),date:new Date().toISOString().slice(0,10),
   areas:[],clubs:[],balls:'',mins:'',wrist:0,note:''};}
 
-function blankHole(p){return{par:p,score:p,putts:2,tee:null,gir:null,pen:null,
+function blankHole(p){return{par:p,score:p,putts:2,pu:null,tee:null,gir:null,pen:null,
   penTee:null,rec:null,teeClub:null,appDist:'',appClub:'',appD:null,appL:null,appAlt:null,fp:null,chip:null};}
 function migrate(){
   (db.rounds||[]).forEach(function(r){(r.holes||[]).forEach(function(h){h.done=true;});});
@@ -206,13 +207,16 @@ function migrate(){
     if(h.appRes&&M[h.appRes]){h.appD=h.appD||M[h.appRes][0];h.appL=h.appL||M[h.appRes][1];delete h.appRes;}});
 }
 
-function newRound(n,course){
+function newRound(n,course,startHole){
   const base=(CD[course]&&CD[course].par)||GENERIC;
-  const pars=n===9?base.slice(0,9):base.slice();
-  return{id:Date.now(),date:new Date().toISOString().slice(0,10),course:course,
-    tees:'',cr:null,slope:null,n:n,tier2:true,t2open:true,wind:null,wristPre:0,wristPost:null,note:'',
-    holes:pars.map(blankHole)};
+  const st=Math.max(1,Math.min(18,+startHole||1));
+  const pars=[], hnos=[];
+  for(var p=0;p<n;p++){var idx=(st-1+p)%18;pars.push(base[idx]);hnos.push(idx+1);}
+  return{id:Date.now(),date:new Date().toISOString().slice(0,10),course:course,start:st,
+    tees:'',cr:null,slope:null,n:n,tier2:true,t2open:true,wind:null,carry:null,warmup:'',wristPre:0,wristPost:null,note:'',
+    holes:pars.map(function(pp,i){var h=blankHole(pp);h.hno=hnos[i];return h;})};
 }
+function hno(h,i){return (h&&h.hno)?h.hno:i+1;}
 function teeList(c){return Object.keys((CD[c]&&CD[c].tees)||{});}
 function setTee(t){const T=CD[cur.course]&&CD[cur.course].tees[t];
   cur.tees=t;cur.cr=T?T[0]:null;cur.slope=T?T[1]:null;db.lastTee=t;save();finish();}
@@ -229,21 +233,24 @@ async function load(){
   detectStore();
   try{const r=await ST.get(KEY);
     if(r&&r.value){const d=JSON.parse(r.value);db.rounds=d.rounds||[];db.sessions=d.sessions||[];db.stride=d.stride??null;
-      db.theme=d.theme||'auto';db.t2default=d.t2default;db.lastCourse=d.lastCourse;db.lastTee=d.lastTee;
+      db.theme=d.theme||'auto';db.t2default=d.t2default;db.lastCourse=d.lastCourse;db.lastTee=d.lastTee;db.startHole=d.startHole;
       cur=d.cur||null;hole=d.hole||0;
       t2Open=cur?(cur.t2open!==false):(db.t2default!==false);}
   }catch(e){ if(String(e).includes('not found')||String(e).includes('404')){storeOk=true;}else{storeOk=false;} }
   migrate();
   applyTheme();
-  if(window.matchMedia)window.matchMedia('(prefers-color-scheme:dark)')
-    .addEventListener('change',applyTheme);
+  try{
+    var mq=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)');
+    if(mq&&mq.addEventListener)mq.addEventListener('change',applyTheme);
+    else if(mq&&mq.addListener)mq.addListener(applyTheme);
+  }catch(e){}
   render();
 }
 let saveTimer=null;
 function save(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(async()=>{
-    try{await ST.set(KEY,JSON.stringify({rounds:db.rounds,sessions:db.sessions,stride:db.stride,theme:db.theme,t2default:db.t2default,lastCourse:db.lastCourse,lastTee:db.lastTee,cur:cur,hole:hole}));
+    try{await ST.set(KEY,JSON.stringify({rounds:db.rounds,sessions:db.sessions,stride:db.stride,theme:db.theme,t2default:db.t2default,lastCourse:db.lastCourse,lastTee:db.lastTee,startHole:db.startHole,cur:cur,hole:hole}));
       storeOk=true;}
     catch(e){storeOk=false;}
     var h=document.getElementById('hdr');
@@ -253,7 +260,7 @@ function save(){
   },250);
 }
 
-function go(v){view=v;flash='';saveMsg='';['play','practice','rounds','stats','data'].forEach(k=>{
+function go(v){view=v;flash='';saveMsg='';armed='';['play','practice','rounds','stats','data'].forEach(k=>{
   document.getElementById('v-'+k).classList.toggle('hide',k!==v);
   document.getElementById('t-'+k).classList.toggle('on',k===v);});render();}
 
@@ -267,11 +274,20 @@ function meta(f,v){cur[f]=v;save();render();}
 function showErr(msg){
   var e=document.getElementById('errbox'); if(!e)return;
   e.classList.remove('hide');
-  e.innerHTML='<div class="banner bad"><b>Something broke.</b><br>'+
+  e.innerHTML='<div class="banner bad"><b>Something broke.</b> '+
     String(msg).replace(/[<>&]/g,'')+
-    '<br><br>Your saved rounds are safe. Copy this message, then use Data \u2192 Copy full JSON before doing anything else.</div>';
+    '<br>Export from Data before doing anything else. '+
+    '<button style="padding:4px 10px;font-size:12px;margin-top:8px" onclick="hideErr()">Dismiss</button></div>';
 }
-window.onerror=function(m,src,line){showErr(m+'  (line '+line+')');};
+function hideErr(){var e=document.getElementById('errbox');
+  if(e){e.innerHTML='';e.classList.add('hide');}}
+window.onerror=function(m,src,line){
+  // "Script error." with no source is a cross-origin error the browser refuses to
+  // describe. It cannot come from this file, so reporting it only causes alarm.
+  if(!src||String(m).indexOf('Script error')===0)return true;
+  showErr(m+'  ('+String(src).split('/').pop()+' line '+line+')');
+  return true;
+};
 
 function render(){
   try{ renderInner(); }catch(err){ showErr(err&&err.message?err.message:err); }
@@ -305,8 +321,15 @@ function renderPlay(){
         <button class="${db.t2default===false?'on':''}" onclick="setT2Default(false)">Collapsed</button>
       </div>
       <p class="hint">Open logs approach, putt and chip detail. Collapsed is Tier 1 only — five seconds a hole, fine for a team match.</p></div>
-      <button class="big" onclick="start(18)">Start 18 holes</button>
-      <button class="big ghost" onclick="start(9)">Start 9 holes</button>`;
+      <div style="display:grid;grid-template-columns:3fr 1fr;gap:8px;margin:8px 0">
+        <button class="big" style="margin:0" onclick="start(18)">Start 18 holes</button>
+        <button class="big quiet" style="margin:0" onclick="arm('sh')">H${db.startHole||1}</button>
+      </div>
+      <div style="display:grid;grid-template-columns:3fr 1fr;gap:8px;margin:8px 0">
+        <button class="big ghost" style="margin:0" onclick="start(9)">Start 9 holes</button>
+        <button class="big quiet" style="margin:0" onclick="arm('sh')">H${db.startHole||1}</button>
+      </div>
+      ${armed==='sh'?holeGrid():''}`;
     return;}
   const h=cur.holes[hole], n=cur.n;
   el.innerHTML=`
@@ -314,7 +337,7 @@ function renderPlay(){
   ${n===18?`<div class="strip">${cur.holes.slice(9).map((x,i)=>cellHTML(x,i+9)).join('')}</div>`:''}
 
   <div style="display:flex;align-items:baseline;gap:12px;margin:16px 0 6px">
-    <div><div class="eyebrow">Hole</div><div class="num" style="font-size:46px;line-height:.9">${hole+1}</div></div>
+    <div><div class="eyebrow">Hole</div><div class="num" style="font-size:46px;line-height:.9">${hno(h,hole)}</div></div>
     <div style="flex:1">
       <div class="eyebrow">Par</div>
       <div class="seg">${[3,4,5].map(p=>`<button class="${h.par===p?'on':''}" onclick="setPar(${p})">${p}</button>`).join('')}</div>
@@ -328,6 +351,11 @@ function renderPlay(){
   <div class="row"><div class="lab">Putts</div><div class="step">
     <button onclick="bump('putts',-1)">–</button><div class="val num">${h.putts}</div>
     <button onclick="bump('putts',1)">+</button></div></div>
+
+  <div style="padding:9px 0;border-bottom:1px solid var(--line)">
+    <div class="chips">${sBtn('pu',true,'Picked up / given','on-ochre')}</div>
+    ${h.pu?'<p class="hint" style="margin:5px 0 0">No score and no putts recorded for this hole. Everything else you log still counts.</p>':''}
+  </div>
 
   ${h.par>3?`<div class="row"><div class="lab">Tee</div><div class="seg">
     ${sBtn('tee','hit','Fairway','on-pine')}${sBtn('tee','L','Left','on-ochre')}${sBtn('tee','R','Right')}${sBtn('tee','other','Other')}
@@ -384,15 +412,15 @@ function renderPlay(){
   </div>
   <div class="navrow" style="margin-top:8px">
     <button onclick="saveNow()" style="font-weight:600">Save progress</button>
-    ${hole<n-1?`<button class="quiet" onclick="endHere()">Close out ${hole+1}</button>`:'<span></span>'}
+    ${hole<n-1?`<button class="quiet" onclick="endHere()">Close out after ${hole+1}</button>`:'<span></span>'}
   </div>
   ${saveMsg?`<div class="banner ${storeOk?'':'bad'}" style="margin:8px 0 0">${esc(saveMsg)}</div>`:''}
-  <p class="hint">${CLABEL[cur.course]||cur.course} · ${cur.n} holes · ${runningTotal()}</p>`;
+  <p class="hint">${CLABEL[cur.course]||cur.course} · ${cur.n} holes${cur.start>1?' from H'+cur.start:''} · ${runningTotal()}</p>`;
 }
 function cellHTML(x,i){
   const d=x.score-x.par; let c='';
-  if(x.done){ c = d<=-2?'e':(d===-1?'bi':(d===0?'g':(d===1?'b':'d'))); }
-  return `<button class="cell ${c} ${i===hole?'cur':''}" onclick="hole=${i};save();render()">${i+1}</button>`;
+  if(x.pu){ c='p'; } else if(x.done){ c = d<=-2?'e':(d===-1?'bi':(d===0?'g':(d===1?'b':'d'))); }
+  return `<button class="cell ${c} ${i===hole?'cur':''}" onclick="hole=${i};save();render()">${hno(x,i)}</button>`;
 }
 function sBtn(f,v,label,cls){const h=cur.holes[hole];
   return `<button class="${h[f]===v?(cls||'on'):''}" onclick="tog('${f}',${typeof v==='boolean'?v:"'"+v+"'"})">${label}</button>`;}
@@ -417,25 +445,29 @@ function endHere(){
   cur.holes[hole].done=true; cur.endAt=hole+1; save(); finish();
 }
 function endCount(){return cur.endAt||cur.n;}
+function arm(k){armed=(armed===k?'':k);render();}
 function discard(){
-  if(!confirm('Discard this round completely? Everything you logged for it is lost.'))return;
-  cur=null; hole=0; finishing=false; save(); render(); window.scrollTo(0,0);
+  cur=null; hole=0; finishing=false; armed=''; save(); render(); window.scrollTo(0,0);
 }
 function nav(d){if(d>0)cur.holes[hole].done=true;
   hole=Math.max(0,Math.min(cur.n-1,hole+d));save();render();window.scrollTo(0,0);}
 function played(){return cur.holes.filter(function(x){return x.done;});}
+function scored(){return cur.holes.filter(function(x){return x.done&&!x.pu;});}
+function puCount(){return cur.holes.filter(function(x){return x.pu;}).length;}
 function toPar(P){
   var t=P.reduce(function(a,x){return a+x.score},0);
   var p=P.reduce(function(a,x){return a+x.par},0);
   var d=t-p; return d===0?'E':((d>0?'+':'')+d);}
 function runningTotal(){
-  var P=played();
-  if(!P.length)return 'not started';
-  return toPar(P)+' thru '+P.length;}
+  var P=played(); if(!P.length)return 'not started';
+  var S=scored(), u=puCount();
+  if(!S.length)return P.length+' holes logged \u00b7 no score';
+  return toPar(S)+' thru '+S.length+(u?' \u00b7 '+u+' picked up':'');}
 function finalTotal(){
-  var P=played();
-  var t=P.reduce(function(a,x){return a+x.score},0);
-  return t+' ('+toPar(P)+')';}
+  var S=scored(), u=puCount();
+  if(!S.length)return 'no score';
+  var t=S.reduce(function(a,x){return a+x.score},0);
+  return u? toPar(S)+' thru '+S.length : t+' ('+toPar(S)+')';}
 function defaultTee(c){
   var TL=teeList(c);
   for(var i=0;i<TL.length;i++){if(TL[i].indexOf('Gelb')===0)return TL[i];}
@@ -458,6 +490,17 @@ function teePicker(){
     ' Gelb is preselected \u2014 switch only when you actually move back.</p>';
   return out;
 }
+function holeGrid(){
+  var c=db.startHole||1;
+  var out='<div class="card"><div class="eyebrow" style="margin-bottom:6px">First hole</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px">';
+  for(var i=1;i<=18;i++){
+    out+='<button class="'+(c===i?'on':'')+'" style="padding:11px 0;font-size:13px" onclick="setStartHole('+i+')">'+i+'</button>';}
+  out+='</div><p class="hint" style="margin:8px 0 0">H10 with 9 holes gives you the back nine. '+
+    'Any other hole wraps round for a shotgun start, and the pars follow the real hole numbers.</p></div>';
+  return out;
+}
+function setStartHole(i){db.startHole=i;armed='';save();render();}
 function setT2Default(v){db.t2default=v;save();render();}
 function setCourse(c){db.lastCourse=c;
   if(!teeList(c).includes(db.lastTee))db.lastTee=defaultTee(c);
@@ -465,7 +508,7 @@ function setCourse(c){db.lastCourse=c;
 function setTeeDefault(t){db.lastTee=t;save();render();}
 function start(n){
   const C=db.lastCourse||COURSES[0];
-  cur=newRound(n,C);
+  cur=newRound(n,C,db.startHole||1);
   if(db.lastTee&&CD[C]&&CD[C].tees[db.lastTee]){
     const T=CD[C].tees[db.lastTee];
     cur.tees=db.lastTee; cur.cr=T[0]; cur.slope=T[1];}
@@ -485,6 +528,15 @@ function renderFinish(){
     </div></div>`:`<div class="row"><div class="lab">Tees</div><input value="${esc(cur.tees)}" placeholder="tee · CR · slope" onchange="meta('tees',this.value)"></div>`}
     ${cur.cr?`<p class="hint" style="margin:6px 0 0">CR ${cur.cr} · slope ${cur.slope} → differential ${diffOf({holes:cur.holes,cr:cur.cr,slope:cur.slope,n:cur.n})??'—'}</p>`:''}
     <div class="row"><div class="lab">Date</div><input type="date" value="${cur.date}" onchange="meta('date',this.value)"></div>
+    <div class="row"><div class="lab">Bag</div><div class="seg">
+      ${[['carry','Carried'],['trolley','Push cart'],['cart','Buggy']].map(c=>
+        `<button class="${cur.carry===c[0]?'on':''}" onclick="meta('carry','${c[0]}')">${c[1]}</button>`).join('')}
+    </div></div>
+    <p class="hint">Carrying is fatigue and forearm load both. Worth separating from everything else.</p>
+    <div class="row"><div class="lab">Warm-up</div>
+      <input class="mono" inputmode="numeric" placeholder="balls hit before teeing off" value="${esc(cur.warmup)}"
+        onchange="meta('warmup',this.value)"></div>
+    <p class="hint">Not a practice session — but the swings count toward load. Leave blank if you went straight to the first tee.</p>
     <div class="row"><div class="lab">Wind</div><div class="seg">
       ${['calm','breezy','windy'].map(w=>`<button class="${cur.wind===w?(w==='windy'?'on-ochre':'on'):''}" onclick="meta('wind','${w}')">${w[0].toUpperCase()+w.slice(1)}</button>`).join('')}
     </div></div>
@@ -497,7 +549,9 @@ function renderFinish(){
   </div>
   <button class="big" onclick="commit()">Save round</button>
   <button class="big quiet" onclick="finishing=false;delete cur.endAt;render()">Back to holes</button>
-  <button class="big quiet" style="border-color:var(--red);color:var(--red)" onclick="discard()">Discard round</button>`;
+  ${armed==='discard'
+    ? `<button class="big" style="background:var(--red);border-color:var(--red);color:var(--red-fg)" onclick="discard()">Tap again — this deletes the round</button>`
+    : `<button class="big quiet" style="border-color:var(--red);color:var(--red)" onclick="arm('discard')">Discard round</button>`}`;
 }
 function commit(){
   if(cur.endAt&&cur.endAt<cur.n){cur.holes=cur.holes.slice(0,cur.endAt);cur.n=cur.endAt;}
@@ -515,16 +569,16 @@ function sTog(f,v){if(!sess)sess=blankSess();
 function sSet(f,v){if(!sess)sess=blankSess(); sess[f]=v; save();}
 function sSetR(f,v){if(!sess)sess=blankSess(); sess[f]=v; save(); render();}
 function saveSess(){
-  if(!sess||!sess.areas.length){alert('Tick at least one area first.');return;}
+  if(!sess||!sess.areas.length){flash='Tick at least one area first.';render();return;}
   db.sessions.push(sess); sess=null; save(); render(); window.scrollTo(0,0);}
-function delSess(id){if(confirm('Delete this session?')){
-  db.sessions=db.sessions.filter(x=>x.id!==id);save();render();}}
+function delSess(id){db.sessions=db.sessions.filter(x=>x.id!==id);armed='';save();render();}
 
 function renderPractice(){
   const el=document.getElementById('v-practice');
   if(!sess)sess=blankSess();
   const S=sess;
   el.innerHTML=`
+  ${flash?`<div class="banner">${esc(flash)}</div>`:''}
   <h3 class="eyebrow" style="margin:16px 0 6px">New session</h3>
   <div class="card">
     <div class="row"><div class="lab">Date</div>
@@ -564,7 +618,9 @@ function renderPractice(){
         <b class="mono" style="font-size:13px">${x.date}</b>
         <div style="display:flex;gap:6px;align-items:baseline">
           <span class="hint" style="margin:0">${x.balls?x.balls+' balls':''}${x.balls&&x.mins?' · ':''}${x.mins?x.mins+' min':''}${x.wrist>1?' · wrist '+['','ache','sore','pain'][x.wrist]:''}</span>
-          <button style="padding:2px 7px;font-size:11px" onclick="delSess(${x.id})">×</button></div></div>
+          ${armed==='s'+x.id
+            ? `<button style="padding:2px 6px;font-size:10px;background:var(--red);color:var(--red-fg);border-color:var(--red)" onclick="delSess(${x.id})">sure?</button>`
+            : `<button style="padding:2px 7px;font-size:11px" onclick="arm('s${x.id}')">×</button>`}</div></div>
       <div class="hint" style="margin:4px 0 0;color:var(--ink)">${esc(x.areas.join(' · '))}${x.clubs.length?' — '+esc(x.clubs.join(' ')):''}</div>
       ${x.note?`<div style="font-size:13.5px;margin:7px 0 0;padding-top:7px;border-top:1px solid var(--line)">${esc(x.note)}</div>`:''}
     </div>`).join('')}`
@@ -578,27 +634,42 @@ function renderRounds(){
   el.innerHTML=`<table><thead><tr><th>Date</th><th>Course</th><th>Score</th><th>Diff</th><th>GIR</th><th>Putts</th><th>D+</th><th></th></tr></thead><tbody>
   ${db.rounds.slice().reverse().map(r=>{const s=sum(r);return `<tr>
     <td>${r.date.slice(5)}</td><td style="font-family:'IBM Plex Sans'">${esc(CLABEL[r.course]||r.course).slice(0,12)}</td>
-    <td><b>${s.score}</b></td><td>${diffOf(r)??'—'}</td><td>${s.girPct}%</td><td>${s.putts}</td>
+    <td><b>${s.pu?'—':s.score}</b></td><td>${diffOf(r)??'—'}</td><td>${s.girPct}%</td><td>${s.putts}</td>
     <td style="color:${s.dbl?'var(--red)':'inherit'}">${s.dbl}</td>
-    <td><button style="padding:3px 7px;font-size:11px" onclick="del(${r.id})">×</button></td></tr>`;}).join('')}
+    <td>${armed==='d'+r.id
+      ? `<button style="padding:3px 6px;font-size:10px;background:var(--red);color:var(--red-fg);border-color:var(--red)" onclick="del(${r.id})">sure?</button>`
+      : `<button style="padding:3px 7px;font-size:11px" onclick="arm('d${r.id}')">×</button>`}</td></tr>`;}).join('')}
   </tbody></table>`;
 }
-function del(id){if(confirm('Delete this round?')){db.rounds=db.rounds.filter(r=>r.id!==id);save();render();}}
+function del(id){db.rounds=db.rounds.filter(r=>r.id!==id);armed='';save();render();}
 
 function diffOf(r){
   if(!r.cr||!r.slope||r.n!==18)return null;
+  if((r.holes||[]).some(function(h){return h.pu;}))return null;
   const s=r.holes.reduce((a,x)=>a+x.score,0);
   return Math.round((s-r.cr)*113/r.slope*10)/10;
 }
+function nineSplit(r){
+  if(r.n!==18)return null;
+  var f=r.holes.filter(function(h,i){return hno(h,i)<=9;});
+  var b=r.holes.filter(function(h,i){return hno(h,i)>9;});
+  if(f.length!==9||b.length!==9)return null;
+  var ok=function(a){return a.every(function(h){return !h.pu;});};
+  if(!ok(f)||!ok(b))return null;
+  var tp=function(a){return a.reduce(function(x,h){return x+h.score-h.par},0);};
+  return {f:tp(f),b:tp(b)};
+}
 function sum(r){
-  const hs=r.holes,score=hs.reduce((a,x)=>a+x.score,0),par=hs.reduce((a,x)=>a+x.par,0);
+  const all=r.holes, hs=all.filter(x=>!x.pu);
+  const score=hs.reduce((a,x)=>a+x.score,0),par=hs.reduce((a,x)=>a+x.par,0);
   const putts=hs.reduce((a,x)=>a+x.putts,0);
-  const gir=hs.filter(x=>x.gir===true).length, girN=hs.filter(x=>x.gir!==null).length;
-  const l45=hs.filter(x=>x.par>3&&x.tee), fir=l45.filter(x=>x.tee==='hit').length;
-  return{score,par,putts,dbl:hs.filter(x=>x.score-x.par>=2).length,
-    gir,girN,girPct:girN?Math.round(100*gir/girN):0,
+  const l45=all.filter(x=>x.par>3&&x.tee), fir=l45.filter(x=>x.tee==='hit').length;
+  const gA=all.filter(x=>x.gir!==null), gH=gA.filter(x=>x.gir===true).length;
+  return{score,par,putts,pu:all.length-hs.length,holed:hs.length,
+    dbl:hs.filter(x=>x.score-x.par>=2).length,
+    gir:gH,girN:gA.length,girPct:gA.length?Math.round(100*gH/gA.length):0,
     fir,firN:l45.length,firPct:l45.length?Math.round(100*fir/l45.length):0,
-    pen:hs.filter(x=>x.pen).length, ob:hs.filter(x=>x.pen==='OB').length,
+    pen:all.filter(x=>x.pen).length, ob:all.filter(x=>x.pen==='OB').length,
     birdie:hs.filter(x=>x.score<x.par).length,
     miss:hs.filter(x=>x.gir===false).length,
     ud:hs.filter(x=>x.gir===false&&x.putts===1).length,
@@ -621,7 +692,9 @@ function renderStats(){
   const girA=Math.round(100*S.reduce((a,s)=>a+s.gir,0)/Math.max(1,S.reduce((a,s)=>a+s.girN,0)));
   const firA=Math.round(100*S.reduce((a,s)=>a+s.fir,0)/Math.max(1,S.reduce((a,s)=>a+s.firN,0)));
   const R9=R.filter(r=>r.n>=9), S9=R9.map(sum);
-  const R18=R.filter(r=>r.n===18), S18=R18.map(sum);
+  const complete=r=>!(r.holes||[]).some(h=>h.pu);
+  const R18=R.filter(r=>r.n===18&&complete(r)), S18=R18.map(sum);
+  const nPU=R.filter(r=>!complete(r)).length;
   const n9c=R.filter(r=>r.n===9).length, nOther=R.length-R18.length-n9c;
   const puttA=avg(S9.map((s,i)=>per18(s.putts,R9[i])));
   const dblA=avg(S9.map((s,i)=>per18(s.dbl,R9[i])));
@@ -652,7 +725,7 @@ function renderStats(){
   el.innerHTML=`
   ${n<20?`<div class="banner warn"><b>${n} of 20.</b> Sample too small to act on. Log, don't interpret.</div>`
         :`<div class="banner"><b>${n} rounds.</b> Sample is now readable.</div>`}
-  <p class="hint" style="margin:0 0 8px">${R18.length} full${n9c?' · '+n9c+' nine-hole':''}${nOther?' · '+nOther+' partial':''}. Rates pool every hole logged; per-18 scoring excludes rounds under nine holes; average score uses 18-hole rounds only.</p>
+  <p class="hint" style="margin:0 0 8px">${R18.length} full${n9c?' · '+n9c+' nine-hole':''}${nOther?' · '+nOther+' partial':''}${nPU?' · '+nPU+' with pick-ups':''}. Rates pool every hole logged. Average score uses complete 18-hole rounds only — a round with a pick-up has no gross score.</p>
 
   <div class="grid3">
     <div class="met"><div class="v">${R18.length?avg(S18.map(s=>s.score)).toFixed(1):'—'}</div><div class="l">Avg score · 18h</div></div>
@@ -685,6 +758,8 @@ function renderStats(){
     <div class="kv"><span>Rounds with an OB</span><b>${obR} of ${n}</b></div>
     <div class="kv"><span>Rounds with wrist soreness+</span><b>${wr} of ${n}</b></div></div>
 
+  ${bagBlock(R)}
+
   ${teeBlock(R)}
 
   ${loadBlock()}
@@ -704,10 +779,37 @@ function renderStats(){
 
   ${fpN?`<h3 class="eyebrow" style="margin:20px 0 6px">First putt · paced steps</h3>
   <div class="card">${PUTT_B.map(b=>{
-    const hs=R.flatMap(r=>r.holes).filter(h=>h.fp===b);
+    const hs=R.flatMap(r=>r.holes).filter(h=>h.fp===b&&!h.pu);
     const made=hs.filter(h=>h.putts===1).length, three=hs.filter(h=>h.putts>=3).length;
     return `<div class="kv"><span>${b} steps &nbsp;<span style="color:var(--ink2)">n=${hs.length}</span></span><b>${hs.length?Math.round(100*made/hs.length)+'% made':'—'}${three?' · '+three+' three-putt':''}</b></div>`;}).join('')}</div>
   <p class="hint">Bucket edges sit where make rate roughly halves, so 4-6 and 7-10 are genuinely different skills. Needs ~10 rounds per bucket.</p>`:''}`;
+}
+
+function bagBlock(R){
+  var G={};
+  R.forEach(function(r){
+    if(!r.carry)return;
+    var k=r.carry, sp=nineSplit(r), s=sum(r);
+    G[k]=G[k]||{n:0,f:0,b:0,nSplit:0,gir:0,girN:0};
+    G[k].n++; G[k].gir+=s.gir; G[k].girN+=s.girN;
+    if(sp){G[k].nSplit++; G[k].f+=sp.f; G[k].b+=sp.b;}
+  });
+  var LB={carry:'Carried',trolley:'Push cart',cart:'Buggy'};
+  var keys=['carry','trolley','cart'].filter(function(k){return G[k];});
+  if(!keys.length)return '';
+  return `
+  <h3 class="eyebrow" style="margin:20px 0 6px">Bag</h3>
+  <table><thead><tr><th>Method</th><th>n</th><th>Front</th><th>Back</th><th>Drift</th><th>GIR</th></tr></thead><tbody>
+  ${keys.map(function(k){var b=G[k];
+    var f=b.nSplit?(b.f/b.nSplit):null, bk=b.nSplit?(b.b/b.nSplit):null;
+    var dr=(f===null)?null:(bk-f);
+    return `<tr><td><b>${LB[k]}</b></td><td>${b.n}</td>
+      <td>${f===null?'—':(f>=0?'+':'')+f.toFixed(1)}</td>
+      <td>${bk===null?'—':(bk>=0?'+':'')+bk.toFixed(1)}</td>
+      <td style="color:${dr!==null&&dr>1?'var(--red)':'inherit'}">${dr===null?'—':(dr>=0?'+':'')+dr.toFixed(1)}</td>
+      <td>${b.girN?Math.round(100*b.gir/b.girN)+'%':'—'}</td></tr>`;}).join('')}
+  </tbody></table>
+  <p class="hint"><b>Drift</b> is back nine minus front nine relative to par. If carrying costs you late in the round, that is where it shows — not in the total. Needs about five rounds per method.</p>`;
 }
 
 function teeBlock(R){
@@ -735,9 +837,12 @@ function loadBlock(){
   const SS=db.sessions||[]; if(!SS.length&&!db.rounds.length)return '';
   const day=86400000, now=Date.now();
   const inWin=(d,n)=>{const t=Date.parse(d); return !isNaN(t)&&(now-t)<=n*day;};
-  const ballsIn=n=>SS.filter(x=>inWin(x.date,n)).reduce((a,x)=>a+(+x.balls||0),0);
+  const swingsOf=r=>{let t=0;(r.holes||[]).forEach(h=>{t+=(+h.score||0)-(+h.putts||0);});
+    return Math.max(0,t)+(+r.warmup||0);};
+  const swingsIn=n=>SS.filter(x=>inWin(x.date,n)).reduce((a,x)=>a+(+x.balls||0),0)
+    + db.rounds.filter(r=>inWin(r.date,n)).reduce((a,r)=>a+swingsOf(r),0);
   const roundsIn=n=>db.rounds.filter(r=>inWin(r.date,n)).length;
-  const acute=ballsIn(7), chronicWk=ballsIn(28)/4;
+  const acute=swingsIn(7), chronicWk=swingsIn(28)/4;
   const acwr=chronicWk>0?(acute/chronicWk):null;
   const flags=SS.filter(x=>x.wrist>1).length;
   const areaCount={}; AREAS.forEach(a=>areaCount[a]=0);
@@ -747,10 +852,10 @@ function loadBlock(){
   const weeks=oldest?Math.floor((now-oldest)/(7*day)):0;
   return `
   <h3 class="eyebrow" style="margin:20px 0 0">Load</h3>
-  <p class="hint" style="margin:2px 0 8px">Practice volume and rounds together. Your two prior flares both followed a ramp.</p>
+  <p class="hint" style="margin:2px 0 8px">Every swing that isn't a putt: practice balls, warm-up balls, and strokes minus putts from each round. All counted, none estimated. Both prior flares followed a ramp.</p>
   <div class="grid3">
-    <div class="met"><div class="v">${acute}</div><div class="l">Balls · 7 d</div></div>
-    <div class="met"><div class="v">${Math.round(chronicWk)}</div><div class="l">Balls · 28 d avg</div></div>
+    <div class="met"><div class="v">${acute}</div><div class="l">Swings · 7 d</div></div>
+    <div class="met"><div class="v">${Math.round(chronicWk)}</div><div class="l">Swings · 28 d avg</div></div>
     <div class="met"><div class="v" style="color:${acwr&&acwr>1.5?'var(--red)':'inherit'}">${acwr?acwr.toFixed(2):'—'}</div><div class="l">Acute : chronic</div></div>
   </div>
   ${acwr&&acwr>1.5
@@ -765,7 +870,7 @@ function loadBlock(){
 }
 
 /* ---------- DATA ---------- */
-let impMsg='', saveMsg='';
+let impMsg='', saveMsg='', armed='';
 function importData(){
   var ta=document.getElementById('imp');
   var raw=ta&&ta.value?String(ta.value).trim():'';
@@ -841,12 +946,13 @@ function summaryText(){
   const S=R.map(sum);
   let o='JAN — ROUND LOG · '+R.length+' rounds\n';
   o+='stride: '+(db.stride?db.stride+' m/step':'not calibrated')+'\n\n';
-  o+='date       course              n  score  diff  gir   fir   putts d+  ob  wrist  wind\n';
+  o+='date       course              n  score  diff  gir   fir   putts d+  ob  bag      wrist  wind\n';
   R.forEach((r,i)=>{const s=S[i];
     o+=r.date+' '+((CLABEL[r.course]||r.course)+'                    ').slice(0,19)+' '+String(r.n).padStart(2)+
       String(s.score).padStart(7)+String(diffOf(r)??'-').padStart(6)+
       String(s.girPct+'%').padStart(6)+String(s.firPct+'%').padStart(6)+
       String(s.putts).padStart(6)+String(s.dbl).padStart(4)+String(s.ob).padStart(4)+
+      (s.pu?'  PU'+s.pu:'')+'  '+(r.carry||'-')+
       '  '+['none','ache','sore','pain'][r.wristPost??0]+'  '+(r.wind||'-')+'\n';});
   const A=R.flatMap(r=>r.holes).filter(h=>h.appD||h.appL);
   const cD=k=>A.filter(h=>h.appD===k).length, cL=k=>A.filter(h=>h.appL===k).length;
@@ -872,14 +978,14 @@ function summaryText(){
   const fp={};PUTT_B.forEach(b=>fp[b]=0);R.flatMap(r=>r.holes).forEach(h=>{if(h.fp)fp[h.fp]++});
   o+='\nfirst putt (paced steps)\n';
   PUTT_B.forEach(function(b){
-    var hs=R.flatMap(function(r){return r.holes}).filter(function(h){return h.fp===b});
+    var hs=R.flatMap(function(r){return r.holes}).filter(function(h){return h.fp===b&&!h.pu});
     if(!hs.length)return;
     var made=hs.filter(function(h){return h.putts===1}).length;
     var three=hs.filter(function(h){return h.putts>=3}).length;
     o+='  '+(b+'      ').slice(0,7)+'n='+String(hs.length).padStart(3)+
        '  made '+String(made).padStart(3)+' ('+Math.round(100*made/hs.length)+'%)'+
        (three?'  3-putts '+three:'')+'\n';});
-  var ms=R.flatMap(function(r){return r.holes}).filter(function(h){return h.gir===false});
+  var ms=R.flatMap(function(r){return r.holes}).filter(function(h){return h.gir===false&&!h.pu});
   var uds=ms.filter(function(h){return h.putts===1});
   o+='\nup and down: '+uds.length+' of '+ms.length+
      (ms.length?' ('+Math.round(100*uds.length/ms.length)+'%)':'')+'\n';
@@ -898,7 +1004,10 @@ function summaryText(){
     const sn=SS.filter(x=>x.note);
     if(sn.length){o+='\nsession notes\n'+sn.map(x=>x.date+': '+x.note).join('\n')+'\n';}
     const tb=SS.reduce((a,x)=>a+(+x.balls||0),0);
-    o+='\ntotal balls logged: '+tb+'\n';}
+    o+='\ntotal practice balls: '+tb+'\n';}
+  var wu=R.reduce(function(a,r){return a+(+r.warmup||0)},0);
+  var rs=R.reduce(function(a,r){var t=0;(r.holes||[]).forEach(function(h){t+=(+h.score||0)-(+h.putts||0);});return a+Math.max(0,t)},0);
+  o+='warm-up balls: '+wu+'  |  round swings (strokes minus putts): '+rs+'\n';
   return o;
 }
 
