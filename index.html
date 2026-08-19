@@ -137,6 +137,7 @@
 <div id="v-data" class="wrap hide"></div>
 
 <script>
+const VER='2.3 \u00b7 19 Aug 2026';
 const CLUBS=['LW','SW','GW','PW','9i','8i','7i','6i','5i','4H','5W','3W','Dr'];
 const PUTT_B=['0-1','2-3','4-6','7-10','11+'];
 const KEY='golf:v1';
@@ -182,7 +183,10 @@ function blankSess(){return{id:Date.now(),date:new Date().toISOString().slice(0,
   areas:[],clubs:[],balls:'',mins:'',wrist:0,note:''};}
 
 function blankHole(p){return{par:p,score:p,putts:2,pu:null,tee:null,gir:null,pen:null,
-  penTee:null,rec:null,teeClub:null,teeOut:null,appDist:'',appClub:'',appD:null,appL:null,appAlt:null,fp:null,chip:null};}
+  penTee:null,rec:null,teeClub:null,teeOut:null,appDist:'',appClub:'',appD:null,appL:null,appAlt:null,
+  appKind:null,appNo:null,p5:null,fp:null,fpD:null,fpL:null,chip:null};}
+function defNo(h){return h.par===3?1:(h.par===5?((h.p5==='hit'||h.p5==='miss')?2:3):2);}
+function bumpNo(d){const h=cur.holes[hole];h.appNo=Math.max(1,Math.min(8,(h.appNo||defNo(h))+d));h.done=true;save();render();}
 function migrate(){
   (db.rounds||[]).forEach(function(r){(r.holes||[]).forEach(function(h){h.done=true;});});
   var FPMAP={'2-4':'2-3','5-9':'7-10','10+':'11+'};
@@ -205,6 +209,12 @@ function migrate(){
     if(h.appRes&&M[h.appRes]){h.appD=h.appD||M[h.appRes][0];h.appL=h.appL||M[h.appRes][1];delete h.appRes;}}));
   if(cur)(cur.holes||[]).forEach(h=>{
     if(h.appRes&&M[h.appRes]){h.appD=h.appD||M[h.appRes][0];h.appL=h.appL||M[h.appRes][1];delete h.appRes;}});
+  var wuFix=function(r){
+    if(r.wuBalls===undefined||r.wuBalls===null||r.wuBalls==='')r.wuBalls=r.warmup||'';
+    if(r.wuPutts===undefined||r.wuPutts===null)r.wuPutts='';
+    if(r.wuMins===undefined||r.wuMins===null)r.wuMins='';
+    if(r.wuRoute===undefined)r.wuRoute=null;};
+  (db.rounds||[]).forEach(wuFix); if(cur)wuFix(cur);
 }
 
 function newRound(n,course,startHole){
@@ -213,7 +223,8 @@ function newRound(n,course,startHole){
   const pars=[], hnos=[];
   for(var p=0;p<n;p++){var idx=(st-1+p)%18;pars.push(base[idx]);hnos.push(idx+1);}
   return{id:Date.now(),date:new Date().toISOString().slice(0,10),course:course,start:st,
-    tees:'',cr:null,slope:null,n:n,tier2:true,t2open:true,wind:null,carry:null,warmup:'',wristPre:0,wristPost:null,note:'',
+    tees:'',cr:null,slope:null,n:n,tier2:true,t2open:true,wind:null,carry:null,
+    warmup:'',wuBalls:'',wuPutts:'',wuMins:'',wuRoute:null,wristPre:0,wristPost:null,note:'',
     holes:pars.map(function(pp,i){var h=blankHole(pp);h.hno=hnos[i];return h;})};
 }
 function hno(h,i){return (h&&h.hno)?h.hno:i+1;}
@@ -366,6 +377,10 @@ function renderPlay(){
     <div class="chips">${sBtn('teeOut',true,'Next shot was just back in play','on-ochre')}</div>
     <p class="hint" style="margin:5px 0 0">Only if you could not go at the green. Not whether the lie felt bad.</p></div>`:''}`:''}
 
+  ${h.par===5?`<div class="row" style="align-items:flex-start"><div class="lab" style="padding-top:9px">2nd shot</div>
+    <div class="chips" style="flex:1">${sBtn('p5','hit','Went \u00b7 on green','on-pine')}${sBtn('p5','miss','Went \u00b7 missed','on-ochre')}${sBtn('p5','lay','Laid up')}${sBtn('p5','no','Never on')}</div></div>
+  <p class="hint" style="margin:5px 0 0">Went means you took on the green with the second. Never on covers a tee shot in trouble or a number no club reached. This also fixes which shot the Tier 2 block is describing \u2014 the second if you went, the third if you laid up.</p>`:''}
+
   <div class="row"><div class="lab">Green</div><div class="seg">
     ${sBtn('gir',true,'GIR','on-pine')}${sBtn('gir',false,'Missed')}
   </div></div>
@@ -380,6 +395,13 @@ function renderPlay(){
   ${cur.tier2?`
   <details ${t2Open?'open':''} ontoggle="t2Open=this.open">
     <summary>Tier 2 detail ▾</summary>
+    <div class="row"><div class="lab">This shot</div><div class="seg">
+      ${sBtn('appKind','green','At the green','on-pine')}${sBtn('appKind','lay','Lay-up','on-ochre')}${sBtn('appKind','punch','Punch-out')}
+    </div></div>
+    <div class="row"><div class="lab">Shot #</div><div class="step">
+      <button onclick="bumpNo(-1)">–</button><div class="val num">${h.appNo||defNo(h)}</div>
+      <button onclick="bumpNo(1)">+</button></div></div>
+    <p class="hint" style="margin:0 0 4px">${h.appNo?'Set by hand.':'Derived from par and the 2nd-shot choice \u2014 tap to correct.'} Only <b>At the green</b> feeds the short:long ratio. Lay-ups and punch-outs are logged but excluded, which is the entire reason this field exists.</p>
     <div class="row" style="border-bottom:0"><div class="lab">Play to</div>
       <div style="display:flex;gap:6px;flex:1">
         <input class="mono" inputmode="numeric" placeholder="yds" value="${esc(h.appDist)}"
@@ -403,6 +425,15 @@ function renderPlay(){
       ${PUTT_B.map(b=>sBtn('fp',b,b)).join('')}
     </div></div>
     <p class="hint" style="margin:0 0 8px">Paced steps to the hole — never an estimate in feet. Log it whether you got there with an iron, a chip or a bunker shot.</p>
+    ${h.fp?(h.putts<=1
+      ? `<p class="hint" style="margin:0 0 8px;color:var(--pine)">Holed \u2014 nothing to log below.</p>`
+      : `<div class="row"><div class="lab">Miss \u00b7 speed</div><div class="seg">
+          ${sBtn('fpD','short','Short','on-ochre')}${sBtn('fpD','hole','Hole high','on-pine')}${sBtn('fpD','past','Past')}
+        </div></div>
+        <div class="row"><div class="lab">Miss \u00b7 line</div><div class="seg">
+          ${sBtn('fpL','high','High side')}${sBtn('fpL','on','On line','on-pine')}${sBtn('fpL','low','Low side','on-ochre')}
+        </div></div>
+        <p class="hint" style="margin:5px 0 8px">Two axes, same logic as approaches. Low side never had a chance; on line means only the speed was wrong. Magnitude stays out on purpose \u2014 a three-putt already records "way short" and "way past", and a severity button would be an outcome judgement, which is what wrecked the old data.</p>`):''}
     ${h.gir===false?`<div class="row" style="align-items:flex-start"><div class="lab" style="padding-top:9px">Recovery</div>
       <div class="chips" style="flex:1">${sBtn('rec','chip','Chip')}${sBtn('rec','pitch','Pitch')}${sBtn('rec','bunker','Bunker','on-ochre')}${sBtn('rec','putt','Putted on')}</div></div>
     <p class="hint" style="margin:5px 0 0">Chip is greenside and running. Pitch is a full-ish wedge that flies — roughly 25 m and up. Different skills, so they get counted separately.</p>`:''}
@@ -529,7 +560,7 @@ function renderFinish(){
     ${teeList(cur.course).length?`<div class="row"><div class="lab">Tees</div><div class="seg" style="flex-wrap:wrap">
       ${teeList(cur.course).map(t=>`<button class="${cur.tees===t?'on':''}" style="flex:1 1 44%;font-size:12px" onclick="setTee('${t}')">${t}</button>`).join('')}
     </div></div>`:`<div class="row"><div class="lab">Tees</div><input value="${esc(cur.tees)}" placeholder="tee · CR · slope" onchange="meta('tees',this.value)"></div>`}
-    ${cur.cr?`<p class="hint" style="margin:6px 0 0">CR ${cur.cr} · slope ${cur.slope} → differential ${diffOf({holes:cur.holes,cr:cur.cr,slope:cur.slope,n:cur.n})??'—'}</p>`:''}
+    ${cur.cr?`<p class="hint" style="margin:6px 0 0">CR ${cur.cr} · slope ${cur.slope} → differential ${diffLabel({holes:cur.holes.slice(0,endCount()),cr:cur.cr,slope:cur.slope,n:endCount()})}${endCount()===9?` \u2014 9 holes, so that figure is already doubled against half the course rating. Approximate: it assumes the nine you played rates as half the eighteen.`:''}</p>`:''}
     <div class="row"><div class="lab">Date</div><input type="date" value="${cur.date}" onchange="meta('date',this.value)"></div>
     <div class="row"><div class="lab">Bag</div><div class="seg">
       ${[['carry','Carried'],['trolley','Push cart'],['cart','Buggy']].map(c=>
@@ -537,9 +568,16 @@ function renderFinish(){
     </div></div>
     <p class="hint">Carrying is fatigue and forearm load both. Worth separating from everything else.</p>
     <div class="row"><div class="lab">Warm-up</div>
-      <input class="mono" inputmode="numeric" placeholder="balls hit before teeing off" value="${esc(cur.warmup)}"
-        onchange="meta('warmup',this.value)"></div>
-    <p class="hint">Not a practice session — but the swings count toward load. Leave blank if you went straight to the first tee.</p>
+      <div style="display:flex;gap:6px;flex:1">
+        <input class="mono" inputmode="numeric" placeholder="balls" value="${esc(cur.wuBalls??'')}" onchange="meta('wuBalls',this.value)">
+        <input class="mono" inputmode="numeric" placeholder="putts" value="${esc(cur.wuPutts??'')}" onchange="meta('wuPutts',this.value)">
+        <input class="mono" inputmode="numeric" placeholder="mins" value="${esc(cur.wuMins??'')}" onchange="meta('wuMins',this.value)">
+      </div></div>
+    <div class="row"><div class="lab">Route</div><div class="seg">
+      ${[['none','None'],['range','Range'],['rs','Range+short'],['full','Full']].map(x=>
+        `<button class="${cur.wuRoute===x[0]?'on':''}" onclick="meta('wuRoute','${x[0]}')">${x[1]}</button>`).join('')}
+    </div></div>
+    <p class="hint">Balls carry wrist load, putts don't, minutes are the connective-tissue warm-up you are not allowed to shorten. One number called "32" told us none of that.</p>
     <div class="row"><div class="lab">Wind</div><div class="seg">
       ${['calm','breezy','windy'].map(w=>`<button class="${cur.wind===w?(w==='windy'?'on-ochre':'on'):''}" onclick="meta('wind','${w}')">${w[0].toUpperCase()+w.slice(1)}</button>`).join('')}
     </div></div>
@@ -634,10 +672,11 @@ function renderPractice(){
 function renderRounds(){
   const el=document.getElementById('v-rounds');
   if(!db.rounds.length){el.innerHTML=`<div class="banner">Nothing logged yet. Your first round here is round 1 of the clean 20-round block.</div>`;return;}
-  el.innerHTML=`<table><thead><tr><th>Date</th><th>Course</th><th>Score</th><th>Diff</th><th>GIR</th><th>Putts</th><th>D+</th><th></th></tr></thead><tbody>
+  el.innerHTML=`<p class="hint" style="margin:0 0 6px">A differential marked ≈ is a 9-hole differential already doubled to 18-hole equivalence. Read down the column freely — never compare a raw 9-hole number with an 18-hole one.</p>
+  <table><thead><tr><th>Date</th><th>Course</th><th>Score</th><th>Diff</th><th>GIR</th><th>Putts</th><th>D+</th><th></th></tr></thead><tbody>
   ${db.rounds.slice().reverse().map(r=>{const s=sum(r);return `<tr>
     <td>${r.date.slice(5)}</td><td style="font-family:'IBM Plex Sans'">${esc(CLABEL[r.course]||r.course).slice(0,12)}</td>
-    <td><b>${s.pu?'—':s.score}</b></td><td>${diffOf(r)??'—'}</td><td>${s.girPct}%</td><td>${s.putts}</td>
+    <td><b>${s.pu?'—':s.score}</b></td><td>${diffLabel(r)}</td><td>${s.girPct}%</td><td>${s.putts}</td>
     <td style="color:${s.dbl?'var(--red)':'inherit'}">${s.dbl}</td>
     <td>${armed==='d'+r.id
       ? `<button style="padding:3px 6px;font-size:10px;background:var(--red);color:var(--red-fg);border-color:var(--red)" onclick="del(${r.id})">sure?</button>`
@@ -651,6 +690,18 @@ function diffOf(r){
   if((r.holes||[]).some(function(h){return h.pu;}))return null;
   const s=r.holes.reduce((a,x)=>a+x.score,0);
   return Math.round((s-r.cr)*113/r.slope*10)/10;
+}
+function diff9(r){
+  if(!r.cr||!r.slope||r.n!==9)return null;
+  if((r.holes||[]).some(function(h){return h.pu;}))return null;
+  var s=r.holes.reduce(function(a,x){return a+x.score},0);
+  var d9=(s-r.cr/2)*113/r.slope;
+  return {d9:Math.round(d9*10)/10, eq:Math.round(d9*20)/10};
+}
+function diffLabel(r){
+  var d=diffOf(r); if(d!==null)return String(d);
+  var n=diff9(r); if(n)return n.eq+'\u2248';
+  return '\u2014';
 }
 function nineSplit(r){
   if(r.n!==18)return null;
@@ -704,7 +755,11 @@ function renderStats(){
   const birdA=avg(S9.map((s,i)=>per18(s.birdie,R9[i])));
   const obR=R.filter((r,i)=>S[i].ob>0).length;
 
-  const A=R.flatMap(r=>r.holes).filter(h=>h.appD||h.appL);
+  const AllA=R.flatMap(r=>r.holes).filter(h=>h.appD||h.appL);
+  const A=AllA.filter(h=>h.appKind!=='punch'&&h.appKind!=='lay');
+  const nPunch=AllA.filter(h=>h.appKind==='punch').length;
+  const nLay=AllA.filter(h=>h.appKind==='lay').length;
+  const nUnk=AllA.filter(h=>!h.appKind).length;
   const cD=k=>A.filter(h=>h.appD===k).length, cL=k=>A.filter(h=>h.appL===k).length;
   const sh=cD('short'),pin=cD('pin'),lo=cD('long');
   const le=cL('left'),ct=cL('ctr'),ri=cL('right');
@@ -716,7 +771,7 @@ function renderStats(){
   const fpN=Object.values(fp).reduce((a,b)=>a+b,0);
 
   const byClub={};
-  A.forEach(h=>{if(!h.appClub)return;const k=h.appClub;
+  AllA.filter(h=>h.appKind!=='punch').forEach(h=>{if(!h.appClub)return;const k=h.appClub;
     byClub[k]=byClub[k]||{n:0,d:[],pd:[],s:0,l:0};
     const dd=+h.appDist||0; byClub[k].n++;
     if(dd)byClub[k].d.push(dd);
@@ -726,6 +781,7 @@ function renderStats(){
   const wr=R.filter(r=>r.wristPost>1).length;
 
   el.innerHTML=`
+  ${db.stride?'':`<div class="banner bad"><b>Stride still not calibrated.</b> Every pace bucket below is unitless. Twenty steps along a measured 20 m, once, in the Data tab.</div>`}
   ${n<20?`<div class="banner warn"><b>${n} of 20.</b> Sample too small to act on. Log, don't interpret.</div>`
         :`<div class="banner"><b>${n} rounds.</b> Sample is now readable.</div>`}
   <p class="hint" style="margin:0 0 8px">${R18.length} full${n9c?' · '+n9c+' nine-hole':''}${nOther?' · '+nOther+' partial':''}${nPU?' · '+nPU+' with pick-ups':''}. Rates pool every hole logged. Average score uses complete 18-hole rounds only — a round with a pick-up has no gross score.</p>
@@ -743,7 +799,9 @@ function renderStats(){
 
   <h3 class="eyebrow" style="margin:20px 0 0">Watch metrics</h3>
   <p class="hint" style="margin:2px 0 8px">Categorical, so measurement error can't touch them. These carry the diagnosis.</p>
-  ${A.length<60?`<div class="banner">${A.length} of ~60 approaches. Roughly four rounds now that both axes log on every shot.</div>`:''}
+  ${A.length<60?`<div class="banner">${A.length} of ~60 approaches at the green. Roughly four rounds now that both axes log on every shot.</div>`:''}
+  ${(nPunch||nLay)?`<p class="hint" style="margin:0 0 8px">Excluded from the two ratios: ${nLay} lay-up${nLay===1?'':'s'} and ${nPunch} punch-out${nPunch===1?'':'s'}.${nUnk?` ${nUnk} older shots carry no kind flag and are still counted as approaches \u2014 treat the ratio as contaminated until that number stops growing.`:''}</p>`
+    :(nUnk?`<p class="hint" style="margin:0 0 8px">${nUnk} approaches carry no shot-kind flag. Any punch-out or reload among them is inflating the short count.</p>`:'')}
   <div class="grid2">
     <div class="met"><div class="v" style="color:${sh/Math.max(1,lo)>1.5?'var(--red)':'var(--pine)'}">${ratio(sh,lo)}</div>
       <div class="l">Short : long</div></div>
@@ -785,7 +843,76 @@ function renderStats(){
     const hs=R.flatMap(r=>r.holes).filter(h=>h.fp===b&&!h.pu);
     const made=hs.filter(h=>h.putts===1).length, three=hs.filter(h=>h.putts>=3).length;
     return `<div class="kv"><span>${b} steps &nbsp;<span style="color:var(--ink2)">n=${hs.length}</span></span><b>${hs.length?Math.round(100*made/hs.length)+'% made':'—'}${three?' · '+three+' three-putt':''}</b></div>`;}).join('')}</div>
-  <p class="hint">Bucket edges sit where make rate roughly halves, so 4-6 and 7-10 are genuinely different skills. Needs ~10 rounds per bucket.</p>`:''}`;
+  <p class="hint">Bucket edges sit where make rate roughly halves, so 4-6 and 7-10 are genuinely different skills. Needs ~10 rounds per bucket.</p>`:''}
+
+  ${puttMissBlock(R)}
+
+  ${par5Block(R)}
+
+  <p class="hint" style="margin:18px 0 4px">Build ${VER}</p>`;
+}
+
+function puttMissBlock(R){
+  var H=R.flatMap(function(r){return r.holes}).filter(function(h){
+    return !h.pu&&h.putts>1&&(h.fpD||h.fpL);});
+  if(!H.length)return '';
+  var c=function(f,v,set){return (set||H).filter(function(h){return h[f]===v}).length;};
+  var pct=function(a,b){return b?Math.round(100*a/b)+'%':'\u2014';};
+  var rows=PUTT_B.map(function(b){
+    var g=H.filter(function(h){return h.fp===b;});
+    if(!g.length)return '';
+    var all=R.flatMap(function(r){return r.holes}).filter(function(h){return h.fp===b&&!h.pu;});
+    return '<tr><td><b>'+b+'</b></td><td>'+g.length+'</td>'+
+      '<td style="color:'+(c('fpD','short',g)/g.length>0.4?'var(--red)':'inherit')+'">'+pct(c('fpD','short',g),g.length)+'</td>'+
+      '<td>'+pct(c('fpD','past',g),g.length)+'</td>'+
+      '<td style="color:'+(c('fpL','low',g)/g.length>0.4?'var(--red)':'inherit')+'">'+pct(c('fpL','low',g),g.length)+'</td>'+
+      '<td>'+pct(c('fpL','on',g),g.length)+'</td>'+
+      '<td>'+pct(all.filter(function(h){return h.putts===1}).length,all.length)+'</td></tr>';
+  }).join('');
+  var gir=H.filter(function(h){return h.gir===true;}), rec=H.filter(function(h){return h.gir===false;});
+  return '<h3 class="eyebrow" style="margin:20px 0 6px">First putt \u00b7 why it missed</h3>'+
+  '<div class="grid2">'+
+    '<div class="met"><div class="v" style="color:'+(c('fpD','short')/Math.max(1,c('fpD','past'))>1.5?'var(--red)':'var(--pine)')+'">'+
+      (c('fpD','past')===0?(c('fpD','short')+':0'):(c('fpD','short')/c('fpD','past')).toFixed(1)+':1')+'</div><div class="l">Short : past</div></div>'+
+    '<div class="met"><div class="v" style="color:'+(c('fpL','low')/Math.max(1,c('fpL','high'))>1.5?'var(--red)':'var(--pine)')+'">'+
+      (c('fpL','high')===0?(c('fpL','low')+':0'):(c('fpL','low')/c('fpL','high')).toFixed(1)+':1')+'</div><div class="l">Low : high side</div></div>'+
+  '</div>'+
+  '<div class="card">'+
+    '<div class="kv"><span>Misses logged</span><b>'+H.length+'</b></div>'+
+    '<div class="kv"><span>Short / hole high / past</span><b>'+c('fpD','short')+' \u00b7 '+c('fpD','hole')+' \u00b7 '+c('fpD','past')+'</b></div>'+
+    '<div class="kv"><span>High / on line / low</span><b>'+c('fpL','high')+' \u00b7 '+c('fpL','on')+' \u00b7 '+c('fpL','low')+'</b></div>'+
+    '<div class="kv"><span>Speed-only misses (on line)</span><b>'+pct(c('fpL','on'),H.length)+'</b></div>'+
+    '<div class="kv"><span>Missed after a GIR</span><b>'+gir.length+'</b></div>'+
+    '<div class="kv"><span>Missed after a recovery</span><b>'+rec.length+'</b></div>'+
+  '</div>'+
+  (rows?'<table><thead><tr><th>Steps</th><th>miss n</th><th>short</th><th>past</th><th>low</th><th>on line</th><th>made</th></tr></thead><tbody>'+rows+'</tbody></table>':'')+
+  '<p class="hint">Read the 2-3 and 4-6 rows first. If <b>short</b> and <b>on line</b> both run high, the stroke is fine and the read is fine \u2014 you are leaving it short of the hole, which is a speed calibration problem and the cheapest thing on this page to fix. If <b>low</b> runs high instead, it is an aim or read problem and needs a different practice block. The two demand opposite work, which is why the miss was worth logging.</p>';
+}
+
+function par5Block(R){
+  var P=R.flatMap(function(r){return r.holes}).filter(function(h){return h.par===5&&h.p5;});
+  if(!P.length)return '';
+  var g=function(k){return P.filter(function(h){return h.p5===k;});};
+  var hit=g('hit'), miss=g('miss'), lay=g('lay'), no=g('no');
+  var went=hit.length+miss.length;
+  var toPar=function(a){var s=a.filter(function(h){return !h.pu;});
+    if(!s.length)return '\u2014';
+    var d=s.reduce(function(x,h){return x+h.score-h.par},0)/s.length;
+    return (d>=0?'+':'')+d.toFixed(2);};
+  var brd=function(a){var s=a.filter(function(h){return !h.pu;});
+    return s.length?Math.round(100*s.filter(function(h){return h.score<h.par}).length/s.length)+'%':'\u2014';};
+  return '<h3 class="eyebrow" style="margin:20px 0 6px">Par 5 \u00b7 the second shot</h3>'+
+  '<div class="grid3">'+
+    '<div class="met"><div class="v">'+(P.length?Math.round(100*went/P.length)+'%':'\u2014')+'</div><div class="l">Went for it</div></div>'+
+    '<div class="met"><div class="v">'+(went?Math.round(100*hit.length/went)+'%':'\u2014')+'</div><div class="l">Found green</div></div>'+
+    '<div class="met"><div class="v">'+P.length+'</div><div class="l">Par 5s logged</div></div>'+
+  '</div>'+
+  '<table><thead><tr><th>2nd shot</th><th>n</th><th>vs par</th><th>birdie</th></tr></thead><tbody>'+
+    [['Went \u00b7 on green',hit],['Went \u00b7 missed',miss],['Laid up',lay],['Never on',no]]
+      .filter(function(x){return x[1].length;})
+      .map(function(x){return '<tr><td><b>'+x[0]+'</b></td><td>'+x[1].length+'</td><td>'+toPar(x[1])+'</td><td>'+brd(x[1])+'</td></tr>';}).join('')+
+  '</tbody></table>'+
+  '<p class="hint">Every birdie you have has come from a wedge third. This table is the test of whether going for it in two actually pays, and the honest comparison is <b>Went \u00b7 missed</b> against <b>Laid up</b> \u2014 not the on-green row, which is selected on success. Needs roughly ten in each row before it decides anything.</p>';
 }
 
 function bagBlock(R){
@@ -841,7 +968,7 @@ function loadBlock(){
   const day=86400000, now=Date.now();
   const inWin=(d,n)=>{const t=Date.parse(d); return !isNaN(t)&&(now-t)<=n*day;};
   const swingsOf=r=>{let t=0;(r.holes||[]).forEach(h=>{t+=(+h.score||0)-(+h.putts||0);});
-    return Math.max(0,t)+(+r.warmup||0);};
+    return Math.max(0,t)+(+(r.wuBalls||r.warmup)||0);};
   const swingsIn=n=>SS.filter(x=>inWin(x.date,n)).reduce((a,x)=>a+(+x.balls||0),0)
     + db.rounds.filter(r=>inWin(r.date,n)).reduce((a,r)=>a+swingsOf(r),0);
   const roundsIn=n=>db.rounds.filter(r=>inWin(r.date,n)).length;
@@ -903,6 +1030,7 @@ function renderData(){
     <div class="kv"><span>Storage</span><b style="color:${STMODE==='none'?'var(--red)':'var(--pine)'}">${
       STMODE==='app'?'Claude app':(STMODE==='browser'?'this browser':'NONE')}</b></div>
     <div class="kv"><span>Rounds held</span><b>${db.rounds.length}</b></div>
+    <div class="kv"><span>Build</span><b>${VER}</b></div>
   </div>
   <p class="hint">${STMODE==='app'
     ?'Saving through the Claude app. If I hand you an updated file, the new copy may start empty — export first, import after.'
@@ -947,24 +1075,28 @@ function copy(t){
 function summaryText(){
   const R=db.rounds;if(!R.length)return'No rounds logged yet.';
   const S=R.map(sum);
-  let o='JAN — ROUND LOG · '+R.length+' rounds\n';
+  let o='JAN — ROUND LOG · '+R.length+' rounds · build '+VER+'\n';
   o+='stride: '+(db.stride?db.stride+' m/step':'not calibrated')+'\n\n';
   o+='date       course              n  score  diff  gir   fir   putts d+  ob  bag      wrist  wind\n';
   R.forEach((r,i)=>{const s=S[i];
     o+=r.date+' '+((CLABEL[r.course]||r.course)+'                    ').slice(0,19)+' '+String(r.n).padStart(2)+
-      String(s.score).padStart(7)+String(diffOf(r)??'-').padStart(6)+
+      String(s.score).padStart(7)+String(diffLabel(r)).replace('\u2014','-').padStart(6)+
       String(s.girPct+'%').padStart(6)+String(s.firPct+'%').padStart(6)+
       String(s.putts).padStart(6)+String(s.dbl).padStart(4)+String(s.ob).padStart(4)+
       (s.pu?'  PU'+s.pu:'')+'  '+(r.carry||'-')+
       '  '+['none','ache','sore','pain'][r.wristPost??0]+'  '+(r.wind||'-')+'\n';});
-  const A=R.flatMap(r=>r.holes).filter(h=>h.appD||h.appL);
+  const AllA=R.flatMap(r=>r.holes).filter(h=>h.appD||h.appL);
+  const A=AllA.filter(h=>h.appKind!=='punch'&&h.appKind!=='lay');
   const cD=k=>A.filter(h=>h.appD===k).length, cL=k=>A.filter(h=>h.appL===k).length;
-  o+='\napproaches logged: '+A.length+'  (greens hit '+A.filter(h=>h.gir===true).length+')\n';
+  o+='\napproaches at the green: '+A.length+'  (greens hit '+A.filter(h=>h.gir===true).length+')\n';
+  o+='excluded: lay-ups '+AllA.filter(h=>h.appKind==='lay').length+
+     ' | punch-outs '+AllA.filter(h=>h.appKind==='punch').length+
+     ' | no kind flag (still counted above) '+AllA.filter(h=>!h.appKind).length+'\n';
   o+='vs own number   short '+cD('short')+' | on '+cD('pin')+' | long '+cD('long')+'\n';
   o+='vs own line     left '+cL('left')+' | on '+cL('ctr')+' | right '+cL('right')+'\n';
   o+='non-stock swings flagged: '+A.filter(h=>h.appAlt).length+'\n';
   const bc={},pc={};
-  A.forEach(h=>{const d=+h.appDist||0; if(!h.appClub||!d)return;
+  AllA.filter(h=>h.appKind!=='punch').forEach(h=>{const d=+h.appDist||0; if(!h.appClub||!d)return;
     (bc[h.appClub]=bc[h.appClub]||[]).push(d);
     if(h.appD==='pin'&&!h.appAlt)(pc[h.appClub]=pc[h.appClub]||[]).push(d);});
   if(Object.keys(bc).length){o+='\nclub  n  plays-to  true (stock swings, on number)\n';
@@ -991,6 +1123,30 @@ function summaryText(){
     o+='  '+(b+'      ').slice(0,7)+'n='+String(hs.length).padStart(3)+
        '  made '+String(made).padStart(3)+' ('+Math.round(100*made/hs.length)+'%)'+
        (three?'  3-putts '+three:'')+'\n';});
+  var PM=R.flatMap(function(r){return r.holes}).filter(function(h){return !h.pu&&h.putts>1&&(h.fpD||h.fpL)});
+  if(PM.length){
+    var cm=function(f,v,set){return (set||PM).filter(function(h){return h[f]===v}).length;};
+    o+='\nfirst putt misses: '+PM.length+'\n';
+    o+='  speed  short '+cm('fpD','short')+' | hole high '+cm('fpD','hole')+' | past '+cm('fpD','past')+'\n';
+    o+='  line   high '+cm('fpL','high')+' | on line '+cm('fpL','on')+' | low '+cm('fpL','low')+'\n';
+    PUTT_B.forEach(function(b){
+      var g=PM.filter(function(h){return h.fp===b});
+      if(!g.length)return;
+      o+='  '+(b+'      ').slice(0,7)+'miss n='+String(g.length).padStart(3)+
+         '  short '+cm('fpD','short',g)+'  past '+cm('fpD','past',g)+
+         '  low '+cm('fpL','low',g)+'  on line '+cm('fpL','on',g)+'\n';});
+  }
+  var P5=R.flatMap(function(r){return r.holes}).filter(function(h){return h.par===5&&h.p5});
+  if(P5.length){
+    o+='\npar 5 second shot\n';
+    [['went-on-green','hit'],['went-missed','miss'],['laid-up','lay'],['never-on','no']].forEach(function(x){
+      var g=P5.filter(function(h){return h.p5===x[1]&&!h.pu});
+      if(!g.length)return;
+      var d=g.reduce(function(a,h){return a+h.score-h.par},0)/g.length;
+      o+='  '+(x[0]+'              ').slice(0,16)+'n='+String(g.length).padStart(3)+
+         '  vs par '+(d>=0?'+':'')+d.toFixed(2)+
+         '  birdies '+g.filter(function(h){return h.score<h.par}).length+'\n';});
+  }
   var ms=R.flatMap(function(r){return r.holes}).filter(function(h){return h.gir===false&&!h.pu});
   var uds=ms.filter(function(h){return h.putts===1});
   o+='\nup and down: '+uds.length+' of '+ms.length+
@@ -1011,9 +1167,12 @@ function summaryText(){
     if(sn.length){o+='\nsession notes\n'+sn.map(x=>x.date+': '+x.note).join('\n')+'\n';}
     const tb=SS.reduce((a,x)=>a+(+x.balls||0),0);
     o+='\ntotal practice balls: '+tb+'\n';}
-  var wu=R.reduce(function(a,r){return a+(+r.warmup||0)},0);
+  var wu=R.reduce(function(a,r){return a+(+(r.wuBalls||r.warmup)||0)},0);
+  var wp=R.reduce(function(a,r){return a+(+r.wuPutts||0)},0);
+  var wm=R.reduce(function(a,r){return a+(+r.wuMins||0)},0);
+  o+='\nwarm-up split: balls '+wu+' | putts '+wp+' | minutes '+wm+'\n';
   var rs=R.reduce(function(a,r){var t=0;(r.holes||[]).forEach(function(h){t+=(+h.score||0)-(+h.putts||0);});return a+Math.max(0,t)},0);
-  o+='warm-up balls: '+wu+'  |  round swings (strokes minus putts): '+rs+'\n';
+  o+='round swings (strokes minus putts): '+rs+'\n';
   return o;
 }
 
