@@ -137,7 +137,7 @@
 <div id="v-data" class="wrap hide"></div>
 
 <script>
-const VER='2.3 \u00b7 19 Aug 2026';
+const VER='2.4 \u00b7 24 Aug 2026';
 const CLUBS=['LW','SW','GW','PW','9i','8i','7i','6i','5i','4H','5W','3W','Dr'];
 const PUTT_B=['0-1','2-3','4-6','7-10','11+'];
 const KEY='golf:v1';
@@ -183,8 +183,11 @@ function blankSess(){return{id:Date.now(),date:new Date().toISOString().slice(0,
   areas:[],clubs:[],balls:'',mins:'',wrist:0,note:''};}
 
 function blankHole(p){return{par:p,score:p,putts:2,pu:null,tee:null,gir:null,pen:null,
-  penTee:null,rec:null,teeClub:null,teeOut:null,appDist:'',appClub:'',appD:null,appL:null,appAlt:null,
-  appKind:null,appNo:null,p5:null,fp:null,fpD:null,fpL:null,chip:null};}
+  penTee:null,rec:null,ss:null,teeClub:null,teeOut:null,appFlag:'',appDist:'',appClub:'',
+  appD:null,appL:null,appAlt:null,
+  appKind:'green',appNo:null,p5:null,fp:null,fpD:null,fpL:null,chip:null};}
+function atGreen(h){return h.appKind!=='lay'&&h.appKind!=='punch';}
+function adj(h){var f=+h.appFlag||0,p=+h.appDist||0; return (f&&p)?p-f:null;}
 function defNo(h){return h.par===3?1:(h.par===5?((h.p5==='hit'||h.p5==='miss')?2:3):2);}
 function bumpNo(d){const h=cur.holes[hole];h.appNo=Math.max(1,Math.min(8,(h.appNo||defNo(h))+d));h.done=true;save();render();}
 function migrate(){
@@ -402,16 +405,26 @@ function renderPlay(){
       <button onclick="bumpNo(-1)">–</button><div class="val num">${h.appNo||defNo(h)}</div>
       <button onclick="bumpNo(1)">+</button></div></div>
     <p class="hint" style="margin:0 0 4px">${h.appNo?'Set by hand.':'Derived from par and the 2nd-shot choice \u2014 tap to correct.'} Only <b>At the green</b> feeds the short:long ratio. Lay-ups and punch-outs are logged but excluded, which is the entire reason this field exists.</p>
+    ${atGreen(h)?`
+    <div class="row" style="border-bottom:0"><div class="lab">Flag</div>
+      <div style="display:flex;gap:6px;flex:1;align-items:center">
+        <input class="mono" inputmode="numeric" placeholder="yds" value="${esc(h.appFlag)}"
+          onchange="set('appFlag',this.value)" style="flex:0 0 86px">
+        <span class="hint" style="margin:0">lasered to the flag</span>
+      </div></div>
     <div class="row" style="border-bottom:0"><div class="lab">Play to</div>
       <div style="display:flex;gap:6px;flex:1">
         <input class="mono" inputmode="numeric" placeholder="yds" value="${esc(h.appDist)}"
-          onchange="set('appDist',this.value)" style="flex:0 0 76px">
+          onchange="set('appDist',this.value)" style="flex:0 0 86px">
         <select onchange="set('appClub',this.value)" style="flex:1">
           <option value="">club</option>
           ${CLUBS.map(c=>`<option ${h.appClub===c?'selected':''}>${c}</option>`).join('')}
         </select>
       </div></div>
-    <p class="hint" style="margin:0 0 4px">The number you chose to hit — mid-green, not the flag, if that was the play.</p>
+    ${adj(h)!==null?`<p class="hint" style="margin:5px 0 4px;color:${Math.abs(adj(h))>=5?'var(--blue)':'var(--ink2)'}">
+      Adjustment <b>${adj(h)>0?'+':''}${adj(h)} y</b>${(+h.appFlag)?' ('+(adj(h)>0?'+':'')+Math.round(1000*adj(h)/(+h.appFlag))/10+'%)':''}
+      — recorded on its own, so a bad number and a bad strike stay separable.</p>`
+      :`<p class="hint" style="margin:0 0 4px"><b>Flag</b> is what the laser said. <b>Play to</b> is what you committed to hit after wind, elevation and lie. Log both — the gap between them is your adjustment and it costs nothing extra to record.</p>`}
     <div class="row"><div class="lab">Distance</div><div class="seg">
       ${sBtn('appD','short','Short','on-ochre')}${sBtn('appD','pin','On number','on-pine')}${sBtn('appD','long','Long')}
     </div></div>
@@ -420,11 +433,21 @@ function renderPlay(){
     </div></div>
     <div style="padding:9px 0;border-bottom:1px solid var(--line)">
       <div class="chips">${sBtn('appAlt',true,'Not a stock swing','on-ochre')}</div></div>
-    <p class="hint" style="margin:5px 0 0">Both judged against your own number and line, not the pin. Flag knockdowns, punches and wind holds — they drop out of the distance column.</p>
+    <p class="hint" style="margin:5px 0 0">Both judged against <b>Play to</b>, not the flag. Stock means your normal swing with that club — a PW you decided plays 135 today is still stock. Flag only knockdowns, three-quarters, punches and shaped shots; if this fires on every windy hole it carries no signal.</p>`
+    :`<p class="hint" style="margin:5px 0 0">Lay-up and punch-out log the event and nothing else. Where you actually finished shows up as the next shot's flag number, so a target field here would only duplicate it.</p>`}
+    ${h.gir===false?`<div class="row"><div class="lab">Position</div><div class="seg">
+      ${sBtn('ss',true,'Short-sided','on-red')}${sBtn('ss',false,'Room to work','on-pine')}
+    </div></div>
+    <p class="hint" style="margin:5px 0 0">Short-sided means under about 8 m of green between ball and flag, or a bunker, water or a severe slope sitting on the line. Judge it standing over the ball, <b>before</b> you play the recovery — never afterwards, or the field records how it turned out instead of where you were. Two buttons on purpose: blank means you forgot, not that you had room.</p>
+    <div class="row" style="align-items:flex-start"><div class="lab" style="padding-top:9px">Recovery</div>
+      <div class="chips" style="flex:1">${sBtn('rec','chip','Chip')}${sBtn('rec','pitch','Pitch')}${sBtn('rec','bunker','Bunker','on-ochre')}${sBtn('rec','putt','Putted on')}</div></div>
+    <p class="hint" style="margin:5px 0 0">Chip is greenside and running. Pitch is a full-ish wedge that flies — roughly 25 m and up. Different skills, so they get counted separately.</p>`:''}
+
+    <div style="border-top:2px solid var(--line);margin-top:14px;padding-top:4px"></div>
     <div class="row"><div class="lab">1st putt</div><div class="seg">
       ${PUTT_B.map(b=>sBtn('fp',b,b)).join('')}
     </div></div>
-    <p class="hint" style="margin:0 0 8px">Paced steps to the hole — never an estimate in feet. Log it whether you got there with an iron, a chip or a bunker shot.</p>
+    <p class="hint" style="margin:0 0 8px">Paced steps to the hole — never an estimate in feet. Log it whether you got there with an iron, a chip or a bunker shot. Last thing on the hole: pace it out as you walk to the ball, tap it in the buggy or on the next tee.</p>
     ${h.fp?(h.putts<=1
       ? `<p class="hint" style="margin:0 0 8px;color:var(--pine)">Holed \u2014 nothing to log below.</p>`
       : `<div class="row"><div class="lab">Miss \u00b7 speed</div><div class="seg">
@@ -434,9 +457,6 @@ function renderPlay(){
           ${sBtn('fpL','high','High side')}${sBtn('fpL','on','On line','on-pine')}${sBtn('fpL','low','Low side','on-ochre')}
         </div></div>
         <p class="hint" style="margin:5px 0 8px">Two axes, same logic as approaches. Low side never had a chance; on line means only the speed was wrong. Magnitude stays out on purpose \u2014 a three-putt already records "way short" and "way past", and a severity button would be an outcome judgement, which is what wrecked the old data.</p>`):''}
-    ${h.gir===false?`<div class="row" style="align-items:flex-start"><div class="lab" style="padding-top:9px">Recovery</div>
-      <div class="chips" style="flex:1">${sBtn('rec','chip','Chip')}${sBtn('rec','pitch','Pitch')}${sBtn('rec','bunker','Bunker','on-ochre')}${sBtn('rec','putt','Putted on')}</div></div>
-    <p class="hint" style="margin:5px 0 0">Chip is greenside and running. Pitch is a full-ish wedge that flies — roughly 25 m and up. Different skills, so they get counted separately.</p>`:''}
   </details>`:''}
 
   <div class="navrow">
@@ -819,6 +839,10 @@ function renderStats(){
     <div class="kv"><span>Rounds with an OB</span><b>${obR} of ${n}</b></div>
     <div class="kv"><span>Rounds with wrist soreness+</span><b>${wr} of ${n}</b></div></div>
 
+  ${ssBlock(R)}
+
+  ${adjBlock(R)}
+
   ${bagBlock(R)}
 
   ${teeBlock(R)}
@@ -850,6 +874,92 @@ function renderStats(){
   ${par5Block(R)}
 
   <p class="hint" style="margin:18px 0 4px">Build ${VER}</p>`;
+}
+
+function ssBlock(R){
+  var MS=R.flatMap(function(r){return r.holes}).filter(function(h){return h.gir===false&&!h.pu;});
+  var L=MS.filter(function(h){return h.ss===true||h.ss===false;});
+  if(!L.length)return '';
+  var SS=L.filter(function(h){return h.ss===true;}), RM=L.filter(function(h){return h.ss===false;});
+  var pct=function(a,b){return b?Math.round(100*a/b)+'%':'\u2014';};
+  var ud=function(g){return g.filter(function(h){return h.putts===1;}).length;};
+  var dbl=function(g){return g.filter(function(h){return h.score-h.par>=2;}).length;};
+  var unlogged=MS.length-L.length;
+  var rate=L.length?SS.length/L.length:0;
+  var cnt=function(g,f,v){return g.filter(function(h){return h[f]===v;}).length;};
+  var dirRow=function(g,lab){
+    if(!g.length)return '';
+    return '<tr><td><b>'+lab+'</b></td><td>'+g.length+'</td>'+
+      '<td>'+cnt(g,'appD','short')+'</td><td>'+cnt(g,'appD','long')+'</td>'+
+      '<td>'+cnt(g,'appL','left')+'</td><td>'+cnt(g,'appL','right')+'</td></tr>';};
+  var dirs=dirRow(SS,'Short-sided')+dirRow(RM,'Room');
+  return '<h3 class="eyebrow" style="margin:20px 0 6px">Green misses \u00b7 short-sided</h3>'+
+  '<div class="grid3">'+
+    '<div class="met"><div class="v" style="color:'+(rate>0.4?'var(--red)':(rate>0.3?'var(--ochre)':'var(--pine)'))+'">'+
+      pct(SS.length,L.length)+'</div><div class="l">Short-sided</div></div>'+
+    '<div class="met"><div class="v">'+pct(ud(SS),SS.length)+'</div><div class="l">Up&amp;down \u00b7 short-sided</div></div>'+
+    '<div class="met"><div class="v">'+pct(ud(RM),RM.length)+'</div><div class="l">Up&amp;down \u00b7 room</div></div>'+
+  '</div>'+
+  '<div class="card">'+
+    '<div class="kv"><span>Green misses with a position logged</span><b>'+L.length+' of '+MS.length+
+      (unlogged?' <span style="color:var(--ochre)">('+unlogged+' blank)</span>':'')+'</b></div>'+
+    '<div class="kv"><span>Short-sided / room to work</span><b>'+SS.length+' \u00b7 '+RM.length+'</b></div>'+
+    '<div class="kv"><span>Up and down \u2014 short-sided</span><b>'+ud(SS)+' of '+SS.length+'</b></div>'+
+    '<div class="kv"><span>Up and down \u2014 room to work</span><b>'+ud(RM)+' of '+RM.length+'</b></div>'+
+    '<div class="kv"><span>Doubles+ \u2014 short-sided</span><b style="color:'+(dbl(SS)?'var(--red)':'inherit')+'">'+
+      dbl(SS)+' ('+pct(dbl(SS),SS.length)+')</b></div>'+
+    '<div class="kv"><span>Doubles+ \u2014 room to work</span><b>'+dbl(RM)+' ('+pct(dbl(RM),RM.length)+')</b></div>'+
+  '</div>'+
+  (dirs?'<table><thead><tr><th>Position</th><th>n</th><th>app short</th><th>long</th><th>left</th><th>right</th></tr></thead><tbody>'+
+    dirs+'</tbody></table>'+
+    '<p class="hint">This table decides which project the short-siding belongs to. If short-sided misses are mostly <b>app short</b>, the approach is coming up short into front pins and the fix is clubbing \u2014 no aiming change would have helped. If they are mostly <b>left</b> or <b>right</b>, you aimed at flags and the fix is centre of green. Aggregate rate alone cannot tell those apart, and they need opposite work.</p>':'')+
+  '<p class="hint">Short-sided is roughly a 10\u201315% up-and-down proposition against 30\u201335% with room \u2014 call it two strokes a round between an all-short-sided and an all-room round, which is a large share of the 10\u21925 gap. It is also decided entirely at club selection, so it moves without a swing change. Compare the two up-and-down figures above once both have about 25 events: if they come out equal, the position is not costing you what theory says and this field retires.</p>';
+}
+
+function adjBlock(R){
+  var A=R.flatMap(function(r){return r.holes}).filter(function(h){
+    return atGreen(h)&&(h.appD||h.appL);});
+  if(!A.length)return '';
+  var both=A.filter(function(h){return adj(h)!==null;});
+  var pct=function(a,b){return b?Math.round(100*a/b)+'%':'\u2014';};
+  var cnt=function(g,v){return g.filter(function(h){return h.appD===v;}).length;};
+  var med=function(a){if(!a.length)return null;var s=a.slice().sort(function(x,y){return x-y});
+    return s[Math.floor(s.length/2)];};
+  var BANDS=[[0,130,'\u2264130'],[131,155,'131\u2013155'],[156,175,'156\u2013175'],[176,999,'176+']];
+  var bandRows=function(field,label){
+    var rows=BANDS.map(function(b){
+      var g=A.filter(function(h){var d=+h[field]||0;return d>0&&d>=b[0]&&d<=b[1];});
+      if(!g.length)return '';
+      var s=cnt(g,'short'),p=cnt(g,'pin'),l=cnt(g,'long');
+      return '<tr><td><b>'+b[2]+'</b></td><td>'+g.length+'</td>'+
+        '<td style="color:'+(s/Math.max(1,l)>1.5&&g.length>=6?'var(--red)':'inherit')+'">'+s+'</td>'+
+        '<td>'+p+'</td><td>'+l+'</td>'+
+        '<td>'+(l===0?(s?s+':0':'\u2014'):(s/l).toFixed(1)+':1')+'</td></tr>';}).join('');
+    if(!rows)return '';
+    var cov=A.filter(function(h){return (+h[field]||0)>0;}).length;
+    return '<p class="hint" style="margin:14px 0 4px"><b>'+label+'</b> \u2014 '+cov+' of '+A.length+' approaches carry this number</p>'+
+      '<table><thead><tr><th>Band (y)</th><th>n</th><th>short</th><th>on</th><th>long</th><th>S:L</th></tr></thead><tbody>'+
+      rows+'</tbody></table>';};
+  var adjs=both.map(adj);
+  var moved=both.filter(function(h){return Math.abs(adj(h))>=5;});
+  var flat=both.filter(function(h){return Math.abs(adj(h))<5;});
+  var up=both.filter(function(h){return adj(h)>=5;});
+  return '<h3 class="eyebrow" style="margin:20px 0 6px">Flag vs play number</h3>'+
+  '<div class="grid3">'+
+    '<div class="met"><div class="v">'+both.length+'</div><div class="l">Both numbers</div></div>'+
+    '<div class="met"><div class="v">'+(med(adjs)===null?'\u2014':(med(adjs)>0?'+':'')+med(adjs))+'</div><div class="l">Median adj (y)</div></div>'+
+    '<div class="met"><div class="v">'+pct(moved.length,both.length)+'</div><div class="l">Adjusted \u22655 y</div></div>'+
+  '</div>'+
+  '<div class="card">'+
+    '<div class="kv"><span>Approaches with a flag number</span><b>'+both.length+' of '+A.length+
+      ((A.length-both.length)?' <span style="color:var(--ochre)">('+(A.length-both.length)+' play-to only)</span>':'')+'</b></div>'+
+    '<div class="kv"><span>Adjusted up \u2014 short / on / long</span><b>'+cnt(up,'short')+' \u00b7 '+cnt(up,'pin')+' \u00b7 '+cnt(up,'long')+'</b></div>'+
+    '<div class="kv"><span>No adjustment \u2014 short / on / long</span><b>'+cnt(flat,'short')+' \u00b7 '+cnt(flat,'pin')+' \u00b7 '+cnt(flat,'long')+'</b></div>'+
+  '</div>'+
+  '<p class="hint">Two rows, one question. If shots you <b>adjusted up</b> still come out short at the same rate as shots you did not adjust, the adjustment is systematically undersized and the fix is arithmetic \u2014 stack wind, elevation and lie instead of picking one. If only the unadjusted row runs short, you are failing to adjust at all when you should. If both rows sit level, the number is fine and the miss is contact.</p>'+
+  bandRows('appDist','Bands on your play-to number \u2014 did you hit what you tried to hit')+
+  bandRows('appFlag','Bands on the raw flag number \u2014 same shots, other definition')+
+  '<p class="hint">The 155 y weak band was derived before these were separate fields, so it currently rests on a mixed variable. If the short bias starts in a different row on each table, the threshold is defined on the wrong number and every club decision built on it needs redoing. Only the flag table can be built from here on \u2014 older rounds have no flag number and are absent from it, so ignore that table until its n approaches the other one.</p>';
 }
 
 function puttMissBlock(R){
@@ -1051,9 +1161,14 @@ function renderData(){
 
   <h3 class="eyebrow" style="margin:20px 0 6px">Stride</h3>
   <div class="card">
-    <p class="hint" style="margin:0 0 8px">Pace 20 steps along a measured 20 m once. Divide. Enter the result so step counts convert later.</p>
-    <input class="mono" inputmode="decimal" placeholder="m per step, e.g. 0.88" value="${db.stride??''}"
+    <p class="hint" style="margin:0 0 8px">Metres per step. Pace a long known distance and divide — the longer the better, because rangefinder error is fixed per reading, so a 20 m baseline carries roughly ±9% and a 100 m baseline about ±2%. Nine percent is a full metre at the 7-10 / 11+ boundary. Pace it on the surface you actually pace on; stride shortens on a green.</p>
+    <input class="mono" inputmode="decimal" placeholder="m per step, e.g. 1.01" value="${db.stride??''}"
       onchange="db.stride=this.value?+this.value:null;save()">
+    ${db.stride?`<p class="hint" style="margin:8px 0 0">At ${db.stride} m/step: ${PUTT_B.map(b=>{
+      var p=b.replace('+','').split('-');
+      var lo=Math.round(+p[0]*db.stride*10)/10;
+      var hi=p[1]?Math.round(+p[1]*db.stride*10)/10:null;
+      return b+' = '+(hi?lo+'\u2013'+hi:lo+'+')+' m';}).join(' \u00b7 ')}</p>`:''}
   </div>
 
   <h3 class="eyebrow" style="margin:20px 0 6px">Export</h3>
@@ -1154,6 +1269,40 @@ function summaryText(){
   ['chip','pitch','bunker','putt'].forEach(function(k){
     var g=R.flatMap(function(r){return r.holes}).filter(function(h){return h.rec===k});
     if(g.length)o+='  '+(k+'      ').slice(0,7)+g.filter(function(h){return h.putts===1}).length+' of '+g.length+'\n';});
+  var ssL=ms.filter(function(h){return h.ss===true||h.ss===false});
+  if(ssL.length){
+    var ssY=ssL.filter(function(h){return h.ss===true}),ssN=ssL.filter(function(h){return h.ss===false});
+    var u=function(g){return g.filter(function(h){return h.putts===1}).length};
+    var dd=function(g){return g.filter(function(h){return h.score-h.par>=2}).length};
+    o+='\nshort-sided: '+ssY.length+' of '+ssL.length+' logged misses ('+
+       Math.round(100*ssY.length/ssL.length)+'%)'+
+       ((ms.length-ssL.length)?'  ['+(ms.length-ssL.length)+' blank]':'')+'\n';
+    o+='  short-sided  u&d '+u(ssY)+'/'+ssY.length+'  doubles+ '+dd(ssY)+'\n';
+    o+='  room         u&d '+u(ssN)+'/'+ssN.length+'  doubles+ '+dd(ssN)+'\n';
+    var cn=function(g,f,v){return g.filter(function(h){return h[f]===v}).length};
+    o+='  short-sided approach miss: short '+cn(ssY,'appD','short')+' long '+cn(ssY,'appD','long')+
+       ' left '+cn(ssY,'appL','left')+' right '+cn(ssY,'appL','right')+'\n';
+  }
+  var AB=R.flatMap(function(r){return r.holes}).filter(function(h){return atGreen(h)&&(h.appD||h.appL)});
+  var BO=AB.filter(function(h){return adj(h)!==null});
+  if(BO.length){
+    var av=BO.map(adj).sort(function(x,y){return x-y});
+    var cS=function(g,v){return g.filter(function(h){return h.appD===v}).length};
+    var upG=BO.filter(function(h){return adj(h)>=5}),flG=BO.filter(function(h){return Math.abs(adj(h))<5});
+    o+='\nflag vs play number: '+BO.length+' of '+AB.length+' approaches carry both\n';
+    o+='  median adjustment '+av[Math.floor(av.length/2)]+' y\n';
+    o+='  adjusted up   n='+upG.length+'  short '+cS(upG,'short')+' on '+cS(upG,'pin')+' long '+cS(upG,'long')+'\n';
+    o+='  no adjustment n='+flG.length+'  short '+cS(flG,'short')+' on '+cS(flG,'pin')+' long '+cS(flG,'long')+'\n';
+    [['appDist','play-to'],['appFlag','flag']].forEach(function(fx){
+      var rows='';
+      [[0,130,'<=130'],[131,155,'131-155'],[156,175,'156-175'],[176,999,'176+']].forEach(function(b){
+        var g=AB.filter(function(h){var d=+h[fx[0]]||0;return d>0&&d>=b[0]&&d<=b[1]});
+        if(!g.length)return;
+        rows+='    '+(b[2]+'        ').slice(0,9)+'n='+String(g.length).padStart(3)+
+          '  short '+String(cS(g,'short')).padStart(3)+'  on '+String(cS(g,'pin')).padStart(3)+
+          '  long '+String(cS(g,'long')).padStart(3)+'\n';});
+      if(rows)o+='  bands on '+fx[1]+' number\n'+rows;});
+  }
   const notes=R.filter(r=>r.note);
   if(notes.length){o+='\nround notes\n'+notes.map(r=>r.date+': '+r.note).join('\n')+'\n';}
   const SS=db.sessions||[];
