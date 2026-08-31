@@ -142,7 +142,7 @@
 <div id="v-data" class="wrap hide"></div>
 
 <script>
-const VER='2.5 \u00b7 31 Aug 2026';
+const VER='2.6 \u00b7 31 Aug 2026';
 const CLUBS=['LW','SW','GW','PW','9i','8i','7i','6i','5i','4H','5W','3W','Dr'];
 const PUTT_B=['0-1','2-3','4-6','7-10','11+'];
 const KEY='golf:v1';
@@ -181,10 +181,10 @@ const CLABEL={'GC Gatow':'Gatow'};
 const CFIX={'Stolper Heide Ost':'Stolpe Ost','Stolper Heide West':'Stolpe West'};
 
 let db={rounds:[],sessions:[],stride:null};
-let cur=null, sess=null, hole=0, view='play', storeOk=true, t2Open=true, flash='', finishing=false, legend=false;
+let cur=null, sess=null, hole=0, view='play', storeOk=true, t2Open=true, flash='', finishing=false, legend=false, RO=false, vwId=null, vwHole=0;
 const TEE_CLUBS=['Dr','3W','5W','4H','5i','6i','7i'];
 const AREAS=['Range','Clubs','Short game','Putting','Bunker'];
-function blankSess(){return{id:Date.now(),date:new Date().toISOString().slice(0,10),
+function blankSess(){return{id:Date.now()*1000+Math.floor(Math.random()*1000),date:new Date().toISOString().slice(0,10),
   areas:[],clubs:[],balls:'',mins:'',wrist:0,note:''};}
 
 function blankHole(p){return{par:p,score:p,putts:2,pu:null,tee:null,gir:null,pen:null,
@@ -243,7 +243,7 @@ function newRound(n,course,startHole){
   const st=Math.max(1,Math.min(18,+startHole||1));
   const pars=[], hnos=[];
   for(var p=0;p<n;p++){var idx=(st-1+p)%18;pars.push(base[idx]);hnos.push(idx+1);}
-  return{id:Date.now(),date:new Date().toISOString().slice(0,10),course:course,start:st,
+  return{id:Date.now()*1000+Math.floor(Math.random()*1000),date:new Date().toISOString().slice(0,10),course:course,start:st,
     tees:'',cr:null,slope:null,n:n,tier2:true,t2open:true,wind:null,carry:null,
     warmup:'',wuBalls:'',wuPutts:'',wuMins:'',wuRoute:null,wristPre:0,wristPost:null,note:'',
     holes:pars.map(function(pp,i){var h=blankHole(pp);h.hno=hnos[i];return h;})};
@@ -363,8 +363,11 @@ function renderPlay(){
       </div>
       ${armed==='sh'?holeGrid():''}`;
     return;}
+  el.innerHTML=holeScreenHTML();
+}
+function holeScreenHTML(){
   const h=cur.holes[hole], n=cur.n;
-  el.innerHTML=`
+  return `
   <div class="strip">${cur.holes.slice(0,9).map((x,i)=>cellHTML(x,i)).join('')}</div>
   ${n===18?`<div class="strip">${cur.holes.slice(9).map((x,i)=>cellHTML(x,i+9)).join('')}</div>`:''}
   ${(function(){var c=starCount();return (c[0]||c[1])?`<p class="hint" style="margin:2px 0 0;font-size:11px">
@@ -375,10 +378,11 @@ function renderPlay(){
     <div><div class="eyebrow">Hole</div><div class="num" style="font-size:46px;line-height:.9">${hno(h,hole)}</div></div>
     <div style="flex:1">
       <div class="eyebrow">Par</div>
-      <div class="seg">${[3,4,5].map(p=>`<button class="${h.par===p?'on':''}" onclick="setPar(${p})">${p}</button>`).join('')}</div>
+      <div class="seg" ${RO?'style="pointer-events:none;opacity:.55"':''}>${[3,4,5].map(p=>`<button class="${h.par===p?'on':''}" onclick="setPar(${p})">${p}</button>`).join('')}</div>
     </div>
   </div>
 
+  <div ${RO?'style="pointer-events:none"':''}>
   ${h.par>3?`<div class="row"><div class="lab">Tee</div><div class="seg">
     ${sBtn('tee','hit','Fairway','on-pine')}${sBtn('tee','L','Left','on-ochre')}${sBtn('tee','R','Right')}${sBtn('tee','other','Other')}
   </div></div>
@@ -490,7 +494,11 @@ function renderPlay(){
     ${h.pu?'<p class="hint" style="margin:5px 0 0">Score and putts voided. Everything else still counts.</p>':''}
   </div>
 
-  <div class="navrow">
+  </div>
+  ${RO?`<div class="navrow">
+    <button onclick="vwGo(${hole-1})" ${hole===0?'disabled style=opacity:.4':''}>‹ Prev</button>
+    <button onclick="vwGo(${hole+1})" ${hole===n-1?'disabled style=opacity:.4':''}>Next ›</button>
+  </div>`:`<div class="navrow">
     <button onclick="nav(-1)" ${hole===0?'disabled style=opacity:.4':''}>‹ Prev</button>
     ${hole===n-1?`<button class="on" style="background:var(--blue);border-color:var(--blue);color:var(--blue-fg)" onclick="finish()">Finish round</button>`
       :`<button onclick="nav(1)">Next ›</button>`}
@@ -499,25 +507,26 @@ function renderPlay(){
     <button onclick="saveNow()" style="font-weight:600">Save progress</button>
     ${hole<n-1?`<button class="quiet" onclick="endHere()">Close out after ${hole+1}</button>`:'<span></span>'}
   </div>
-  ${saveMsg?`<div class="banner ${storeOk?'':'bad'}" style="margin:8px 0 0">${esc(saveMsg)}</div>`:''}
+  ${saveMsg?`<div class="banner ${storeOk?'':'bad'}" style="margin:8px 0 0">${esc(saveMsg)}</div>`:''}`}
   <p class="hint">${CLABEL[cur.course]||cur.course} · ${cur.n} holes${cur.start>1?' from H'+cur.start:''} · ${runningTotal()}</p>`;
 }
-function missTier(x){
+function missTier(x,t2){
   if(!x||!x.done)return 0;
   var t1=false;
   if(x.par>3&&(!x.tee||!x.teeClub))t1=true;
   if(x.gir===null||x.gir===undefined)t1=true;
   if(t1)return 1;
-  if(!cur||!cur.tier2)return 0;
-  var t2=false;
-  if(x.par===5&&!x.p5)t2=true;
-  if(atGreen(x)&&(!x.appFlag||!x.appDist||!x.appClub||!x.appD||!x.appL))t2=true;
-  if(x.gir===false&&(x.ss===null||x.ss===undefined||!x.rec||x.rec2===null||x.rec2===undefined))t2=true;
+  var T2=(t2===undefined)?(cur&&cur.tier2):t2;
+  if(!T2)return 0;
+  var t2f=false;
+  if(x.par===5&&!x.p5)t2f=true;
+  if(atGreen(x)&&(!x.appFlag||!x.appDist||!x.appClub||!x.appD||!x.appL))t2f=true;
+  if(x.gir===false&&(x.ss===null||x.ss===undefined||!x.rec||x.rec2===null||x.rec2===undefined))t2f=true;
   if(!x.pu){
-    if(!x.fp)t2=true;
-    else if(x.putts>1&&(!x.fpD||!x.fpL))t2=true;
+    if(!x.fp)t2f=true;
+    else if(x.putts>1&&(!x.fpD||!x.fpL))t2f=true;
   }
-  return t2?2:0;
+  return t2f?2:0;
 }
 function starCount(){var a=0,b=0;(cur?cur.holes:[]).forEach(function(x){var m=missTier(x);
   if(m===1)a++; else if(m===2)b++;});return[a,b];}
@@ -526,7 +535,7 @@ function cellHTML(x,i){
   if(x.pu){ c='p'; } else if(x.done){ c = d<=-2?'e':(d===-1?'bi':(d===0?'g':(d===1?'b':'d'))); }
   const m=missTier(x);
   const star=m?`<span class="st ${m===1?'t1':'t2'}">\u2605</span>`:'';
-  return `<button class="cell ${c} ${i===hole?'cur':''}" onclick="hole=${i};save();render()">${hno(x,i)}${star}</button>`;
+  return `<button class="cell ${c} ${i===hole?'cur':''}" onclick="${RO?`vwGo(${i})`:`hole=${i};save();render()`}">${hno(x,i)}${star}</button>`;
 }
 function sBtn(f,v,label,cls){const h=cur.holes[hole];
   return `<button class="${h[f]===v?(cls||'on'):''}" onclick="tog('${f}',${typeof v==='boolean'?v:"'"+v+"'"})">${label}</button>`;}
@@ -750,20 +759,103 @@ function renderPractice(){
 
 /* ---------- ROUNDS ---------- */
 function renderRounds(){
+  if(vwId){renderView();return;}
   const el=document.getElementById('v-rounds');
   if(!db.rounds.length){el.innerHTML=`<div class="banner">Nothing logged yet. Your first round here is round 1 of the clean 20-round block.</div>`;return;}
-  el.innerHTML=`<p class="hint" style="margin:0 0 6px">A differential marked ≈ is a 9-hole differential already doubled to 18-hole equivalence. Read down the column freely — never compare a raw 9-hole number with an 18-hole one.</p>
-  <table><thead><tr><th>Date</th><th>Course</th><th>Score</th><th>Diff</th><th>GIR</th><th>Putts</th><th>D+</th><th></th></tr></thead><tbody>
-  ${db.rounds.slice().reverse().map(r=>{const s=sum(r);return `<tr>
-    <td>${r.date.slice(5)}</td><td style="font-family:'IBM Plex Sans'">${esc(CLABEL[r.course]||r.course).slice(0,12)}</td>
+  el.innerHTML=`<p class="hint" style="margin:0 0 6px">Tap a date to open the round. <b>Gaps</b> counts holes with an empty Tier 1 / Tier 2 field. A differential marked ≈ is a 9-hole differential already doubled — never compare a raw 9-hole number with an 18-hole one.</p>
+  <table><thead><tr><th>Date</th><th>Course</th><th>Score</th><th>Diff</th><th>GIR</th><th>Putts</th><th>D+</th><th>Gaps</th><th></th></tr></thead><tbody>
+  ${db.rounds.slice().reverse().map(r=>{const s=sum(r);const g=gaps(r);return `<tr>
+    <td style="cursor:pointer" onclick="vwOpen(${r.id})"><b style="color:var(--blue)">${r.date.slice(5)}</b>${r.edits?'<span style="color:var(--ink2)"> \u00b7e</span>':''}</td>
+    <td style="font-family:'IBM Plex Sans';cursor:pointer" onclick="vwOpen(${r.id})">${esc(CLABEL[r.course]||r.course).slice(0,12)}</td>
     <td><b>${s.pu?'—':s.score}</b></td><td>${diffLabel(r)}</td><td>${s.girPct}%</td><td>${s.putts}</td>
     <td style="color:${s.dbl?'var(--red)':'inherit'}">${s.dbl}</td>
+    <td style="cursor:pointer" onclick="vwOpen(${r.id})">${(g[0]||g[1])?`<b>${g[0]}</b>/<span style="opacity:.6">${g[1]}</span>`:'\u2014'}</td>
     <td>${armed==='d'+r.id
       ? `<button style="padding:3px 6px;font-size:10px;background:var(--red);color:var(--red-fg);border-color:var(--red)" onclick="del(${r.id})">sure?</button>`
       : `<button style="padding:3px 7px;font-size:11px" onclick="arm('d${r.id}')">×</button>`}</td></tr>`;}).join('')}
   </tbody></table>`;
 }
 function del(id){db.rounds=db.rounds.filter(r=>r.id!==id);armed='';save();render();}
+
+/* ---------- ROUND VIEWER ---------- */
+function vwRound(){return db.rounds.filter(function(r){return r.id===vwId;})[0]||null;}
+function vwOpen(id){if(!db.rounds.some(function(r){return r.id===id;}))return;
+  vwId=id; vwHole=0; armed=''; save(); render(); window.scrollTo(0,0);}
+function vwClose(){vwId=null; vwHole=0; armed=''; save(); render(); window.scrollTo(0,0);}
+function vwGo(i){var r=vwRound(); if(!r)return;
+  vwHole=Math.max(0,Math.min(r.n-1,i)); save(); render(); window.scrollTo(0,0);}
+function gaps(r){var a=0,b=0;(r.holes||[]).forEach(function(x){
+  var m=missTier(x,r.tier2!==false); if(m===1)a++; else if(m===2)b++;});return[a,b];}
+function vwSet(f,v){var r=vwRound(); if(!r)return;
+  var old=(r[f]===undefined?null:r[f]);
+  if(String(old===null?'':old)===String(v===null||v===undefined?'':v))return;
+  (r.edits=r.edits||[]).push({f:f,from:old,to:v,at:new Date().toISOString().slice(0,16).replace('T',' ')});
+  r[f]=v; save(); render();}
+function vwTee(t){var r=vwRound(); if(!r)return;
+  var T=CD[r.course]&&CD[r.course].tees[t];
+  vwSet('tees',t); if(T){vwSet('cr',T[0]); vwSet('slope',T[1]);}}
+function vwUndo(i){var r=vwRound(); if(!r||!r.edits||!r.edits[i])return;
+  var e=r.edits[i]; r[e.f]=e.from; r.edits.splice(i,1);
+  if(!r.edits.length)delete r.edits; armed=''; save(); render();}
+
+function renderView(){
+  const el=document.getElementById('v-rounds');
+  var r=vwRound();
+  if(!r){vwId=null; renderRounds(); return;}
+  var sc=cur, sh=hole, body;
+  cur=r; hole=Math.max(0,Math.min(r.n-1,vwHole)); RO=true;
+  try{ body=holeScreenHTML(); }
+  finally{ RO=false; cur=sc; hole=sh; }
+  var st=sum(r), g=gaps(r);
+  el.innerHTML=`
+  <div class="navrow" style="margin:0 0 10px">
+    <button onclick="vwClose()">\u2039 All rounds</button><span></span>
+  </div>
+  <div class="card" style="margin:0 0 4px">
+    <div class="eyebrow">${esc(CLABEL[r.course]||r.course)} \u00b7 ${esc(r.date)}${r.edits?' \u00b7 edited':''}</div>
+    <h2 class="num" style="font-size:30px;margin:4px 0 2px">${st.pu?'\u2014':st.score}</h2>
+    <p class="hint" style="margin:0">${r.n} holes \u00b7 diff ${diffLabel(r)} \u00b7 GIR ${st.girPct}% \u00b7 ${st.putts} putts \u00b7 ${st.dbl} doubles+${(g[0]||g[1])?` \u00b7 gaps ${g[0]}/${g[1]}`:' \u00b7 complete'}</p>
+  </div>
+  <p class="hint" style="margin:0 0 2px">Shot data is read-only. Round facts below can be corrected, and every correction is logged.</p>
+  ${body}
+  <h3 class="eyebrow" style="margin:22px 0 6px">Round facts \u2014 editable</h3>
+  <div class="card">
+    <div class="row"><div class="lab">Date</div><input type="date" value="${esc(r.date)}" onchange="vwSet('date',this.value)"></div>
+    ${teeList(r.course).length?`<div class="row"><div class="lab">Tees</div><div class="seg" style="flex-wrap:wrap">
+      ${teeList(r.course).map(t=>`<button class="${r.tees===t?'on':''}" style="flex:1 1 44%;font-size:12px" onclick="vwTee('${t}')">${t}</button>`).join('')}
+    </div></div>`:`<div class="row"><div class="lab">Tees</div><input value="${esc(r.tees)}" onchange="vwSet('tees',this.value)"></div>`}
+    <div class="row"><div class="lab">Bag</div><div class="seg">
+      ${[['carry','Carried'],['trolley','Push cart'],['cart','Buggy']].map(c=>
+        `<button class="${r.carry===c[0]?'on':''}" onclick="vwSet('carry','${c[0]}')">${c[1]}</button>`).join('')}
+    </div></div>
+    <div class="row"><div class="lab">Warm-up</div>
+      <div style="display:flex;gap:6px;flex:1">
+        <input class="mono" inputmode="numeric" placeholder="balls" value="${esc(r.wuBalls??'')}" onchange="vwSet('wuBalls',this.value)">
+        <input class="mono" inputmode="numeric" placeholder="putts" value="${esc(r.wuPutts??'')}" onchange="vwSet('wuPutts',this.value)">
+        <input class="mono" inputmode="numeric" placeholder="mins" value="${esc(r.wuMins??'')}" onchange="vwSet('wuMins',this.value)">
+      </div></div>
+    <div class="row"><div class="lab">Route</div><div class="seg">
+      ${[['none','None'],['range','Range'],['rs','Range+short'],['full','Full']].map(x=>
+        `<button class="${r.wuRoute===x[0]?'on':''}" onclick="vwSet('wuRoute','${x[0]}')">${x[1]}</button>`).join('')}
+    </div></div>
+    <div class="row"><div class="lab">Wind</div><div class="seg">
+      ${['calm','breezy','windy'].map(w=>`<button class="${r.wind===w?(w==='windy'?'on-ochre':'on'):''}" onclick="vwSet('wind','${w}')">${w[0].toUpperCase()+w.slice(1)}</button>`).join('')}
+    </div></div>
+    <div class="row"><div class="lab">Wrist</div><div class="seg">
+      ${[0,1,2,3].map(w=>`<button class="${r.wristPost===w?(w>1?'on-red':'on'):''}" onclick="vwSet('wristPost',${w})">${['None','Ache','Sore','Pain'][w]}</button>`).join('')}
+    </div></div>
+    <div class="row" style="border-bottom:0"><div class="lab">Note</div><input value="${esc(r.note)}" placeholder="optional" onchange="vwSet('note',this.value)"></div>
+  </div>
+  ${r.edits?`<h3 class="eyebrow" style="margin:20px 0 6px">Edit log</h3>
+  <table><thead><tr><th>When</th><th>Field</th><th>From</th><th>To</th><th></th></tr></thead><tbody>
+  ${r.edits.map((e,i)=>`<tr><td>${esc(e.at)}</td><td style="font-family:'IBM Plex Sans'">${esc(e.f)}</td>
+    <td>${esc(e.from===null||e.from===''?'\u2014':e.from)}</td><td>${esc(e.to===null||e.to===''?'\u2014':e.to)}</td>
+    <td>${armed==='u'+i
+      ? `<button style="padding:3px 6px;font-size:10px;background:var(--red);color:var(--red-fg);border-color:var(--red)" onclick="vwUndo(${i})">sure?</button>`
+      : `<button style="padding:3px 7px;font-size:11px" onclick="arm('u${i}')">undo</button>`}</td></tr>`).join('')}
+  </tbody></table>
+  <p class="hint">Every correction stays visible here, so a corrected round is never silently indistinguishable from a clean one.</p>`:''}`;
+}
 
 function diffOf(r){
   if(!r.cr||!r.slope||r.n!==18)return null;
