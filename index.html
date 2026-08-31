@@ -59,9 +59,14 @@
   nav button:last-child{border-right:0}
   nav button.on{background:var(--ink);color:var(--surf)}
   .strip{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;margin:12px 0 4px}
-  .cell{aspect-ratio:1/1.15;border:1px solid var(--line);border-radius:2px;background:var(--surf);
+  .cell{position:relative;aspect-ratio:1/1.15;border:1px solid var(--line);border-radius:2px;background:var(--surf);
     display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;
     font-family:'IBM Plex Mono',monospace;color:var(--ink2);padding:0;min-width:0}
+  .cell .st{position:absolute;top:0;right:2px;font-size:10px;line-height:1;font-weight:400;
+    font-family:system-ui,-apple-system,sans-serif;pointer-events:none;
+    text-shadow:0 0 2px var(--surf),0 0 2px var(--surf),0 0 2px var(--surf)}
+  .cell .st.t1{color:var(--ink)}
+  .cell .st.t2{color:var(--ink2);opacity:.55}
   .cell.cur{outline:2px solid var(--blue);outline-offset:1px}
   .cell.p{background:var(--surf);color:var(--ink2);border-style:dashed;border-color:var(--ink2)}
   .cell.e{background:var(--eag);color:var(--eag-fg);border-color:var(--eag)}
@@ -137,7 +142,7 @@
 <div id="v-data" class="wrap hide"></div>
 
 <script>
-const VER='2.4 \u00b7 24 Aug 2026';
+const VER='2.5 \u00b7 31 Aug 2026';
 const CLUBS=['LW','SW','GW','PW','9i','8i','7i','6i','5i','4H','5W','3W','Dr'];
 const PUTT_B=['0-1','2-3','4-6','7-10','11+'];
 const KEY='golf:v1';
@@ -176,7 +181,7 @@ const CLABEL={'GC Gatow':'Gatow'};
 const CFIX={'Stolper Heide Ost':'Stolpe Ost','Stolper Heide West':'Stolpe West'};
 
 let db={rounds:[],sessions:[],stride:null};
-let cur=null, sess=null, hole=0, view='play', storeOk=true, t2Open=true, flash='', finishing=false;
+let cur=null, sess=null, hole=0, view='play', storeOk=true, t2Open=true, flash='', finishing=false, legend=false;
 const TEE_CLUBS=['Dr','3W','5W','4H','5i','6i','7i'];
 const AREAS=['Range','Clubs','Short game','Putting','Bunker'];
 function blankSess(){return{id:Date.now(),date:new Date().toISOString().slice(0,10),
@@ -185,9 +190,18 @@ function blankSess(){return{id:Date.now(),date:new Date().toISOString().slice(0,
 function blankHole(p){return{par:p,score:p,putts:2,pu:null,tee:null,gir:null,pen:null,
   penTee:null,rec:null,ss:null,teeClub:null,teeOut:null,appFlag:'',appDist:'',appClub:'',
   appD:null,appL:null,appAlt:null,
-  appKind:'green',appNo:null,p5:null,fp:null,fpD:null,fpL:null,chip:null};}
-function atGreen(h){return h.appKind!=='lay'&&h.appKind!=='punch';}
+  appKind:'green',appNo:null,p5:null,con:null,rec2:null,fp:null,fpD:null,fpL:null,chip:null};}
+function atGreen(h){return h.appKind!=='lay'&&h.appKind!=='punch'&&h.appKind!=='no';}
 function adj(h){var f=+h.appFlag||0,p=+h.appDist||0; return (f&&p)?p-f:null;}
+function pctOf(h){var f=+h.appFlag||0,a=adj(h); return (f&&a!==null)?Math.round(1000*a/f)/10:null;}
+function pctSet(v){const h=cur.holes[hole];
+  var f=+h.appFlag||0;
+  var raw=String(v==null?'':v).replace(',','.').replace(/[%\s]/g,'');
+  if(raw===''){h.done=true;save();render();return;}
+  var q=parseFloat(raw);
+  if(!isFinite(q)||!f){h.done=true;save();render();return;}
+  h.appDist=String(Math.round(f*(1+q/100)));
+  h.done=true;save();render();}
 function defNo(h){return h.par===3?1:(h.par===5?((h.p5==='hit'||h.p5==='miss')?2:3):2);}
 function bumpNo(d){const h=cur.holes[hole];h.appNo=Math.max(1,Math.min(8,(h.appNo||defNo(h))+d));h.done=true;save();render();}
 function migrate(){
@@ -218,6 +232,10 @@ function migrate(){
     if(r.wuMins===undefined||r.wuMins===null)r.wuMins='';
     if(r.wuRoute===undefined)r.wuRoute=null;};
   (db.rounds||[]).forEach(wuFix); if(cur)wuFix(cur);
+  (db.rounds||[]).forEach(function(r){if(r._snap)delete r._snap;});
+  var cfix=function(h){if(h.con===undefined)h.con=null; if(h.rec2===undefined)h.rec2=null; if(h.stg!==undefined)delete h.stg;};
+  (db.rounds||[]).forEach(function(r){(r.holes||[]).forEach(cfix);});
+  if(cur)(cur.holes||[]).forEach(cfix);
 }
 
 function newRound(n,course,startHole){
@@ -349,6 +367,9 @@ function renderPlay(){
   el.innerHTML=`
   <div class="strip">${cur.holes.slice(0,9).map((x,i)=>cellHTML(x,i)).join('')}</div>
   ${n===18?`<div class="strip">${cur.holes.slice(9).map((x,i)=>cellHTML(x,i+9)).join('')}</div>`:''}
+  ${(function(){var c=starCount();return (c[0]||c[1])?`<p class="hint" style="margin:2px 0 0;font-size:11px">
+    ${c[0]?`<b>\u2605 ${c[0]}</b> missing Tier 1 `:''}${c[1]?`<span style="opacity:.55">\u2605 ${c[1]} missing Tier 2</span>`:''}
+    \u2014 tap the hole to fill it. Only holes you have already touched are checked.</p>`:'';})()}
 
   <div style="display:flex;align-items:baseline;gap:12px;margin:16px 0 6px">
     <div><div class="eyebrow">Hole</div><div class="num" style="font-size:46px;line-height:.9">${hno(h,hole)}</div></div>
@@ -358,19 +379,6 @@ function renderPlay(){
     </div>
   </div>
 
-  <div class="row"><div class="lab">Score</div><div class="step">
-    <button onclick="bump('score',-1)">–</button><div class="val num">${h.score}</div>
-    <button onclick="bump('score',1)">+</button></div></div>
-
-  <div class="row"><div class="lab">Putts</div><div class="step">
-    <button onclick="bump('putts',-1)">–</button><div class="val num">${h.putts}</div>
-    <button onclick="bump('putts',1)">+</button></div></div>
-
-  <div style="padding:9px 0;border-bottom:1px solid var(--line)">
-    <div class="chips">${sBtn('pu',true,'Picked up / given','on-ochre')}</div>
-    ${h.pu?'<p class="hint" style="margin:5px 0 0">No score and no putts recorded for this hole. Everything else you log still counts.</p>':''}
-  </div>
-
   ${h.par>3?`<div class="row"><div class="lab">Tee</div><div class="seg">
     ${sBtn('tee','hit','Fairway','on-pine')}${sBtn('tee','L','Left','on-ochre')}${sBtn('tee','R','Right')}${sBtn('tee','other','Other')}
   </div></div>
@@ -378,11 +386,11 @@ function renderPlay(){
     <div class="chips" style="flex:1">${TEE_CLUBS.map(c=>sBtn('teeClub',c,c)).join('')}</div></div>
   ${h.tee&&h.tee!=='hit'?`<div style="padding:9px 0;border-bottom:1px solid var(--line)">
     <div class="chips">${sBtn('teeOut',true,'Next shot was just back in play','on-ochre')}</div>
-    <p class="hint" style="margin:5px 0 0">Only if you could not go at the green. Not whether the lie felt bad.</p></div>`:''}`:''}
+    <p class="hint" style="margin:5px 0 0">Could not go at the green. Not how the lie felt.</p></div>`:''}`:''}
 
   ${h.par===5?`<div class="row" style="align-items:flex-start"><div class="lab" style="padding-top:9px">2nd shot</div>
     <div class="chips" style="flex:1">${sBtn('p5','hit','Went \u00b7 on green','on-pine')}${sBtn('p5','miss','Went \u00b7 missed','on-ochre')}${sBtn('p5','lay','Laid up')}${sBtn('p5','no','Never on')}</div></div>
-  <p class="hint" style="margin:5px 0 0">Went means you took on the green with the second. Never on covers a tee shot in trouble or a number no club reached. This also fixes which shot the Tier 2 block is describing \u2014 the second if you went, the third if you laid up.</p>`:''}
+  `:''}
 
   <div class="row"><div class="lab">Green</div><div class="seg">
     ${sBtn('gir',true,'GIR','on-pine')}${sBtn('gir',false,'Missed')}
@@ -393,24 +401,27 @@ function renderPlay(){
   </div></div>
   ${h.pen?`<div style="padding:9px 0;border-bottom:1px solid var(--line)">
     <div class="chips">${sBtn('penTee',true,'It was the tee shot','on-red')}</div>
-    <p class="hint" style="margin:5px 0 0">Only tick this if the penalty came off the tee. Otherwise the tee club gets blamed for a shot it didn't hit.</p></div>`:''}
+    <p class="hint" style="margin:5px 0 0">Off the tee only.</p></div>`:''}
 
   ${cur.tier2?`
   <details ${t2Open?'open':''} ontoggle="t2Open=this.open">
     <summary>Tier 2 detail ▾</summary>
     <div class="row"><div class="lab">This shot</div><div class="seg">
-      ${sBtn('appKind','green','At the green','on-pine')}${sBtn('appKind','lay','Lay-up','on-ochre')}${sBtn('appKind','punch','Punch-out')}
+      <button class="${atGreen(h)?'on-pine':''}" onclick="set('appKind','green')">At the green</button>
+      <button class="${atGreen(h)?'':'on-ochre'}" onclick="set('appKind','no')">Never at it</button>
     </div></div>
     <div class="row"><div class="lab">Shot #</div><div class="step">
       <button onclick="bumpNo(-1)">–</button><div class="val num">${h.appNo||defNo(h)}</div>
       <button onclick="bumpNo(1)">+</button></div></div>
-    <p class="hint" style="margin:0 0 4px">${h.appNo?'Set by hand.':'Derived from par and the 2nd-shot choice \u2014 tap to correct.'} Only <b>At the green</b> feeds the short:long ratio. Lay-ups and punch-outs are logged but excluded, which is the entire reason this field exists.</p>
+    <p class="hint" style="margin:0 0 4px">${h.appNo?'Set by hand.':'Derived \u2014 tap to correct.'}</p>
     ${atGreen(h)?`
     <div class="row" style="border-bottom:0"><div class="lab">Flag</div>
       <div style="display:flex;gap:6px;flex:1;align-items:center">
         <input class="mono" inputmode="numeric" placeholder="yds" value="${esc(h.appFlag)}"
           onchange="set('appFlag',this.value)" style="flex:0 0 86px">
-        <span class="hint" style="margin:0">lasered to the flag</span>
+        <input class="mono" inputmode="text" placeholder="±%" value="${pctOf(h)===null?'':(pctOf(h)>0?'+':'')+pctOf(h)}"
+          onchange="pctSet(this.value)" style="flex:0 0 76px">
+        <span class="hint" style="margin:0">laser, then ±%</span>
       </div></div>
     <div class="row" style="border-bottom:0"><div class="lab">Play to</div>
       <div style="display:flex;gap:6px;flex:1">
@@ -421,10 +432,8 @@ function renderPlay(){
           ${CLUBS.map(c=>`<option ${h.appClub===c?'selected':''}>${c}</option>`).join('')}
         </select>
       </div></div>
-    ${adj(h)!==null?`<p class="hint" style="margin:5px 0 4px;color:${Math.abs(adj(h))>=5?'var(--blue)':'var(--ink2)'}">
-      Adjustment <b>${adj(h)>0?'+':''}${adj(h)} y</b>${(+h.appFlag)?' ('+(adj(h)>0?'+':'')+Math.round(1000*adj(h)/(+h.appFlag))/10+'%)':''}
-      — recorded on its own, so a bad number and a bad strike stay separable.</p>`
-      :`<p class="hint" style="margin:0 0 4px"><b>Flag</b> is what the laser said. <b>Play to</b> is what you committed to hit after wind, elevation and lie. Log both — the gap between them is your adjustment and it costs nothing extra to record.</p>`}
+    ${adj(h)!==null?`<p class="hint" style="margin:5px 0 4px;color:${Math.abs(adj(h))>=5?'var(--blue)':'var(--ink2)'}">Adjustment <b>${adj(h)>0?'+':''}${adj(h)} y</b>${(+h.appFlag)?' ('+(adj(h)>0?'+':'')+Math.round(1000*adj(h)/(+h.appFlag))/10+'%)':''}</p>`
+      :`<p class="hint" style="margin:0 0 4px"><b>Flag</b> = laser. <b>Play to</b> = what you committed to hit.</p>`}
     <div class="row"><div class="lab">Distance</div><div class="seg">
       ${sBtn('appD','short','Short','on-ochre')}${sBtn('appD','pin','On number','on-pine')}${sBtn('appD','long','Long')}
     </div></div>
@@ -432,22 +441,30 @@ function renderPlay(){
       ${sBtn('appL','left','Left','on-ochre')}${sBtn('appL','ctr','On line','on-pine')}${sBtn('appL','right','Right')}
     </div></div>
     <div style="padding:9px 0;border-bottom:1px solid var(--line)">
-      <div class="chips">${sBtn('appAlt',true,'Not a stock swing','on-ochre')}</div></div>
-    <p class="hint" style="margin:5px 0 0">Both judged against <b>Play to</b>, not the flag. Stock means your normal swing with that club — a PW you decided plays 135 today is still stock. Flag only knockdowns, three-quarters, punches and shaped shots; if this fires on every windy hole it carries no signal.</p>`
-    :`<p class="hint" style="margin:5px 0 0">Lay-up and punch-out log the event and nothing else. Where you actually finished shows up as the next shot's flag number, so a target field here would only duplicate it.</p>`}
+      <div class="chips">${sBtn('appAlt',true,'Not a stock swing','on-ochre')}${sBtn('con','fat','Fat','on-red')}${sBtn('con','hosel','Hosel','on-red')}</div>
+      <p class="hint" style="margin:5px 0 0">Stock = your normal swing with that club, whatever number you gave it. Fat and Hosel only when unambiguous.</p></div>
+    <p class="hint" style="margin:5px 0 0">Distance and line judged against <b>Play to</b>, not the flag.</p>`
+    :`<p class="hint" style="margin:5px 0 8px">Event only \u2014 no numbers needed.</p>
+    <div style="padding:9px 0;border-bottom:1px solid var(--line)">
+      <div class="chips">${sBtn('con','fat','Fat','on-red')}${sBtn('con','hosel','Hosel','on-red')}</div>
+      <p class="hint" style="margin:5px 0 0">Blank unless the strike was unambiguous. A chunked punch-out still loads the wrist.</p></div>`}
     ${h.gir===false?`<div class="row"><div class="lab">Position</div><div class="seg">
       ${sBtn('ss',true,'Short-sided','on-red')}${sBtn('ss',false,'Room to work','on-pine')}
     </div></div>
-    <p class="hint" style="margin:5px 0 0">Short-sided means under about 8 m of green between ball and flag, or a bunker, water or a severe slope sitting on the line. Judge it standing over the ball, <b>before</b> you play the recovery — never afterwards, or the field records how it turned out instead of where you were. Two buttons on purpose: blank means you forgot, not that you had room.</p>
+    <p class="hint" style="margin:5px 0 0">Under ~8 m of green to work with, or trouble on the line. Judge it <b>before</b> you play the recovery.</p>
     <div class="row" style="align-items:flex-start"><div class="lab" style="padding-top:9px">Recovery</div>
       <div class="chips" style="flex:1">${sBtn('rec','chip','Chip')}${sBtn('rec','pitch','Pitch')}${sBtn('rec','bunker','Bunker','on-ochre')}${sBtn('rec','putt','Putted on')}</div></div>
-    <p class="hint" style="margin:5px 0 0">Chip is greenside and running. Pitch is a full-ish wedge that flies — roughly 25 m and up. Different skills, so they get counted separately.</p>`:''}
+    <p class="hint" style="margin:5px 0 8px">The <b>first</b> recovery only.</p>
+    <div class="row"><div class="lab">After it</div><div class="seg">
+      ${sBtn('rec2',false,'On the green','on-pine')}${sBtn('rec2',true,'Needed another','on-red')}
+    </div></div>
+    <p class="hint" style="margin:5px 0 0">Where the ball <b>physically was</b>, not whether the shot was good. Fringe counts as not on.</p>`:''}
 
     <div style="border-top:2px solid var(--line);margin-top:14px;padding-top:4px"></div>
     <div class="row"><div class="lab">1st putt</div><div class="seg">
       ${PUTT_B.map(b=>sBtn('fp',b,b)).join('')}
     </div></div>
-    <p class="hint" style="margin:0 0 8px">Paced steps to the hole — never an estimate in feet. Log it whether you got there with an iron, a chip or a bunker shot. Last thing on the hole: pace it out as you walk to the ball, tap it in the buggy or on the next tee.</p>
+    <p class="hint" style="margin:0 0 8px">Paced steps, never feet. However the ball got there.</p>
     ${h.fp?(h.putts<=1
       ? `<p class="hint" style="margin:0 0 8px;color:var(--pine)">Holed \u2014 nothing to log below.</p>`
       : `<div class="row"><div class="lab">Miss \u00b7 speed</div><div class="seg">
@@ -456,8 +473,22 @@ function renderPlay(){
         <div class="row"><div class="lab">Miss \u00b7 line</div><div class="seg">
           ${sBtn('fpL','high','High side')}${sBtn('fpL','on','On line','on-pine')}${sBtn('fpL','low','Low side','on-ochre')}
         </div></div>
-        <p class="hint" style="margin:5px 0 8px">Two axes, same logic as approaches. Low side never had a chance; on line means only the speed was wrong. Magnitude stays out on purpose \u2014 a three-putt already records "way short" and "way past", and a severity button would be an outcome judgement, which is what wrecked the old data.</p>`):''}
+        `):''}
   </details>`:''}
+
+  <div style="border-top:2px solid var(--line);margin-top:16px;padding-top:2px"></div>
+  <div class="row"><div class="lab">Score</div><div class="step">
+    <button onclick="bump('score',-1)">–</button><div class="val num">${h.score}</div>
+    <button onclick="bump('score',1)">+</button></div></div>
+
+  <div class="row"><div class="lab">Putts</div><div class="step">
+    <button onclick="bump('putts',-1)">–</button><div class="val num">${h.putts}</div>
+    <button onclick="bump('putts',1)">+</button></div></div>
+
+  <div style="padding:9px 0;border-bottom:1px solid var(--line)">
+    <div class="chips">${sBtn('pu',true,'Picked up / given','on-ochre')}</div>
+    ${h.pu?'<p class="hint" style="margin:5px 0 0">Score and putts voided. Everything else still counts.</p>':''}
+  </div>
 
   <div class="navrow">
     <button onclick="nav(-1)" ${hole===0?'disabled style=opacity:.4':''}>‹ Prev</button>
@@ -471,10 +502,31 @@ function renderPlay(){
   ${saveMsg?`<div class="banner ${storeOk?'':'bad'}" style="margin:8px 0 0">${esc(saveMsg)}</div>`:''}
   <p class="hint">${CLABEL[cur.course]||cur.course} · ${cur.n} holes${cur.start>1?' from H'+cur.start:''} · ${runningTotal()}</p>`;
 }
+function missTier(x){
+  if(!x||!x.done)return 0;
+  var t1=false;
+  if(x.par>3&&(!x.tee||!x.teeClub))t1=true;
+  if(x.gir===null||x.gir===undefined)t1=true;
+  if(t1)return 1;
+  if(!cur||!cur.tier2)return 0;
+  var t2=false;
+  if(x.par===5&&!x.p5)t2=true;
+  if(atGreen(x)&&(!x.appFlag||!x.appDist||!x.appClub||!x.appD||!x.appL))t2=true;
+  if(x.gir===false&&(x.ss===null||x.ss===undefined||!x.rec||x.rec2===null||x.rec2===undefined))t2=true;
+  if(!x.pu){
+    if(!x.fp)t2=true;
+    else if(x.putts>1&&(!x.fpD||!x.fpL))t2=true;
+  }
+  return t2?2:0;
+}
+function starCount(){var a=0,b=0;(cur?cur.holes:[]).forEach(function(x){var m=missTier(x);
+  if(m===1)a++; else if(m===2)b++;});return[a,b];}
 function cellHTML(x,i){
   const d=x.score-x.par; let c='';
   if(x.pu){ c='p'; } else if(x.done){ c = d<=-2?'e':(d===-1?'bi':(d===0?'g':(d===1?'b':'d'))); }
-  return `<button class="cell ${c} ${i===hole?'cur':''}" onclick="hole=${i};save();render()">${hno(x,i)}</button>`;
+  const m=missTier(x);
+  const star=m?`<span class="st ${m===1?'t1':'t2'}">\u2605</span>`:'';
+  return `<button class="cell ${c} ${i===hole?'cur':''}" onclick="hole=${i};save();render()">${hno(x,i)}${star}</button>`;
 }
 function sBtn(f,v,label,cls){const h=cur.holes[hole];
   return `<button class="${h[f]===v?(cls||'on'):''}" onclick="tog('${f}',${typeof v==='boolean'?v:"'"+v+"'"})">${label}</button>`;}
@@ -505,9 +557,10 @@ function discard(){
 }
 function nav(d){if(d>0)cur.holes[hole].done=true;
   hole=Math.max(0,Math.min(cur.n-1,hole+d));save();render();window.scrollTo(0,0);}
-function played(){return cur.holes.filter(function(x){return x.done;});}
-function scored(){return cur.holes.filter(function(x){return x.done&&!x.pu;});}
-function puCount(){return cur.holes.filter(function(x){return x.pu;}).length;}
+function liveHoles(){var lim=(finishing&&cur.endAt)?cur.endAt:cur.n;return cur.holes.slice(0,lim);}
+function played(){return liveHoles().filter(function(x){return x.done;});}
+function scored(){return liveHoles().filter(function(x){return x.done&&!x.pu;});}
+function puCount(){return liveHoles().filter(function(x){return x.pu;}).length;}
 function toPar(P){
   var t=P.reduce(function(a,x){return a+x.score},0);
   var p=P.reduce(function(a,x){return a+x.par},0);
@@ -568,7 +621,14 @@ function start(n){
     cur.tees=db.lastTee; cur.cr=T[0]; cur.slope=T[1];}
   t2Open=db.t2default!==false; cur.t2open=t2Open; finishing=false;
   hole=0;save();render();window.scrollTo(0,0);}
-function finish(){cur.holes.forEach(function(h){h.done=true;});finishing=true;save();render();}
+function finish(){
+  if(!cur._snap)cur._snap=cur.holes.map(function(h){return !!h.done;});
+  var lim=cur.endAt||cur.n;
+  cur.holes.forEach(function(h,i){if(i<lim)h.done=true;});
+  finishing=true;save();render();}
+function unfinish(){
+  if(cur._snap){cur.holes.forEach(function(h,i){h.done=!!cur._snap[i];});delete cur._snap;}
+  delete cur.endAt; finishing=false; armed=''; save(); render(); window.scrollTo(0,0);}
 function renderFinish(){
   const el=document.getElementById('v-play');
   el.innerHTML=`<div class="card">
@@ -586,7 +646,7 @@ function renderFinish(){
       ${[['carry','Carried'],['trolley','Push cart'],['cart','Buggy']].map(c=>
         `<button class="${cur.carry===c[0]?'on':''}" onclick="meta('carry','${c[0]}')">${c[1]}</button>`).join('')}
     </div></div>
-    <p class="hint">Carrying is fatigue and forearm load both. Worth separating from everything else.</p>
+    
     <div class="row"><div class="lab">Warm-up</div>
       <div style="display:flex;gap:6px;flex:1">
         <input class="mono" inputmode="numeric" placeholder="balls" value="${esc(cur.wuBalls??'')}" onchange="meta('wuBalls',this.value)">
@@ -597,26 +657,26 @@ function renderFinish(){
       ${[['none','None'],['range','Range'],['rs','Range+short'],['full','Full']].map(x=>
         `<button class="${cur.wuRoute===x[0]?'on':''}" onclick="meta('wuRoute','${x[0]}')">${x[1]}</button>`).join('')}
     </div></div>
-    <p class="hint">Balls carry wrist load, putts don't, minutes are the connective-tissue warm-up you are not allowed to shorten. One number called "32" told us none of that.</p>
+    
     <div class="row"><div class="lab">Wind</div><div class="seg">
       ${['calm','breezy','windy'].map(w=>`<button class="${cur.wind===w?(w==='windy'?'on-ochre':'on'):''}" onclick="meta('wind','${w}')">${w[0].toUpperCase()+w.slice(1)}</button>`).join('')}
     </div></div>
-    <p class="hint">Distance data from a windy round isn't comparable to a calm one. One tap keeps them separable.</p>
+    
     <div class="row"><div class="lab">Wrist</div><div class="seg">
       ${[0,1,2,3].map(w=>`<button class="${cur.wristPost===w?(w>1?'on-red':'on'):''}" onclick="meta('wristPost',${w})">${['None','Ache','Sore','Pain'][w]}</button>`).join('')}
     </div></div>
-    <p class="hint">Wrist after the round. Load and symptoms in the same record, so a flare has a visible ramp.</p>
+    
     <div class="row" style="border-bottom:0"><div class="lab">Note</div><input value="${esc(cur.note)}" placeholder="optional" onchange="meta('note',this.value)"></div>
   </div>
   <button class="big" onclick="commit()">Save round</button>
-  <button class="big quiet" onclick="finishing=false;delete cur.endAt;render()">Back to holes</button>
+  <button class="big quiet" onclick="unfinish()">Back to holes</button>
   ${armed==='discard'
     ? `<button class="big" style="background:var(--red);border-color:var(--red);color:var(--red-fg)" onclick="discard()">Tap again — this deletes the round</button>`
     : `<button class="big quiet" style="border-color:var(--red);color:var(--red)" onclick="arm('discard')">Discard round</button>`}`;
 }
 function commit(){
   if(cur.endAt&&cur.endAt<cur.n){cur.holes=cur.holes.slice(0,cur.endAt);cur.n=cur.endAt;}
-  delete cur.endAt;
+  delete cur.endAt; delete cur._snap;
   db.rounds.push(cur);cur=null;hole=0;finishing=false;save();
   flash='Round saved. Copy the JSON below now — that is the only copy of your data that you control.';
   view='data';['play','practice','rounds','stats','data'].forEach(function(k){
@@ -1148,7 +1208,12 @@ function renderData(){
       ?'Saving to this browser. Survives restarts as long as you open the same file in the same browser and do not clear site data.'
       :'Nothing is being saved. Export after every round.')}</p>
 
-  <h3 class="eyebrow" style="margin:20px 0 6px">Restore from backup</h3>
+  <h3 class="eyebrow" style="margin:22px 0 6px">Legend</h3>
+  <p class="hint" style="margin:0 0 8px">Every field, what it means and why it is shaped that way. The hole screen stays short on purpose — this is where the definitions live.</p>
+  <button class="big ghost" onclick="legend=!legend;render()">${legend?'Hide legend':'Show legend'}</button>
+  ${legend?`<div class="card" style="margin-top:2px"><h3 class="eyebrow" style="margin:18px 0 6px">Tier 1 — every round</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Score / Putts</div><p class="hint" style="margin:0">Sit at the bottom of the hole screen, below everything else, because they are the last thing you know. Both prefill (score = par, putts = 2), so a hole you never touched and a par with two putts look identical in the data. The star check cannot see a missing score.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Tee</div><p class="hint" style="margin:0">Where the ball finished laterally: Fairway / Left / Right / Other. <b>Other</b> is on line but not in the fairway — short, topped, fairway bunker on your line. OB and water are <i>not</i> Other: a drive OB left is Tee = Left plus Penalty = OB. Side is what costs you strokes, not depth, which is why the field only measures side.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Club</div><p class="hint" style="margin:0">Tee club. Feeds the driver-versus-3W comparison, which is confounded by selection: 3W gets used on the harder holes, so a raw loss-rate comparison between the two is not a like-for-like read.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Next shot was just back in play</div><p class="hint" style="margin:0">The tee shot left you unable to go at the green. A judgement about options, not about how the lie felt. Par 4 and 5 only.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">2nd shot (par 5)</div><p class="hint" style="margin:0"><b>Went</b> = you took on the green with the second. <b>Laid up</b> = you chose not to. <b>Never on</b> = no choice existed, because the tee shot was in trouble or no club reached. Separating choice from circumstance is the whole point; collapsing them would credit or blame a decision you never made.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Green</div><p class="hint" style="margin:0">GIR by the strict definition — on the putting surface in regulation. Fringe is not on.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Penalty</div><p class="hint" style="margin:0">OB / Water / Other. <b>Other</b> is unplayable, lost ball that is not OB, staked trees, rules penalties — it exists so that OB and Water stay clean, because your hazard framework is built on those two. <b>It was the tee shot</b> keeps the tee club from being blamed for a shot it did not hit.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Picked up / given</div><p class="hint" style="margin:0">Voids score and putts for the hole, keeps every other field. Use it rather than guessing a number.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Stars on the hole strip</div><p class="hint" style="margin:0">Solid star = a Tier 1 field is empty. Faint star = a Tier 2 field is empty. Only holes you have already touched are checked. One star per hole, Tier 1 wins.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Tier 2 — the approach</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">This shot</div><p class="hint" style="margin:0"><b>At the green</b> or <b>Never at it</b>. Tier 2 always describes the approach — the shot you actually went at the green with, however many strokes in. If you punched out on the second and hit the green with the third, that is <i>At the green</i> with Shot # 3; the punch-out is already recorded by <i>Next shot was just back in play</i>. <b>Never at it</b> means no shot on the hole was aimed at the green, and it is what tells the star check that empty approach fields are legitimate rather than forgotten. Only <i>At the green</i> holes feed the short:long ratio.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Shot #</div><p class="hint" style="margin:0">Which stroke the approach was. Derived from par and the par-5 second-shot choice; tap to correct when a reload or a punch-out shifted it.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Flag</div><p class="hint" style="margin:0">Lasered distance to the flag. Objective, no adjustment applied.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">±%</div><p class="hint" style="margin:0">Types a percentage and fills <b>Play to</b> for you — <code>+10</code>, <code>-5</code>, <code>7.5</code>, <code>10%</code> all work. It stores nothing: the percentage is recoverable from Flag and Play to, so the box is a live readout of your adjustment as much as an input. Needs a Flag first. Clearing it leaves Play to alone. Wind reference: <b>1.25% per mph into, 0.5% per mph downwind</b> — not the symmetric 1% rule.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Play to</div><p class="hint" style="margin:0">The number you committed to hit after wind, elevation and lie. Logged separately from Flag so that a bad number and a bad strike never collapse into the same datapoint. The gap between the two <i>is</i> your adjustment, recorded for free.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Distance / Line</div><p class="hint" style="margin:0">Both judged against <b>Play to</b>, never the flag. Short:long is the documented 5:1 leak; left:right completes the accessibility matrix.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Not a stock swing</div><p class="hint" style="margin:0">Stock means your normal swing with that club, whatever number you gave it today — a PW you decided plays 135 is still stock. Flag only knockdowns, three-quarters, punches and shaped shots. If it fires on every windy hole it carries no signal and the distance calibration loses its filter.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Fat / Hosel</div><p class="hint" style="margin:0">Blank by default and blank almost always. Only for strikes you would call unambiguous: a proper chunk, or a hosel strike you knew the moment it left. An event log for wrist load and early extension, not a strike-quality grade — anything that flew its number gets nothing. Available on lay-ups and punch-outs too, because a chunked punch-out loads the wrist the same.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Tier 2 — missed green</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Position</div><p class="hint" style="margin:0">Short-sided = under roughly 8 m of green between ball and flag, or a bunker, water or severe slope sitting on the line. Judge it standing over the ball <b>before</b> you play the recovery. Judged afterwards it records how the shot turned out instead of where you were, which is the error that made the old proximity data worthless. Two buttons on purpose: blank means you forgot, not that you had room.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Recovery</div><p class="hint" style="margin:0">The <b>first</b> recovery shot only. Chip is greenside and running. Pitch is a full-ish wedge that flies, roughly 25 m and up. Putted on is from off the surface.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">After it</div><p class="hint" style="margin:0">Where the ball <b>physically was</b> once that first recovery came to rest — on the putting surface or not. Fringe counts as not on. Not a judgement of the shot: a chip to three paces you then three-putt is <i>On the green</i>, and a thinned chip eighteen paces past but on the surface is also <i>On the green</i>. That one's cost shows up as first-putt distance instead, which is where it actually lands. Crossed against Position, this separates a greenside strike problem from an approach aiming problem.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Tier 2 — putting</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">1st putt</div><p class="hint" style="margin:0">Paced steps from the ball to the hole, never an estimate in feet, however the ball got there — iron, chip or bunker shot. Pace it as you walk in; enter it last. Buckets are cut where make rate roughly halves, not evenly.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Miss · speed / Miss · line</div><p class="hint" style="margin:0">Two independent axes, because both can be wrong at once and one combined field would discard that. Low side never had a chance; on line means only the speed was wrong. Magnitude stays out deliberately — a three-putt already records itself, and a severity button would be an outcome judgement.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Round close</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Bag</div><p class="hint" style="margin:0">Carried, push cart or buggy. Fatigue and forearm load in one field, worth keeping separable from everything else.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Warm-up</div><p class="hint" style="margin:0">Balls / putts / minutes / route as four numbers. Balls carry wrist load, putts do not, minutes are the connective-tissue warm-up you are not allowed to shorten. One figure called ‘32’ told you none of that.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Wind</div><p class="hint" style="margin:0">Round level. Distance data from a windy round is not comparable with a calm one — one tap keeps them separable, and it is the filter that decides whether your short bias is wind judgement or carry numbers.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Wrist</div><p class="hint" style="margin:0">Symptoms after the round, on the same record as the load that produced them, so a flare has a visible ramp. Next-morning check is the cleaner recovery signal.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Close out after X</div><p class="hint" style="margin:0">Drops the remaining holes at save. <b>Back to holes</b> restores every hole exactly as it was — nothing is marked played by opening the close-out screen.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Rules of the block</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Paces, not feet</div><p class="hint" style="margin:0">Every short-game distance is paced steps, converted by the stride figure below. Yards from the rangefinder for everything full-swing. Never mix the two.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Two-tier entry</div><p class="hint" style="margin:0">Approach fields after the approach shot. Score and putts after holing out. Anything entered from memory on the next tee is worth less than a blank.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">No conclusions before round 20</div><p class="hint" style="margin:0">Block-level findings wait. Single rounds are anecdotes, and a good score can be built on poor ball-striking that the short game covered.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">9 versus 18</div><p class="hint" style="margin:0">A 9-hole differential is doubled to an 18-hole equivalent and marked ≈. Never compare a raw 9-hole number with an 18-hole one.</p></div></div>`:''}
+
+  <h3 class="eyebrow" style="margin:22px 0 6px">Restore from backup</h3>
   <p class="hint" style="margin:0 0 8px">Paste a previously exported JSON block. Existing rounds are kept — anything already here is skipped, so importing twice does no harm.</p>
   <textarea id="imp" placeholder='{"rounds":[...],"sessions":[...]}' style="min-height:70px;font-family:'IBM Plex Mono',monospace;font-size:11px"></textarea>
   <button class="big ghost" onclick="importData()">Import</button>
