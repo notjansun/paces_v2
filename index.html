@@ -142,7 +142,7 @@
 <div id="v-data" class="wrap hide"></div>
 
 <script>
-const VER='2.6 \u00b7 31 Aug 2026';
+const VER='2.7 \u00b7 1 Sep 2026';
 const CLUBS=['LW','SW','GW','PW','9i','8i','7i','6i','5i','4H','5W','3W','Dr'];
 const PUTT_B=['0-1','2-3','4-6','7-10','11+'];
 const KEY='golf:v1';
@@ -370,10 +370,13 @@ function holeScreenHTML(){
   return `
   <div class="strip">${cur.holes.slice(0,9).map((x,i)=>cellHTML(x,i)).join('')}</div>
   ${n===18?`<div class="strip">${cur.holes.slice(9).map((x,i)=>cellHTML(x,i+9)).join('')}</div>`:''}
-  ${(function(){var c=starCount();return (c[0]||c[1])?`<p class="hint" style="margin:2px 0 0;font-size:11px">
+  ${RO?'':(function(){var c=starCount();return (c[0]||c[1])?`<p class="hint" style="margin:2px 0 0;font-size:11px">
     ${c[0]?`<b>\u2605 ${c[0]}</b> missing Tier 1 `:''}${c[1]?`<span style="opacity:.55">\u2605 ${c[1]} missing Tier 2</span>`:''}
     \u2014 tap the hole to fill it. Only holes you have already touched are checked.</p>`:'';})()}
 
+  ${(!RO&&cur.endAt)?`<div class="banner" style="margin:8px 0 0;display:flex;align-items:center;gap:8px">
+    <span style="flex:1">Closing out after H${cur.endAt}.</span>
+    <button style="padding:4px 9px;font-size:11px" onclick="finish()">Back to close-out</button></div>`:''}
   <div style="display:flex;align-items:baseline;gap:12px;margin:16px 0 6px">
     <div><div class="eyebrow">Hole</div><div class="num" style="font-size:46px;line-height:.9">${hno(h,hole)}</div></div>
     <div style="flex:1">
@@ -510,30 +513,41 @@ function holeScreenHTML(){
   ${saveMsg?`<div class="banner ${storeOk?'':'bad'}" style="margin:8px 0 0">${esc(saveMsg)}</div>`:''}`}
   <p class="hint">${CLABEL[cur.course]||cur.course} · ${cur.n} holes${cur.start>1?' from H'+cur.start:''} · ${runningTotal()}</p>`;
 }
-function missTier(x,t2){
-  if(!x||!x.done)return 0;
-  var t1=false;
-  if(x.par>3&&(!x.tee||!x.teeClub))t1=true;
-  if(x.gir===null||x.gir===undefined)t1=true;
-  if(t1)return 1;
+function missList(x,t2){
+  var a=[],b=[];
+  if(!x||!x.done)return{a:a,b:b};
+  if(x.par>3&&!x.tee)a.push('tee result');
+  if(x.par>3&&!x.teeClub)a.push('tee club');
+  if(x.gir===null||x.gir===undefined)a.push('green hit');
+  if(a.length)return{a:a,b:b};
   var T2=(t2===undefined)?(cur&&cur.tier2):t2;
-  if(!T2)return 0;
-  var t2f=false;
-  if(x.par===5&&!x.p5)t2f=true;
-  if(atGreen(x)&&(!x.appFlag||!x.appDist||!x.appClub||!x.appD||!x.appL))t2f=true;
-  if(x.gir===false&&(x.ss===null||x.ss===undefined||!x.rec||x.rec2===null||x.rec2===undefined))t2f=true;
-  if(!x.pu){
-    if(!x.fp)t2f=true;
-    else if(x.putts>1&&(!x.fpD||!x.fpL))t2f=true;
+  if(!T2)return{a:a,b:b};
+  if(x.par===5&&!x.p5)b.push('par-5 2nd shot');
+  if(atGreen(x)){
+    if(!x.appFlag)b.push('flag');
+    if(!x.appDist)b.push('play to');
+    if(!x.appClub)b.push('approach club');
+    if(!x.appD)b.push('distance miss');
+    if(!x.appL)b.push('line miss');
   }
-  return t2f?2:0;
+  if(x.gir===false){
+    if(x.ss===null||x.ss===undefined)b.push('position');
+    if(!x.rec)b.push('recovery');
+    if(x.rec2===null||x.rec2===undefined)b.push('after it');
+  }
+  if(!x.pu){
+    if(!x.fp)b.push('1st putt');
+    else if(x.putts>1){ if(!x.fpD)b.push('putt speed'); if(!x.fpL)b.push('putt line'); }
+  }
+  return{a:a,b:b};
 }
+function missTier(x,t2){var m=missList(x,t2);return m.a.length?1:(m.b.length?2:0);}
 function starCount(){var a=0,b=0;(cur?cur.holes:[]).forEach(function(x){var m=missTier(x);
   if(m===1)a++; else if(m===2)b++;});return[a,b];}
 function cellHTML(x,i){
   const d=x.score-x.par; let c='';
   if(x.pu){ c='p'; } else if(x.done){ c = d<=-2?'e':(d===-1?'bi':(d===0?'g':(d===1?'b':'d'))); }
-  const m=missTier(x);
+  const m=RO?0:missTier(x);
   const star=m?`<span class="st ${m===1?'t1':'t2'}">\u2605</span>`:'';
   return `<button class="cell ${c} ${i===hole?'cur':''}" onclick="${RO?`vwGo(${i})`:`hole=${i};save();render()`}">${hno(x,i)}${star}</button>`;
 }
@@ -635,6 +649,10 @@ function finish(){
   var lim=cur.endAt||cur.n;
   cur.holes.forEach(function(h,i){if(i<lim)h.done=true;});
   finishing=true;save();render();}
+function fixHole(i){
+  if(cur._snap){cur.holes.forEach(function(h,j){h.done=!!cur._snap[j];});delete cur._snap;}
+  finishing=false; armed=''; hole=Math.max(0,Math.min(cur.n-1,i));
+  save(); render(); window.scrollTo(0,0);}
 function unfinish(){
   if(cur._snap){cur.holes.forEach(function(h,i){h.done=!!cur._snap[i];});delete cur._snap;}
   delete cur.endAt; finishing=false; armed=''; save(); render(); window.scrollTo(0,0);}
@@ -677,6 +695,26 @@ function renderFinish(){
     
     <div class="row" style="border-bottom:0"><div class="lab">Note</div><input value="${esc(cur.note)}" placeholder="optional" onchange="meta('note',this.value)"></div>
   </div>
+  ${(function(){
+    var rows=[];
+    cur.holes.slice(0,endCount()).forEach(function(x,i){
+      if(!x.done)return;
+      var m=missList(x,cur.tier2);
+      if(m.a.length||m.b.length)rows.push({i:i,x:x,a:m.a,b:m.b});
+    });
+    if(!rows.length)return `<div class="banner" style="margin:10px 0 0">Every hole complete \u2014 nothing missing.</div>`;
+    return `<h3 class="eyebrow" style="margin:20px 0 6px">Gaps \u2014 ${rows.length} hole${rows.length>1?'s':''}</h3>
+    <p class="hint" style="margin:0 0 6px">Ten minutes old is recall. Tomorrow is reconstruction. Tap to jump back \u2014 the close-out point is kept.</p>
+    <div class="card" style="padding:2px 12px">
+    ${rows.map(function(r){return `<div class="row" style="align-items:flex-start;padding:9px 0;cursor:pointer" onclick="fixHole(${r.i})">
+      <div class="lab" style="flex:0 0 46px"><b>${hno(r.x,r.i)}</b> <span class="num" style="opacity:.5">${r.x.par}</span></div>
+      <div style="flex:1;font-size:12px">
+        ${r.a.length?`<div><span class="st t1" style="font-size:10px">\u2605</span> ${r.a.join(', ')}</div>`:''}
+        ${r.b.length?`<div style="color:var(--ink2)"><span style="opacity:.55">\u2605</span> ${r.b.join(', ')}</div>`:''}
+      </div>
+      <div style="opacity:.4;font-size:14px">\u203a</div></div>`;}).join('')}
+    </div>`;
+  })()}
   <button class="big" onclick="commit()">Save round</button>
   <button class="big quiet" onclick="unfinish()">Back to holes</button>
   ${armed==='discard'
