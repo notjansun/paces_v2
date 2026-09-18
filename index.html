@@ -1,3 +1,8 @@
+<meta charset="utf-8">
+<title>Paces</title>
+<meta name="apple-mobile-web-app-title" content="Paces">
+<meta name="theme-color" content="#E7EBE7" media="(prefers-color-scheme:light)">
+<meta name="theme-color" content="#0E1210" media="(prefers-color-scheme:dark)">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -142,7 +147,7 @@
 <div id="v-data" class="wrap hide"></div>
 
 <script>
-const VER='2.7 \u00b7 1 Sep 2026';
+const VER='2.8 \u00b7 18 Sep 2026';
 const CLUBS=['LW','SW','GW','PW','9i','8i','7i','6i','5i','4H','5W','3W','Dr'];
 const PUTT_B=['0-1','2-3','4-6','7-10','11+'];
 const KEY='golf:v1';
@@ -174,10 +179,12 @@ const CD={
    tees:{'Schwarz 6496 m':[74.8,128],'Weiss 6171 m':[73.1,127],'Gelb 5898 m':[71.7,126],'Blau 5419 m':[69.3,118]}},
  'GC Gatow':{par:[4,4,5,3,4,5,3,4,4,4,4,3,4,4,5,3,5,4],
    tees:{'Gelb 5825 m':[71.3,126],'Blau 5508 m':[69.4,124]}},
+ 'Seddiner See Nord':{par:[4,5,4,3,4,4,3,5,4,4,4,3,5,4,3,5,4,4],
+   tees:{'Weiss 6272 m':[73.5,132],'Gelb 5978 m':[71.5,133]}},
  'Other':{par:null,tees:{}}
 };
 const COURSES=Object.keys(CD);
-const CLABEL={'GC Gatow':'Gatow'};
+const CLABEL={'GC Gatow':'Gatow','Seddiner See Nord':'Seddiner Nord'};
 const CFIX={'Stolper Heide Ost':'Stolpe Ost','Stolper Heide West':'Stolpe West'};
 
 let db={rounds:[],sessions:[],stride:null};
@@ -345,7 +352,7 @@ function renderPlay(){
       <div class="card"><div class="eyebrow" style="margin-bottom:6px">Course</div>
       <div class="chips">${COURSES.map(c=>
         `<button class="${(db.lastCourse||COURSES[0])===c?'on':''}" onclick="setCourse('${c}')">${CLABEL[c]||c}</button>`).join('')}</div>
-      <p class="hint">Stolpe Ost, Stolpe West and Gatow load their real par sequence. Others start generic — fix par per hole as you go.</p>
+      <p class="hint">Stolpe Ost, Stolpe West, Gatow and Seddiner Nord load their real par sequence. Others start generic — fix par per hole as you go.</p>
       ${teePicker()}
       <div class="eyebrow" style="margin:14px 0 6px">Tier 2 panel</div>
       <div class="seg">
