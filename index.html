@@ -147,9 +147,28 @@
 <div id="v-data" class="wrap hide"></div>
 
 <script>
-const VER='2.9 \u00b7 21 Sep 2026';
+const VER='3.0 \u00b7 21 Sep 2026';
 const CLUBS=['LW','SW','GW','PW','9i','8i','7i','6i','5i','4H','5W','3W','Dr'];
 const PUTT_B=['0-1','2-3','4-6','7-10','11+'];
+const BOOK_F=['tee','app','grn'];
+const BOOK_L={tee:'Tee',app:'Approach',grn:'Green'};
+function bookGet(course,hn){
+  var c=(db.book||{})[course]||{}; var e=c[String(hn)]||{};
+  return {tee:e.tee||'',app:e.app||'',grn:e.grn||''};}
+function bookHas(course,hn){var e=bookGet(course,hn);
+  return !!(e.tee||e.app||e.grn);}
+function bookSet(course,hn,f,v,quiet){
+  if(BOOK_F.indexOf(f)<0)return;
+  if(!db.book)db.book={};
+  if(!db.book[course])db.book[course]={};
+  var k=String(hn);
+  if(!db.book[course][k])db.book[course][k]={};
+  db.book[course][k][f]=String(v==null?'':v).slice(0,300);
+  if(!db.book[course][k][f])delete db.book[course][k][f];
+  if(!Object.keys(db.book[course][k]).length)delete db.book[course][k];
+  if(!quiet){save();render();}}
+function bookSetCur(f,v){var h=cur.holes[hole];bookSet(cur.course,hno(h,hole),f,v);}
+function bookPick(c){bookCourse=c;render();}
 function fpBucket(n){n=+n; if(!isFinite(n)||n<0)return null;
   return n<=1?'0-1':(n<=3?'2-3':(n<=6?'4-6':(n<=10?'7-10':'11+')));}
 function fpSet(v){const h=cur.holes[hole];
@@ -192,13 +211,14 @@ const CD={
    tees:{'Gelb 5825 m':[71.3,126],'Blau 5508 m':[69.4,124]}},
  'Seddiner See Nord':{par:[4,5,4,3,4,4,3,5,4,4,4,3,5,4,3,5,4,4],
    tees:{'Weiss 6272 m':[73.5,132],'Gelb 5978 m':[71.5,133]}},
- 'Other':{par:null,tees:{}}
 };
-const COURSES=Object.keys(CD);
+function courseList(){return Object.keys(CD);}
 const CLABEL={'GC Gatow':'Gatow','Seddiner See Nord':'Seddiner Nord'};
 const CFIX={'Stolper Heide Ost':'Stolpe Ost','Stolper Heide West':'Stolpe West'};
 
-let db={rounds:[],sessions:[],stride:null};
+let db={rounds:[],sessions:[],stride:null,book:{},courses:{}};
+let newC=null, newCMsg='';
+let bookEdit=false, bookCourse=null, bookOpen=false;
 let cur=null, sess=null, hole=0, view='play', storeOk=true, t2Open=true, flash='', finishing=false, legend=false, RO=false, vwId=null, vwHole=0;
 const TEE_CLUBS=['Dr','3W','5W','4H','5i','6i','7i'];
 const AREAS=['Range','Clubs','Short game','Putting','Bunker'];
@@ -222,7 +242,12 @@ function pctSet(v){const h=cur.holes[hole];
   h.done=true;save();render();}
 function defNo(h){return h.par===3?1:(h.par===5?((h.p5==='hit'||h.p5==='miss')?2:3):2);}
 function bumpNo(d){const h=cur.holes[hole];h.appNo=Math.max(1,Math.min(8,(h.appNo||defNo(h))+d));h.done=true;save();render();}
+function mergeCourses(){
+  Object.keys(db.courses||{}).forEach(function(k){
+    var c=db.courses[k];
+    if(c&&Array.isArray(c.par)&&c.par.length===18)CD[k]={par:c.par.slice(),tees:c.tees||{},custom:true};});}
 function migrate(){
+  mergeCourses();
   (db.rounds||[]).forEach(function(r){(r.holes||[]).forEach(function(h){h.done=true;});});
   var FPMAP={'2-4':'2-3','5-9':'7-10','10+':'11+'};
   var CHIPMAP={'0-1':'0-1','2-4':'2-3','5+':'7-10'};
@@ -236,8 +261,8 @@ function migrate(){
   (db.rounds||[]).forEach(r=>{if(CFIX[r.course])r.course=CFIX[r.course];});
   if(cur&&CFIX[cur.course])cur.course=CFIX[cur.course];
   if(CFIX[db.lastCourse])db.lastCourse=CFIX[db.lastCourse];
-  if(db.lastTee&&!COURSES.some(c=>teeList(c).includes(db.lastTee)))db.lastTee=null;
-  if(!db.lastTee)db.lastTee=defaultTee(db.lastCourse||COURSES[0]);
+  if(db.lastTee&&!courseList().some(c=>teeList(c).includes(db.lastTee)))db.lastTee=null;
+  if(!db.lastTee)db.lastTee=defaultTee(db.lastCourse||courseList()[0]);
   const M={hit:['pin','ctr'],short:['short',null],long:['long',null],
            left:[null,'left'],right:[null,'right']};
   (db.rounds||[]).forEach(r=>(r.holes||[]).forEach(h=>{
@@ -284,7 +309,7 @@ function setTheme(t){db.theme=t;applyTheme();save();render();}
 async function load(){
   detectStore();
   try{const r=await ST.get(KEY);
-    if(r&&r.value){const d=JSON.parse(r.value);db.rounds=d.rounds||[];db.sessions=d.sessions||[];db.stride=d.stride??null;
+    if(r&&r.value){const d=JSON.parse(r.value);db.rounds=d.rounds||[];db.sessions=d.sessions||[];db.stride=d.stride??null;db.book=d.book||{};db.courses=d.courses||{};
       db.theme=d.theme||'auto';db.t2default=d.t2default;db.lastCourse=d.lastCourse;db.lastTee=d.lastTee;db.startHole=d.startHole;
       cur=d.cur||null;hole=d.hole||0;
       t2Open=cur?(cur.t2open!==false):(db.t2default!==false);}
@@ -302,7 +327,7 @@ let saveTimer=null;
 function save(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(async()=>{
-    try{await ST.set(KEY,JSON.stringify({rounds:db.rounds,sessions:db.sessions,stride:db.stride,theme:db.theme,t2default:db.t2default,lastCourse:db.lastCourse,lastTee:db.lastTee,startHole:db.startHole,cur:cur,hole:hole}));
+    try{await ST.set(KEY,JSON.stringify({rounds:db.rounds,sessions:db.sessions,stride:db.stride,book:db.book,courses:db.courses,theme:db.theme,t2default:db.t2default,lastCourse:db.lastCourse,lastTee:db.lastTee,startHole:db.startHole,cur:cur,hole:hole}));
       storeOk=true;}
     catch(e){storeOk=false;}
     var h=document.getElementById('hdr');
@@ -363,9 +388,9 @@ function renderPlay(){
   if(!cur){
     el.innerHTML=`<div class="banner">No round open. Tier 1 takes five seconds a hole and goes in every round, including team matches.</div>
       <div class="card"><div class="eyebrow" style="margin-bottom:6px">Course</div>
-      <div class="chips">${COURSES.map(c=>
-        `<button class="${(db.lastCourse||COURSES[0])===c?'on':''}" onclick="setCourse('${c}')">${CLABEL[c]||c}</button>`).join('')}</div>
-      <p class="hint">Stolpe Ost, Stolpe West, Gatow and Seddiner Nord load their real par sequence. Others start generic — fix par per hole as you go.</p>
+      <select onchange="setCourse(this.value)">${courseList().map(c=>
+        `<option value="${esc(c)}" ${(db.lastCourse||courseList()[0])===c?'selected':''}>${esc(CLABEL[c]||c)}</option>`).join('')}</select>
+      <p class="hint">Every course here loads its own par sequence and tee ratings. Add one in Data \u2192 Courses.</p>
       ${teePicker()}
       <div class="eyebrow" style="margin:14px 0 6px">Tier 2 panel</div>
       <div class="seg">
@@ -384,6 +409,43 @@ function renderPlay(){
       ${armed==='sh'?holeGrid():''}`;
     return;}
   el.innerHTML=holeScreenHTML();
+}
+function bookToggle(){bookOpen=!bookOpen; if(!bookOpen)bookEdit=false; save(); render();}
+function bookCardHTML(h){
+  var hn=hno(h,hole), c=cur.course, b=bookGet(c,hn), any=!!(b.tee||b.app||b.grn);
+  var lines=BOOK_F.filter(function(f){return b[f];}).map(function(f){
+    return '<div style="display:flex;gap:8px;padding:3px 0"><div style="flex:0 0 54px;font-size:10px;'+
+      'text-transform:uppercase;letter-spacing:.06em;opacity:.55;padding-top:2px">'+BOOK_L[f]+'</div>'+
+      '<div style="flex:1;font-size:12.5px;line-height:1.35;white-space:pre-wrap">'+esc(b[f])+'</div></div>';}).join('');
+  var pillBase='display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;'+
+    'font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;width:auto;'+
+    'border:1px solid var(--pine);background:transparent;color:var(--pine);line-height:1';
+  if(!bookOpen){
+    return '<div style="margin:8px 0 2px"><button onclick="bookToggle()" style="'+pillBase+
+      (any?'':';opacity:.45')+'">\u2691 Birdie book \u00b7 H'+hn+
+      (any?' <span style="font-size:13px;line-height:0">\u25cf</span>':'')+'</button></div>';}
+  return '<div style="margin:8px 0 2px;border:1px solid var(--pine);border-radius:var(--r);'+
+    'padding:9px 11px;background:var(--surf)">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'+
+      '<div style="flex:1;font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;'+
+        'color:var(--pine)">\u2691 Birdie book \u00b7 '+esc(c)+' H'+hn+'</div>'+
+      (RO?'':'<button onclick="bookEdit=!bookEdit;render()" style="'+pillBase+';padding:3px 9px">'+
+        (bookEdit?'Done':(any?'Edit':'Add'))+'</button>')+
+      '<button onclick="bookToggle()" style="'+pillBase+';padding:3px 9px;border-color:var(--line);'+
+        'color:var(--ink);opacity:.6">Hide</button>'+
+    '</div>'+
+    ((!RO&&bookEdit)
+      ? BOOK_F.map(function(f){
+          return '<div style="margin-bottom:6px"><div style="font-size:10px;text-transform:uppercase;'+
+            'letter-spacing:.06em;opacity:.55;margin-bottom:2px">'+BOOK_L[f]+'</div>'+
+            '<textarea onchange="bookSetCur(\''+f+'\',this.value)" placeholder="'+
+            (f==='tee'?'dead side'
+             :(f==='app'?'playable miss, carry'
+                        :'slope, where not to putt from'))+'" '+
+            'style="width:100%;height:40px;font-family:inherit;font-size:12.5px;border:1px solid var(--line);'+
+            'border-radius:3px;padding:6px;background:var(--bg);color:var(--ink)">'+esc(b[f])+'</textarea></div>';}).join('')
+      : (lines||'<p class="hint" style="margin:0">Nothing written for this hole.</p>'))+
+    '</div>';
 }
 function holeScreenHTML(){
   const h=cur.holes[hole], n=cur.n;
@@ -404,6 +466,8 @@ function holeScreenHTML(){
       <div class="seg" ${RO?'style="pointer-events:none;opacity:.55"':''}>${[3,4,5].map(p=>`<button class="${h.par===p?'on':''}" onclick="setPar(${p})">${p}</button>`).join('')}</div>
     </div>
   </div>
+
+  ${bookCardHTML(h)}
 
   <div ${RO?'style="pointer-events:none"':''}>
   ${h.par>3?`<div class="row"><div class="lab">Tee</div><div class="seg">
@@ -526,13 +590,13 @@ function holeScreenHTML(){
     ? (h.note?`<div style="padding:9px 0"><div class="lab" style="margin-bottom:4px">Note</div>
         <p class="hint" style="margin:0;white-space:pre-wrap;color:var(--ink)">${esc(h.note)}</p></div>`:'')
     : `<details ${h.note?'open':''} style="margin-top:2px">
-    <summary>Note${h.note?' \u25cf':''} \u25be</summary>
+    <summary>Round note${h.note?' \u25cf':''} \u25be</summary>
     <textarea placeholder="anything worth remembering about this hole"
       onchange="noteSet(this.value)"
       style="width:100%;height:64px;font-family:inherit;font-size:13px;border:1px solid var(--line);
         border-radius:3px;padding:8px;background:var(--surf);color:var(--ink);margin-top:6px"
       >${esc(h.note)}</textarea>
-    <p class="hint" style="margin:4px 0 0">Free text. Never counted, never aggregated \u2014 the place for anything the schema has no field for.</p>
+    <p class="hint" style="margin:4px 0 0">What happened <b>today</b>, on this hole \u2014 state, commitment, decisions. Dies with the round. Permanent hole knowledge goes in the course book at the top.</p>
   </details>`}
 
   </div>
@@ -596,7 +660,7 @@ async function saveNow(){
   clearTimeout(saveTimer);
   try{
     await ST.set(KEY,JSON.stringify({rounds:db.rounds,sessions:db.sessions,
-      stride:db.stride,theme:db.theme,t2default:db.t2default,lastCourse:db.lastCourse,
+      stride:db.stride,book:db.book,courses:db.courses,theme:db.theme,t2default:db.t2default,lastCourse:db.lastCourse,
       lastTee:db.lastTee,cur:cur,hole:hole}));
     storeOk=true;
     var d=new Date();
@@ -636,13 +700,59 @@ function finalTotal(){
   if(!S.length)return 'no score';
   var t=S.reduce(function(a,x){return a+x.score},0);
   return u? toPar(S)+' thru '+S.length : t+' ('+toPar(S)+')';}
+function parseParSeq(v){
+  var t=String(v||'').replace(/\s+/g,'');
+  var arr = t.indexOf(',')>=0
+    ? t.split(',').filter(function(x){return x!=='';})
+    : t.split('');
+  if(arr.length!==18)return null;
+  var out=[];
+  for(var i=0;i<18;i++){var n=parseInt(arr[i],10);
+    if(!(n===3||n===4||n===5))return null; out.push(n);}
+  return out;}
+function newCourseOpen(){
+  newC={name:'',par:'',tees:[{n:'',cr:'',sl:''}]}; newCMsg=''; render();}
+function newCourseCancel(){newC=null;newCMsg='';render();}
+function newCField(f,v){if(!newC)return;newC[f]=v;}
+function newCTee(i,f,v){if(!newC||!newC.tees[i])return;newC.tees[i][f]=v;}
+function newCAddTee(){if(!newC)return;if(newC.tees.length<6)newC.tees.push({n:'',cr:'',sl:''});render();}
+function newCDropTee(i){if(!newC)return;newC.tees.splice(i,1);if(!newC.tees.length)newC.tees=[{n:'',cr:'',sl:''}];render();}
+function newCourseSave(){
+  if(!newC)return;
+  var nm=String(newC.name||'').trim();
+  if(!nm){newCMsg='Name it first.';render();return;}
+  if(CD[nm]){newCMsg='A course called '+nm+' already exists.';render();return;}
+  var pars=parseParSeq(newC.par);
+  if(!pars){newCMsg='Par needs 18 values, each 3, 4 or 5 \u2014 "443544435 444344354" or "4,4,3,...".';render();return;}
+  var tees={},bad='';
+  newC.tees.forEach(function(t){
+    var n=String(t.n||'').trim(); if(!n)return;
+    var cr=parseFloat(String(t.cr).replace(',','.')), sl=parseInt(t.sl,10);
+    if(!isFinite(cr)||cr<55||cr>85){bad='CR for "'+n+'" looks wrong \u2014 expected roughly 55 to 85.';return;}
+    if(!isFinite(sl)||sl<55||sl>155){bad='Slope for "'+n+'" looks wrong \u2014 expected 55 to 155.';return;}
+    tees[n]=[cr,sl];});
+  if(bad){newCMsg=bad;render();return;}
+  if(!Object.keys(tees).length){newCMsg='Add at least one tee with a CR and a slope.';render();return;}
+  db.courses[nm]={par:pars,tees:tees};
+  mergeCourses();
+  db.lastCourse=nm; db.lastTee=defaultTee(nm);
+  newC=null; newCMsg='Added '+nm+'.'; bookCourse=nm;
+  save(); render();}
+function courseDrop(nm){
+  if(!db.courses[nm])return;
+  if((db.rounds||[]).some(function(r){return r.course===nm;})||(cur&&cur.course===nm)){
+    newCMsg='Cannot remove '+nm+' \u2014 rounds are logged on it.';render();return;}
+  delete db.courses[nm]; delete CD[nm];
+  if(db.lastCourse===nm){db.lastCourse=courseList()[0];db.lastTee=defaultTee(db.lastCourse);}
+  if(bookCourse===nm)bookCourse=null;
+  newCMsg='Removed '+nm+'.'; save(); render();}
 function defaultTee(c){
   var TL=teeList(c);
   for(var i=0;i<TL.length;i++){if(TL[i].indexOf('Gelb')===0)return TL[i];}
   return TL[0]||null;
 }
 function teePicker(){
-  var C=db.lastCourse||COURSES[0];
+  var C=db.lastCourse||courseList()[0];
   var TL=teeList(C);
   if(!TL.length){
     return '<p class="hint">No ratings stored for '+(CLABEL[C]||C)+
@@ -675,7 +785,7 @@ function setCourse(c){db.lastCourse=c;
   save();render();}
 function setTeeDefault(t){db.lastTee=t;save();render();}
 function start(n){
-  const C=db.lastCourse||COURSES[0];
+  const C=db.lastCourse||courseList()[0];
   cur=newRound(n,C,db.startHole||1);
   if(db.lastTee&&CD[C]&&CD[C].tees[db.lastTee]){
     const T=CD[C].tees[db.lastTee];
@@ -701,7 +811,7 @@ function renderFinish(){
     <h2 class="num" style="font-size:34px;margin:4px 0 4px">${finalTotal()}</h2>
     <p class="hint" style="margin:0 0 10px">${endCount()} holes${endCount()===18?' · counts for handicap':(endCount()===9?' · 9-hole score':' · partial round, stats only')}${cur.endAt&&cur.endAt<cur.n?' · holes '+(cur.endAt+1)+'-'+cur.n+' dropped':''}</p>
     <div class="row"><div class="lab">Course</div><select onchange="meta('course',this.value);finish()">
-      ${COURSES.map(c=>`<option value="${c}" ${cur.course===c?'selected':''}>${CLABEL[c]||c}</option>`).join('')}</select></div>
+      ${courseList().map(c=>`<option value="${c}" ${cur.course===c?'selected':''}>${CLABEL[c]||c}</option>`).join('')}</select></div>
     ${teeList(cur.course).length?`<div class="row"><div class="lab">Tees</div><div class="seg" style="flex-wrap:wrap">
       ${teeList(cur.course).map(t=>`<button class="${cur.tees===t?'on':''}" style="flex:1 1 44%;font-size:12px" onclick="setTee('${t}')">${t}</button>`).join('')}
     </div></div>`:`<div class="row"><div class="lab">Tees</div><input value="${esc(cur.tees)}" placeholder="tee · CR · slope" onchange="meta('tees',this.value)"></div>`}
@@ -1379,9 +1489,21 @@ function importData(){
   (d.rounds||[]).forEach(function(r){if(r&&r.id&&!have[r.id]){db.rounds.push(r);aR++;}});
   (d.sessions||[]).forEach(function(x){if(x&&x.id&&!haveS[x.id]){db.sessions.push(x);aS++;}});
   if(d.stride&&!db.stride)db.stride=d.stride;
+  var aC=0;
+  if(d.courses&&typeof d.courses==='object'){
+    Object.keys(d.courses).forEach(function(k){
+      if(!db.courses[k]&&!CD[k]){db.courses[k]=d.courses[k];aC++;}});
+    mergeCourses();}
+  var aB=0;
+  if(d.book&&typeof d.book==='object'){
+    Object.keys(d.book).forEach(function(c){
+      Object.keys(d.book[c]||{}).forEach(function(k){
+        var src=d.book[c][k]||{};
+        BOOK_F.forEach(function(f){
+          if(src[f]&&!bookGet(c,k)[f]){bookSet(c,k,f,src[f],true);aB++;}});});});}
   db.rounds.sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''))||(a.id-b.id);});
   migrate(); save();
-  impMsg='Imported '+aR+' round'+(aR===1?'':'s')+' and '+aS+' session'+(aS===1?'':'s')+'. Duplicates skipped. Total now '+db.rounds.length+' rounds.';
+  impMsg='Imported '+aR+' round'+(aR===1?'':'s')+', '+aS+' session'+(aS===1?'':'s')+', '+aB+' book line'+(aB===1?'':'s')+' and '+aC+' course'+(aC===1?'':'s')+'. Duplicates skipped. Total now '+db.rounds.length+' rounds.';
   render();
 }
 function renderData(){
@@ -1406,6 +1528,59 @@ function renderData(){
   <p class="hint" style="margin:0 0 8px">Every field, what it means and why it is shaped that way. The hole screen stays short on purpose — this is where the definitions live.</p>
   <button class="big ghost" onclick="legend=!legend;render()">${legend?'Hide legend':'Show legend'}</button>
   ${legend?`<div class="card" style="margin-top:2px"><h3 class="eyebrow" style="margin:18px 0 6px">Tier 1 — every round</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Score / Putts</div><p class="hint" style="margin:0">Sit at the bottom of the hole screen, below everything else, because they are the last thing you know. Both prefill (score = par, putts = 2), so a hole you never touched and a par with two putts look identical in the data. The star check cannot see a missing score.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Tee</div><p class="hint" style="margin:0">Where the ball finished laterally: Fairway / Left / Right / Other. <b>Other</b> is on line but not in the fairway — short, topped, fairway bunker on your line. OB and water are <i>not</i> Other: a drive OB left is Tee = Left plus Penalty = OB. Side is what costs you strokes, not depth, which is why the field only measures side.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Club</div><p class="hint" style="margin:0">Tee club. Feeds the driver-versus-3W comparison, which is confounded by selection: 3W gets used on the harder holes, so a raw loss-rate comparison between the two is not a like-for-like read.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Next shot was just back in play</div><p class="hint" style="margin:0">The tee shot left you unable to go at the green. A judgement about options, not about how the lie felt. Par 4 and 5 only.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">2nd shot (par 5)</div><p class="hint" style="margin:0"><b>Went</b> = you took on the green with the second. <b>Laid up</b> = you chose not to. <b>Never on</b> = no choice existed, because the tee shot was in trouble or no club reached. Separating choice from circumstance is the whole point; collapsing them would credit or blame a decision you never made.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Green</div><p class="hint" style="margin:0">GIR by the strict definition — on the putting surface in regulation. Fringe is not on.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Penalty</div><p class="hint" style="margin:0">OB / Water / Other. <b>Other</b> is unplayable, lost ball that is not OB, staked trees, rules penalties — it exists so that OB and Water stay clean, because your hazard framework is built on those two. <b>It was the tee shot</b> keeps the tee club from being blamed for a shot it did not hit.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Picked up / given</div><p class="hint" style="margin:0">Voids score and putts for the hole, keeps every other field. Use it rather than guessing a number.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Stars on the hole strip</div><p class="hint" style="margin:0">Solid star = a Tier 1 field is empty. Faint star = a Tier 2 field is empty. Only holes you have already touched are checked. One star per hole, Tier 1 wins.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Tier 2 — the approach</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">This shot</div><p class="hint" style="margin:0"><b>At the green</b> or <b>Never at it</b>. Tier 2 always describes the approach — the shot you actually went at the green with, however many strokes in. If you punched out on the second and hit the green with the third, that is <i>At the green</i> with Shot # 3; the punch-out is already recorded by <i>Next shot was just back in play</i>. <b>Never at it</b> means no shot on the hole was aimed at the green, and it is what tells the star check that empty approach fields are legitimate rather than forgotten. Only <i>At the green</i> holes feed the short:long ratio.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Shot #</div><p class="hint" style="margin:0">Which stroke the approach was. Derived from par and the par-5 second-shot choice; tap to correct when a reload or a punch-out shifted it.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Flag</div><p class="hint" style="margin:0">Lasered distance to the flag. Objective, no adjustment applied.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">±%</div><p class="hint" style="margin:0">Types a percentage and fills <b>Play to</b> for you — <code>+10</code>, <code>-5</code>, <code>7.5</code>, <code>10%</code> all work. It stores nothing: the percentage is recoverable from Flag and Play to, so the box is a live readout of your adjustment as much as an input. Needs a Flag first. Clearing it leaves Play to alone. Wind reference: <b>1.25% per mph into, 0.5% per mph downwind</b> — not the symmetric 1% rule.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Play to</div><p class="hint" style="margin:0">The number you committed to hit after wind, elevation and lie. Logged separately from Flag so that a bad number and a bad strike never collapse into the same datapoint. The gap between the two <i>is</i> your adjustment, recorded for free.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Distance / Line</div><p class="hint" style="margin:0">Both judged against <b>Play to</b>, never the flag. Short:long is the documented 5:1 leak; left:right completes the accessibility matrix.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Not a stock swing</div><p class="hint" style="margin:0">Stock means your normal swing with that club, whatever number you gave it today — a PW you decided plays 135 is still stock. Flag only knockdowns, three-quarters, punches and shaped shots. If it fires on every windy hole it carries no signal and the distance calibration loses its filter.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Fat / Hosel</div><p class="hint" style="margin:0">Blank by default and blank almost always. Only for strikes you would call unambiguous: a proper chunk, or a hosel strike you knew the moment it left. An event log for wrist load and early extension, not a strike-quality grade — anything that flew its number gets nothing. Available on lay-ups and punch-outs too, because a chunked punch-out loads the wrist the same.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Tier 2 — missed green</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Position</div><p class="hint" style="margin:0">Short-sided = under roughly 8 m of green between ball and flag, or a bunker, water or severe slope sitting on the line. Judge it standing over the ball <b>before</b> you play the recovery. Judged afterwards it records how the shot turned out instead of where you were, which is the error that made the old proximity data worthless. Two buttons on purpose: blank means you forgot, not that you had room.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Recovery</div><p class="hint" style="margin:0">The <b>first</b> recovery shot only. Chip is greenside and running. Pitch is a full-ish wedge that flies, roughly 25 m and up. Putted on is from off the surface.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">After it</div><p class="hint" style="margin:0">Where the ball <b>physically was</b> once that first recovery came to rest — on the putting surface or not. Fringe counts as not on. Not a judgement of the shot: a chip to three paces you then three-putt is <i>On the green</i>, and a thinned chip eighteen paces past but on the surface is also <i>On the green</i>. That one's cost shows up as first-putt distance instead, which is where it actually lands. Crossed against Position, this separates a greenside strike problem from an approach aiming problem.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Tier 2 — putting</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">1st putt</div><p class="hint" style="margin:0">Paced steps from the ball to the hole, never an estimate in feet, however the ball got there — iron, chip or bunker shot. Pace it as you walk in; enter it last. Buckets are cut where make rate roughly halves, not evenly.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Miss · speed / Miss · line</div><p class="hint" style="margin:0">Two independent axes, because both can be wrong at once and one combined field would discard that. Low side never had a chance; on line means only the speed was wrong. Magnitude stays out deliberately — a three-putt already records itself, and a severity button would be an outcome judgement.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Round close</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Bag</div><p class="hint" style="margin:0">Carried, push cart or buggy. Fatigue and forearm load in one field, worth keeping separable from everything else.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Warm-up</div><p class="hint" style="margin:0">Balls / putts / minutes / route as four numbers. Balls carry wrist load, putts do not, minutes are the connective-tissue warm-up you are not allowed to shorten. One figure called ‘32’ told you none of that.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Wind</div><p class="hint" style="margin:0">Round level. Distance data from a windy round is not comparable with a calm one — one tap keeps them separable, and it is the filter that decides whether your short bias is wind judgement or carry numbers.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Wrist</div><p class="hint" style="margin:0">Symptoms after the round, on the same record as the load that produced them, so a flare has a visible ramp. Next-morning check is the cleaner recovery signal.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Close out after X</div><p class="hint" style="margin:0">Drops the remaining holes at save. <b>Back to holes</b> restores every hole exactly as it was — nothing is marked played by opening the close-out screen.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Rules of the block</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Paces, not feet</div><p class="hint" style="margin:0">Every short-game distance is paced steps, converted by the stride figure below. Yards from the rangefinder for everything full-swing. Never mix the two.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Two-tier entry</div><p class="hint" style="margin:0">Approach fields after the approach shot. Score and putts after holing out. Anything entered from memory on the next tee is worth less than a blank.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">No conclusions before round 20</div><p class="hint" style="margin:0">Block-level findings wait. Single rounds are anecdotes, and a good score can be built on poor ball-striking that the short game covered.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">9 versus 18</div><p class="hint" style="margin:0">A 9-hole differential is doubled to an 18-hole equivalent and marked ≈. Never compare a raw 9-hole number with an 18-hole one.</p></div></div>`:''}
+
+  <h3 class="eyebrow" style="margin:22px 0 6px">Courses</h3>
+  <p class="hint" style="margin:0 0 8px">Every course in the picker, with its par sequence and tee ratings. A course added here is permanent and appears everywhere.</p>
+  <div class="card" style="margin-top:0">
+    ${courseList().map(c=>{
+      var t=Object.keys((CD[c]&&CD[c].tees)||{});
+      var used=(db.rounds||[]).filter(r=>r.course===c).length;
+      return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)">
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:13px">${esc(CLABEL[c]||c)}${CD[c]&&CD[c].custom?' <span class="hint" style="margin:0;font-size:10px">own</span>':''}</div>
+          <div class="hint" style="margin:2px 0 0">par ${(CD[c]&&CD[c].par||[]).reduce((a,b)=>a+b,0)||'—'} · ${t.length} tee${t.length===1?'':'s'} · ${used} round${used===1?'':'s'}</div>
+        </div>
+        ${CD[c]&&CD[c].custom&&!used?`<button class="ghost" style="padding:3px 9px;font-size:11px;width:auto" onclick="courseDrop('${c.replace(/'/g,"\\'")}')">Remove</button>`:''}
+      </div>`;}).join('')}
+  </div>
+  ${newC?`<div class="card" style="border-color:var(--pine)">
+    <div class="eyebrow" style="margin-bottom:6px">New course</div>
+    <div style="margin-bottom:8px"><div class="hint" style="margin:0 0 3px">Name</div>
+      <input value="${esc(newC.name)}" placeholder="Berliner GC Gatow" onchange="newCField('name',this.value)"></div>
+    <div style="margin-bottom:8px"><div class="hint" style="margin:0 0 3px">Par, holes 1–18</div>
+      <input class="mono" value="${esc(newC.par)}" placeholder="443544435 444344354" onchange="newCField('par',this.value)">
+      <p class="hint" style="margin:3px 0 0">18 digits, or comma separated. Spaces ignored.</p></div>
+    <div class="hint" style="margin:0 0 3px">Tees — name, CR, slope</div>
+    ${newC.tees.map((t,i)=>`<div style="display:flex;gap:5px;margin-bottom:5px">
+      <input value="${esc(t.n)}" placeholder="Gelb 5825 m" onchange="newCTee(${i},'n',this.value)" style="flex:1">
+      <input class="mono" inputmode="decimal" value="${esc(t.cr)}" placeholder="CR" onchange="newCTee(${i},'cr',this.value)" style="flex:0 0 62px">
+      <input class="mono" inputmode="numeric" value="${esc(t.sl)}" placeholder="SL" onchange="newCTee(${i},'sl',this.value)" style="flex:0 0 58px">
+      <button class="ghost" style="flex:0 0 34px;width:auto;padding:0" onclick="newCDropTee(${i})">×</button></div>`).join('')}
+    <button class="ghost" style="padding:4px 10px;font-size:11px;width:auto" onclick="newCAddTee()">+ Tee</button>
+    <div style="display:flex;gap:6px;margin-top:10px">
+      <button class="big" style="flex:1" onclick="newCourseSave()">Save course</button>
+      <button class="big ghost" style="flex:0 0 96px" onclick="newCourseCancel()">Cancel</button></div>
+  </div>`:`<button class="big ghost" onclick="newCourseOpen()">Create new course</button>`}
+  ${newCMsg?`<p class="hint">${esc(newCMsg)}</p>`:''}
+
+  <h3 class="eyebrow" style="margin:22px 0 6px">Birdie book</h3>
+  <p class="hint" style="margin:0 0 8px">Written at home, read on the tee. Keyed to the course and hole number, so it carries across every round you ever play there and never enters the round data.</p>
+  <select onchange="bookPick(this.value)">${courseList().map(c=>{
+    var n=Object.keys((db.book||{})[c]||{}).length;
+    return `<option value="${esc(c)}" ${(bookCourse||db.lastCourse||courseList()[0])===c?'selected':''}>${esc(c)}${n?' \u00b7 '+n+' hole'+(n===1?'':'s'):' \u00b7 empty'}</option>`;}).join('')}</select>
+  ${(function(){
+    var c=bookCourse||db.lastCourse||courseList()[0];
+    var base=(CD[c]&&CD[c].par)||GENERIC;
+    return `<div class="card" style="margin-top:8px">${base.map(function(pp,i){
+      var hn=i+1, b=bookGet(c,hn), has=b.tee||b.app||b.grn;
+      return `<details ${has?'':''} style="border-bottom:1px solid var(--line)">
+        <summary style="padding:7px 0"><b>H${hn}</b> <span style="opacity:.5;font-size:12px">par ${pp}</span>
+          ${has?'<span style="color:var(--pine)"> \u25cf</span>':''}</summary>
+        ${BOOK_F.map(function(f){
+          return `<div style="margin:0 0 7px"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;opacity:.6;margin-bottom:3px">${BOOK_L[f]}</div>
+          <textarea onchange="bookSet('${c.replace(/'/g,"\\'")}',${hn},'${f}',this.value)"
+            style="width:100%;height:42px;font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:3px;padding:7px;background:var(--surf);color:var(--ink)">${esc(b[f])}</textarea></div>`;}).join('')}
+      </details>`;}).join('')}</div>`;})()}
 
   <h3 class="eyebrow" style="margin:22px 0 6px">Restore from backup</h3>
   <p class="hint" style="margin:0 0 8px">Paste a previously exported JSON block. Existing rounds are kept — anything already here is skipped, so importing twice does no harm.</p>
@@ -1433,7 +1608,7 @@ function renderData(){
   <h3 class="eyebrow" style="margin:20px 0 6px">Export</h3>
   <p class="hint" style="margin:0 0 8px">Copy and paste into chat. Summary for a read; full JSON to move the data.</p>
   <button class="big" onclick="copy(summaryText())">Copy summary</button>
-  <button class="big ghost" onclick="copy(JSON.stringify({rounds:db.rounds,sessions:db.sessions,stride:db.stride}))">Copy full JSON</button>
+  <button class="big ghost" onclick="copy(JSON.stringify({rounds:db.rounds,sessions:db.sessions,stride:db.stride,book:db.book,courses:db.courses}))">Copy full JSON</button>
   <textarea id="out" readonly style="width:100%;height:190px;font-family:'IBM Plex Mono',monospace;
     font-size:11px;border:1px solid var(--line);border-radius:3px;padding:9px;background:var(--surf);color:var(--ink)"
     >${esc(summaryText())}</textarea>
@@ -1553,6 +1728,14 @@ function summaryText(){
     o+='  short-sided approach miss: short '+cn(ssY,'appD','short')+' long '+cn(ssY,'appD','long')+
        ' left '+cn(ssY,'appL','left')+' right '+cn(ssY,'appL','right')+'\n';
   }
+  var BK=[];
+  Object.keys(db.book||{}).sort().forEach(function(c){
+    var hs=Object.keys(db.book[c]||{}).sort(function(a,b){return (+a)-(+b);});
+    if(!hs.length)return;
+    BK.push('  '+c+':');
+    hs.forEach(function(k){var e=db.book[c][k];
+      BOOK_F.forEach(function(f){if(e[f])BK.push('    H'+k+' '+BOOK_L[f]+': '+e[f]);});});});
+  if(BK.length)o+='\nbirdie book:\n'+BK.join('\n')+'\n';
   var NT=[];
   R.forEach(function(r){(r.holes||[]).forEach(function(h,i){
     if(h.note)NT.push('  '+r.date+' H'+(h.hno||i+1)+': '+h.note);});});
