@@ -147,9 +147,20 @@
 <div id="v-data" class="wrap hide"></div>
 
 <script>
-const VER='2.8 \u00b7 18 Sep 2026';
+const VER='2.9 \u00b7 21 Sep 2026';
 const CLUBS=['LW','SW','GW','PW','9i','8i','7i','6i','5i','4H','5W','3W','Dr'];
 const PUTT_B=['0-1','2-3','4-6','7-10','11+'];
+function fpBucket(n){n=+n; if(!isFinite(n)||n<0)return null;
+  return n<=1?'0-1':(n<=3?'2-3':(n<=6?'4-6':(n<=10?'7-10':'11+')));}
+function fpSet(v){const h=cur.holes[hole];
+  var raw=String(v==null?'':v).replace(',','.').trim();
+  if(raw===''){h.fpN=null; h.done=true; save(); render(); return;}
+  var q=Math.round(parseFloat(raw));
+  if(!isFinite(q)||q<0){h.done=true; save(); render(); return;}
+  if(q>60)q=60;
+  h.fpN=q; h.fp=fpBucket(q); h.done=true; save(); render();}
+function noteSet(v){const h=cur.holes[hole];h.note=String(v==null?'':v).slice(0,400);
+  h.done=true; save(); render();}
 const KEY='golf:v1';
 var STMODE='none';
 var ST={
@@ -197,7 +208,7 @@ function blankSess(){return{id:Date.now()*1000+Math.floor(Math.random()*1000),da
 function blankHole(p){return{par:p,score:p,putts:2,pu:null,tee:null,gir:null,pen:null,
   penTee:null,rec:null,ss:null,teeClub:null,teeOut:null,appFlag:'',appDist:'',appClub:'',
   appD:null,appL:null,appAlt:null,
-  appKind:'green',appNo:null,p5:null,con:null,rec2:null,fp:null,fpD:null,fpL:null,chip:null};}
+  appKind:'green',appNo:null,p5:null,con:null,rec2:null,fp:null,fpN:null,fpD:null,fpL:null,chip:null,note:''};}
 function atGreen(h){return h.appKind!=='lay'&&h.appKind!=='punch'&&h.appKind!=='no';}
 function adj(h){var f=+h.appFlag||0,p=+h.appDist||0; return (f&&p)?p-f:null;}
 function pctOf(h){var f=+h.appFlag||0,a=adj(h); return (f&&a!==null)?Math.round(1000*a/f)/10:null;}
@@ -240,7 +251,9 @@ function migrate(){
     if(r.wuRoute===undefined)r.wuRoute=null;};
   (db.rounds||[]).forEach(wuFix); if(cur)wuFix(cur);
   (db.rounds||[]).forEach(function(r){if(r._snap)delete r._snap;});
-  var cfix=function(h){if(h.con===undefined)h.con=null; if(h.rec2===undefined)h.rec2=null; if(h.stg!==undefined)delete h.stg;};
+  var cfix=function(h){if(h.con===undefined)h.con=null; if(h.rec2===undefined)h.rec2=null; if(h.stg!==undefined)delete h.stg;
+    if(h.fpN===undefined)h.fpN=null; if(h.note===undefined||h.note===null)h.note='';
+    if(h.fpN!==null&&h.fpN!==''){var b=fpBucket(h.fpN); if(b)h.fp=b;}};
   (db.rounds||[]).forEach(function(r){(r.holes||[]).forEach(cfix);});
   if(cur)(cur.holes||[]).forEach(cfix);
 }
@@ -475,10 +488,15 @@ function holeScreenHTML(){
     <p class="hint" style="margin:5px 0 0">Where the ball <b>physically was</b>, not whether the shot was good. Fringe counts as not on.</p>`:''}
 
     <div style="border-top:2px solid var(--line);margin-top:14px;padding-top:4px"></div>
-    <div class="row"><div class="lab">1st putt</div><div class="seg">
-      ${PUTT_B.map(b=>sBtn('fp',b,b)).join('')}
-    </div></div>
-    <p class="hint" style="margin:0 0 8px">Paced steps, never feet. However the ball got there.</p>
+    <div class="row" style="border-bottom:0"><div class="lab">1st putt</div>
+      <div style="display:flex;gap:8px;flex:1;align-items:center">
+        <input class="mono" inputmode="numeric" placeholder="steps"
+          value="${h.fpN===null||h.fpN===undefined?'':h.fpN}"
+          onchange="fpSet(this.value)" style="flex:0 0 86px">
+        <span class="hint" style="margin:0">${h.fpN!==null&&h.fpN!==undefined?'band '+fpBucket(h.fpN)
+          :(h.fp?'band '+h.fp+' \u00b7 no number':'')}</span>
+      </div></div>
+    <p class="hint" style="margin:5px 0 8px">Whole paced steps, <b>round down</b>. Never feet. However the ball got there.</p>
     ${h.fp?(h.putts<=1
       ? `<p class="hint" style="margin:0 0 8px;color:var(--pine)">Holed \u2014 nothing to log below.</p>`
       : `<div class="row"><div class="lab">Miss \u00b7 speed</div><div class="seg">
@@ -503,6 +521,19 @@ function holeScreenHTML(){
     <div class="chips">${sBtn('pu',true,'Picked up / given','on-ochre')}</div>
     ${h.pu?'<p class="hint" style="margin:5px 0 0">Score and putts voided. Everything else still counts.</p>':''}
   </div>
+
+  ${RO
+    ? (h.note?`<div style="padding:9px 0"><div class="lab" style="margin-bottom:4px">Note</div>
+        <p class="hint" style="margin:0;white-space:pre-wrap;color:var(--ink)">${esc(h.note)}</p></div>`:'')
+    : `<details ${h.note?'open':''} style="margin-top:2px">
+    <summary>Note${h.note?' \u25cf':''} \u25be</summary>
+    <textarea placeholder="anything worth remembering about this hole"
+      onchange="noteSet(this.value)"
+      style="width:100%;height:64px;font-family:inherit;font-size:13px;border:1px solid var(--line);
+        border-radius:3px;padding:8px;background:var(--surf);color:var(--ink);margin-top:6px"
+      >${esc(h.note)}</textarea>
+    <p class="hint" style="margin:4px 0 0">Free text. Never counted, never aggregated \u2014 the place for anything the schema has no field for.</p>
+  </details>`}
 
   </div>
   ${RO?`<div class="navrow">
@@ -543,7 +574,7 @@ function missList(x,t2){
     if(x.rec2===null||x.rec2===undefined)b.push('after it');
   }
   if(!x.pu){
-    if(!x.fp)b.push('1st putt');
+    if(!x.fp&&(x.fpN===null||x.fpN===undefined))b.push('1st putt');
     else if(x.putts>1){ if(!x.fpD)b.push('putt speed'); if(!x.fpL)b.push('putt line'); }
   }
   return{a:a,b:b};
@@ -1036,6 +1067,8 @@ function renderStats(){
     <div class="kv"><span>Rounds with an OB</span><b>${obR} of ${n}</b></div>
     <div class="kv"><span>Rounds with wrist soreness+</span><b>${wr} of ${n}</b></div></div>
 
+  ${fpNBlock(R)}
+
   ${ssBlock(R)}
 
   ${adjBlock(R)}
@@ -1073,6 +1106,30 @@ function renderStats(){
   <p class="hint" style="margin:18px 0 4px">Build ${VER}</p>`;
 }
 
+function fpNBlock(R){
+  var H=R.flatMap(function(r){return r.holes}).filter(function(h){
+    return !h.pu&&h.fpN!==null&&h.fpN!==undefined&&h.putts>0;});
+  var all=R.flatMap(function(r){return r.holes}).filter(function(h){
+    return !h.pu&&(h.fp||h.fpN!==null&&h.fpN!==undefined)&&h.putts>0;});
+  if(!H.length)return '';
+  var rows='';
+  for(var k=0;k<=10;k++){
+    var g=H.filter(function(h){return h.fpN===k;});
+    if(!g.length)continue;
+    var made=g.filter(function(h){return h.putts===1;}).length;
+    rows+='<tr><td><b>'+k+'</b></td><td>'+g.length+'</td><td>'+made+'</td><td>'+
+      Math.round(100*made/g.length)+'%</td></tr>';}
+  var far=H.filter(function(h){return h.fpN>=11;});
+  if(far.length)rows+='<tr><td><b>11+</b></td><td>'+far.length+'</td><td>'+
+    far.filter(function(h){return h.putts===1;}).length+'</td><td>'+
+    Math.round(100*far.filter(function(h){return h.putts===1;}).length/far.length)+'%</td></tr>';
+  return '<h3 class="eyebrow" style="margin:20px 0 6px">First putt \u00b7 by exact step</h3>'+
+  '<table><thead><tr><th>Steps</th><th>n</th><th>Holed</th><th>Rate</th></tr></thead><tbody>'+
+  rows+'</tbody></table>'+
+  '<p class="hint">'+H.length+' of '+all.length+' first putts carry a number. '+
+  'Bucket rounds are in the band tables above and are not in here \u2014 the two do not pool. '+
+  'Treat any row under n=10 as unread.</p>';
+}
 function ssBlock(R){
   var MS=R.flatMap(function(r){return r.holes}).filter(function(h){return h.gir===false&&!h.pu;});
   var L=MS.filter(function(h){return h.ss===true||h.ss===false;});
@@ -1471,6 +1528,17 @@ function summaryText(){
   ['chip','pitch','bunker','putt'].forEach(function(k){
     var g=R.flatMap(function(r){return r.holes}).filter(function(h){return h.rec===k});
     if(g.length)o+='  '+(k+'      ').slice(0,7)+g.filter(function(h){return h.putts===1}).length+' of '+g.length+'\n';});
+  var fpNH=R.flatMap(function(r){return r.holes}).filter(function(h){
+    return !h.pu&&h.fpN!==null&&h.fpN!==undefined&&h.putts>0;});
+  if(fpNH.length){
+    o+='\nfirst putt by step (n='+fpNH.length+'):\n';
+    for(var sk=0;sk<=10;sk++){
+      var sg=fpNH.filter(function(h){return h.fpN===sk;});
+      if(sg.length)o+='  '+String(sk).padStart(3)+'  '+
+        sg.filter(function(h){return h.putts===1;}).length+' of '+sg.length+'\n';}
+    var sf=fpNH.filter(function(h){return h.fpN>=11;});
+    if(sf.length)o+='  11+  '+sf.filter(function(h){return h.putts===1;}).length+' of '+sf.length+'\n';
+  }
   var ssL=ms.filter(function(h){return h.ss===true||h.ss===false});
   if(ssL.length){
     var ssY=ssL.filter(function(h){return h.ss===true}),ssN=ssL.filter(function(h){return h.ss===false});
@@ -1485,6 +1553,10 @@ function summaryText(){
     o+='  short-sided approach miss: short '+cn(ssY,'appD','short')+' long '+cn(ssY,'appD','long')+
        ' left '+cn(ssY,'appL','left')+' right '+cn(ssY,'appL','right')+'\n';
   }
+  var NT=[];
+  R.forEach(function(r){(r.holes||[]).forEach(function(h,i){
+    if(h.note)NT.push('  '+r.date+' H'+(h.hno||i+1)+': '+h.note);});});
+  if(NT.length)o+='\nhole notes:\n'+NT.join('\n')+'\n';
   var AB=R.flatMap(function(r){return r.holes}).filter(function(h){return atGreen(h)&&(h.appD||h.appL)});
   var BO=AB.filter(function(h){return adj(h)!==null});
   if(BO.length){
