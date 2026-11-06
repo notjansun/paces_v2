@@ -74,6 +74,8 @@
   .cell .st.t1{color:var(--ink)}
   .cell .st.t2{color:inherit}
   .cell.cur{outline:2px solid var(--blue);outline-offset:1px}
+  .cell .hn{position:absolute;top:2px;left:3px;font-size:11px;font-weight:600;line-height:1;opacity:.85;pointer-events:none}
+  .cell .sc{font-family:'Saira Condensed',sans-serif;font-size:21px;font-weight:700;line-height:1;margin-top:6px}
   .cell.p{background:var(--surf);color:var(--ink2);border-style:dashed;border-color:var(--ink2)}
   .cell.e{background:var(--eag);color:var(--eag-fg);border-color:var(--eag)}
   .cell.bi{background:var(--bird);color:var(--bird-fg);border-color:var(--bird-bd)}
@@ -133,7 +135,7 @@
   .sec-f .sum{flex:1;font-size:13px;color:var(--ink);line-height:1.35}
   .sec-f .ed{font-size:11px;color:var(--blue)}
   button.sug{border-style:dashed;border-color:var(--ink)}
-  button.sugb{background:var(--bird);color:var(--bird-fg);border-color:var(--bird-bd)}
+  button.sugb{background:var(--ground);color:var(--ink);border:1px dashed var(--ink2)}
   .vb{flex:0 0 86px;padding:10px 10px;text-align:left;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:15px}
   .vb.kpon{outline:2px solid var(--blue);outline-offset:1px}
   .g9{display:grid;grid-template-columns:74px repeat(3,1fr);gap:5px;align-items:center}
@@ -183,7 +185,7 @@
 <div id="v-data" class="wrap hide"></div>
 
 <script>
-const VER='3.2 \u00b7 21 Oct 2026';
+const VER='3.3 \u00b7 6 Nov 2026';
 function aimTick(on){const h=cur.holes[hole];mark('appD');
   if(on){h.aimOff=true;h.appD=null;h.appL=null;}
   else{h.aimOff=null;h.appD='pin';h.appL='ctr';}
@@ -210,6 +212,13 @@ function pinRel(h){if(h.gPin==null||h.gBall==null)return '';
   var pr=Math.floor(h.gPin/3), br=Math.floor(h.gBall/3), pc=h.gPin%3, bc=h.gBall%3;
   var d=br<pr?'long':(br>pr?'short':''), l=bc<pc?'left':(bc>pc?'right':'');
   return (d||l)?('ball '+[d,l].filter(Boolean).join(' ')+' of pin'):'ball in the pin\u2019s third';}
+function depthOf(h){
+  if(onGv(h)!==true||h.aimOff===true||h.gPin==null||h.gBall==null)return null;
+  var pr=Math.floor(h.gPin/3), br=Math.floor(h.gBall/3);
+  var f=+h.appFlag||0, t=+h.appTgt||0, aim=(!t||!f||Math.abs(t-f)<=2)?pr:1;
+  var lo=Math.min(aim,pr), hi=Math.max(aim,pr);
+  return br<lo?'long':(br>hi?'short':'pin');}
+function deriveDepth(h){var d=depthOf(h); if(d){h.appD=d; h.appL='ctr';}}
 function gTap(i){const h=cur.holes[hole];mark('appD');
   h.gBall=(h.gBall===i?null:i);
   h.done=true;save();render();}
@@ -234,7 +243,7 @@ function greenGridHTML(h){
   s+='</div>';
   var step=(p==null)?'Set the <b>pin</b> above, then tap the ball.':(b==null?'Now tap where the <b>ball</b> \u25cf finished.':(function(t){return t.charAt(0).toUpperCase()+t.slice(1);})(pinRel(h))+'.');
   var mv='';
-  return '<div style="padding:10px 0 4px">'+s+'<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><p class="hint" style="margin:0;flex:1">The green in thirds. '+step+'</p>'+mv+'</div></div>';}
+  return '<div style="padding:10px 0 4px">'+s+'<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><p class="hint" style="margin:0;flex:1">The green in thirds. '+step+(function(){var d=depthOf(h);return d==='short'?' Counts as <b>short</b> of your plan.':(d==='long'?' Counts as <b>long</b> of your plan.':'');})()+'</p>'+mv+'</div></div>';}
 const CLUBS=['LW','SW','GW','PW','9i','8i','7i','6i','5i','4H','5W','3W','Dr'];
 const PUTT_B=['0-1','2-3','4-6','7-10','11+'];
 const BOOK_F=['tee','app','grn'];
@@ -291,9 +300,13 @@ function detectStore(){
 const GENERIC=[4,4,3,5,4,4,4,3,5,4,4,5,4,3,4,4,3,5];
 const CD={
  'Stolpe Ost':{par:[4,4,3,5,4,4,4,3,5,4,4,5,4,3,4,4,3,5],
-   tees:{'Weiss 6403 m':[74.3,129],'Gelb 6025 m':[72.2,129],'Blau 5563 m':[69.9,121]}},
+   tees:{'Weiss 6403 m':[74.3,129],'Gelb 6025 m':[72.2,129],'Blau 5563 m':[69.9,121]},
+   si:[5,3,17,7,11,13,1,9,15,2,14,18,4,10,16,6,12,8], tp:{'Blau 5563 m':[4,4,3,5,4,4,4,3,4,4,4,4,4,3,4,4,3,5]},
+   len:{'Weiss 6403 m':[353,382,167,512,339,372,413,188,464,415,351,468,413,199,332,392,155,488],'Gelb 6025 m':[342,359,155,476,322,348,391,160,440,393,330,443,396,183,317,369,135,466],'Blau 5563 m':[302,330,155,426,303,313,352,160,402,352,305,408,375,183,287,351,135,424]}},
  'Stolpe West':{par:[5,4,4,3,5,3,5,3,4,4,5,3,4,3,4,5,4,4],
-   tees:{'Schwarz 6496 m':[74.8,128],'Weiss 6171 m':[73.1,127],'Gelb 5898 m':[71.7,126],'Blau 5419 m':[69.3,118]}},
+   tees:{'Schwarz 6496 m':[74.8,128],'Weiss 6171 m':[73.1,127],'Gelb 5898 m':[71.7,126],'Blau 5419 m':[69.3,118]},
+   si:[9,15,3,7,17,13,11,1,5,2,14,18,8,12,10,16,4,6], tp:{'Blau 5419 m':[5,4,4,3,5,3,5,3,4,4,5,3,4,3,4,4,4,4]},
+   len:{'Schwarz 6496 m':[520,329,399,200,490,165,507,202,408,398,509,167,370,140,348,497,394,453],'Weiss 6171 m':[492,305,399,181,449,165,507,185,362,398,484,167,370,140,348,456,353,408],'Gelb 5898 m':[484,297,368,175,427,159,492,185,353,359,473,148,351,130,334,445,335,383],'Blau 5419 m':[431,266,361,145,414,147,440,161,319,347,425,148,319,118,307,403,311,357]}},
  'GC Gatow':{par:[4,4,5,3,4,5,3,4,4,4,4,3,4,4,5,3,5,4],
    tees:{'Gelb 5825 m':[71.3,126],'Blau 5508 m':[69.4,124]}},
  'Seddiner See Nord':{par:[4,5,4,3,4,4,3,5,4,4,4,3,5,4,3,5,4,4],
@@ -318,14 +331,15 @@ function blankHole(p){return{par:p,score:p,scoreAuto:true,putts:2,pu:null,tee:nu
   appKind:'green',appNo:null,p5:null,con:null,rec2:null,fp:null,fpN:null,fpD:null,fpL:null,chip:null,note:''};}
 function atGreen(h){return h.appKind!=='lay'&&h.appKind!=='punch'&&h.appKind!=='no';}
 function adj(h){var f=+h.appFlag||0,p=+h.appDist||0; return (f&&p)?p-f:null;}
-function pctOf(h){var f=+h.appFlag||0,a=adj(h); return (f&&a!==null)?Math.round(1000*a/f)/10:null;}
+function tgtOf(h){return +h.appTgt||+h.appFlag||0;}
+function pctOf(h){var b=tgtOf(h),p=+h.appDist||0; return (b&&p)?Math.round(1000*(p-b)/b)/10:null;}
 function pctSet(v){const h=cur.holes[hole];
-  var f=+h.appFlag||0;
+  var f=tgtOf(h);
   var raw=String(v==null?'':v).replace(',','.').replace(/[%\s]/g,'');
-  if(raw===''){h.done=true;save();render();return;}
+  if(raw===''){h.appPct=null;h.done=true;save();render();return;}
   var q=parseFloat(raw);
   if(!isFinite(q)||!f){h.done=true;save();render();return;}
-  h.appDist=String(Math.round(f*(1+q/100)));
+  h.appPct=q; h.appDist=String(Math.round(f*(1+q/100)));
   h.done=true;save();render();}
 function defNo(h){return h.par===3?1:(h.par===5?((h.p5==='hit'||h.p5==='miss')?2:3):2);}
 function bumpNo(d){mark('appNo');const h=cur.holes[hole];h.appNo=Math.max(1,Math.min(8,shotNo(h)+d));h.done=true;save();render();}
@@ -368,6 +382,8 @@ function migrate(){
     if(h.fpN!==null&&h.fpN!==''){var b=fpBucket(h.fpN); if(b)h.fp=b;}};
   (db.rounds||[]).forEach(function(r){(r.holes||[]).forEach(cfix);});
   if(cur)(cur.holes||[]).forEach(cfix);
+  if(db.lastHi===undefined)db.lastHi=10.3;
+  if(cur&&cur.hi===undefined)cur.hi=db.lastHi;
 }
 
 function newRound(n,course,startHole){
@@ -376,14 +392,46 @@ function newRound(n,course,startHole){
   const pars=[], hnos=[];
   for(var p=0;p<n;p++){var idx=(st-1+p)%18;pars.push(base[idx]);hnos.push(idx+1);}
   return{id:Date.now()*1000+Math.floor(Math.random()*1000),date:new Date().toISOString().slice(0,10),course:course,start:st,
-    tees:'',cr:null,slope:null,n:n,tier2:true,t2open:true,wind:null,windAvg:null,windGust:null,rtype:null,carry:null,
+    tees:'',cr:null,slope:null,hi:null,fx:1,n:n,tier2:true,t2open:true,wind:null,windAvg:null,windGust:null,rtype:null,carry:null,
     warmup:'',wuBalls:'',wuPutts:'',wuMins:'',wuRoute:null,wuR:null,wristPre:0,wristPost:null,note:'',
     holes:pars.map(function(pp,i){var h=blankHole(pp);h.hno=hnos[i];return h;})};
 }
 function hno(h,i){return (h&&h.hno)?h.hno:i+1;}
+function parFor(c,t){var d=CD[c]; if(!d)return null; return (d.tp&&t&&d.tp[t])||d.par;}
+function lenFor(c,t,n){var d=CD[c]; return (d&&d.len&&t&&d.len[t])?d.len[t][n-1]:null;}
+function siFor(c,n){var d=CD[c]; return (d&&d.si)?d.si[n-1]:null;}
+function parLocked(r){return !!(r&&CD[r.course]);}
+function applyTeePars(r){var P=parFor(r.course,r.tees); if(!P)return;
+  (r.holes||[]).forEach(function(h,i){var p=P[hno(h,i)-1]; if(!p||p===h.par)return;
+    var fresh=!h.done; h.par=p; if(fresh)h.score=p; else deriveScore(h);});}
+function hiParse(v){var q=parseFloat(String(v==null?'':v).replace(',','.')); return isFinite(q)?Math.round(q*10)/10:null;}
+function courseHcp(r){
+  if(!r||r.hi===null||r.hi===undefined||r.hi===''||!r.cr||!r.slope)return null;
+  var hi=+r.hi; if(!isFinite(hi))return null;
+  var hs=r.holes||[], n=hs.length, par=hs.reduce(function(a,h){return a+h.par;},0);
+  if(n===18)return Math.round(hi*r.slope/113+(r.cr-par));
+  if(n===9)return Math.round(hi/2*r.slope/113+(r.cr/2-par));
+  return null;}
+function strokeMap(r){var CH=courseHcp(r); if(CH===null)return null;
+  var hs=r.holes||[], n=hs.length, si=hs.map(function(h,i){return siFor(r.course,hno(h,i));});
+  if(!n||si.some(function(x){return !x;}))return null;
+  var ord=hs.map(function(h,i){return i;}).sort(function(a,b){return si[a]-si[b];});
+  var base=Math.trunc(CH/n), rem=CH-base*n, m=hs.map(function(){return 0;});
+  ord.forEach(function(i,k){m[i]=base+(rem>0?(k<rem?1:0):(rem<0?(k>=n+rem?-1:0):0));});
+  return m;}
+function sfPts(h,st){if(h.pu)return 0; return Math.max(0,h.par+st+2-h.score);}
+function stableford(r){var m=strokeMap(r); if(!m)return null; var t=0,c=0;
+  (r.holes||[]).forEach(function(h,i){if(!h.done)return; t+=sfPts(h,m[i]); c++;});
+  return {pts:t,n:c};}
+function agsOf(r){var m=strokeMap(r); if(!m)return null;
+  return (r.holes||[]).reduce(function(a,h,i){var cap=h.par+2+m[i]; return a+(h.pu?cap:Math.min(h.score,cap));},0);}
+function isOff(h){return offGreen(h)&&!appPen(h)&&!h.pu;}
+function udOK(h){return h.putts<=1&&h.rec2!==true;}
+function recOf(h){return isOff(h)?h.rec:null;}
+function isLay(h){return h.par===4&&h.lay===true;}
 function teeList(c){return Object.keys((CD[c]&&CD[c].tees)||{});}
 function setTee(t){const T=CD[cur.course]&&CD[cur.course].tees[t];
-  cur.tees=t;cur.cr=T?T[0]:null;cur.slope=T?T[1]:null;db.lastTee=t;save();finish();}
+  cur.tees=t;cur.cr=T?T[0]:null;cur.slope=T?T[1]:null;db.lastTee=t;applyTeePars(cur);save();finish();}
 
 function applyTheme(){
   const t=db.theme||'auto';
@@ -412,7 +460,7 @@ async function load(){
 }
 let saveTimer=null;
 function save(){
-  if(cur&&!RO&&cur.holes&&cur.holes[hole]){var hh=cur.holes[hole]; if(hh.putts<=1){hh.fpD=null;hh.fpL=null;} deriveGir(hh); deriveScore(hh);}
+  if(cur&&!RO&&cur.holes&&cur.holes[hole]){var hh=cur.holes[hole]; if(hh.putts<=1){hh.fpD=null;hh.fpL=null;} deriveGir(hh); deriveScore(hh); deriveDepth(hh);}
   clearTimeout(saveTimer);
   saveTimer=setTimeout(async()=>{
     try{await ST.set(KEY,JSON.stringify({rounds:db.rounds,sessions:db.sessions,stride:db.stride,book:db.book,courses:db.courses,theme:db.theme,t2default:db.t2default,lastCourse:db.lastCourse,lastTee:db.lastTee,startHole:db.startHole,cur:cur,hole:hole}));
@@ -480,6 +528,9 @@ function renderPlay(){
         `<option value="${esc(c)}" ${(db.lastCourse||courseList()[0])===c?'selected':''}>${esc(CLABEL[c]||c)}</option>`).join('')}</select>
       <p class="hint">Every course here loads its own par sequence and tee ratings. Add one in Data \u2192 Courses.</p>
       ${teePicker()}
+      <div class="eyebrow" style="margin:14px 0 6px">Handicap index</div>
+      <input class="mono" inputmode="decimal" value="${db.lastHi==null?'':db.lastHi}" placeholder="e.g. 10.3" onchange="setHi(this.value)" style="max-width:120px">
+      <p class="hint">Used for Stableford and the net-double-bogey cap. Carries over to the next round.</p>
 </div>
       <div style="display:grid;grid-template-columns:3fr 1fr;gap:8px;margin:8px 0">
         <button class="big" style="margin:0" onclick="start(18)">Start 18 holes</button>
@@ -549,7 +600,9 @@ function routeHTML(o,fn){var a=routeOf(o);
   return '<div class="chips" style="flex:1">'+ROUTE.map(function(x){
     return '<button class="'+(a.indexOf(x[0])>=0?'on':'')+'" onclick="routeTog(\''+fn+'\',\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</div>';}
 function roundMetaHTML(o,fn){
-  return `<div class="row"><div class="lab">Intent</div><div class="seg">
+  return `<div class="row"><div class="lab">HCP idx</div><input class="mono" inputmode="decimal" value="${o.hi==null?'':o.hi}" placeholder="index" onchange="${fn}('hi',hiParse(this.value))" style="flex:0 0 90px">
+      <span class="hint" style="margin:0">${(function(){var c=courseHcp(o);return c===null?'needs index, CR and slope':'course handicap '+c;})()}</span></div>
+    <div class="row"><div class="lab">Intent</div><div class="seg">
       ${[['tourn','Tournament'],['casual','Casual']].map(x=>
         `<button class="${o.rtype===x[0]||(x[0]==='tourn'&&o.rtype==='team')?'on':''}" onclick="${fn}('rtype','${x[0]}')">${x[1]}</button>`).join('')}
     </div></div>
@@ -569,7 +622,7 @@ function roundMetaHTML(o,fn){
     <p class="hint" style="margin:2px 0 6px">Set from the average once it is entered; tap to override. Gusts are kept separately.</p>`;}
 
 const FS={tee:'tee',teeClub:'tee',teeOut:'tee',teeBk:'tee',p5:'p5',appKind:'app',appNo:'app',appFlag:'app',appDist:'app',
-  appClub:'app',appD:'app',appL:'app',appAlt:'app',con:'app',onG:'app',penTee:'app',ss:'off',rec:'off',rec2:'off',
+  appClub:'app',appD:'app',appL:'app',appAlt:'app',con:'app',onG:'app',penTee:'app',ss:'off',rec:'off',rec2:'off',appTgt:'app',fringe:'app',lay:'app',risk:null,
   putts:'putt',fpD:'putt',fpL:'putt',score:'close',pu:'close'};
 function mark(p){kpCommit(); if(FS[p]&&FS[p]!==liveSec)keepAnchor(FS[p]); if(FS[p])liveSec=FS[p];}
 function keepAnchor(k,showKp){var el=document.querySelector('[data-sec="'+k+'"]'); var y=el?el.getBoundingClientRect().top:null;
@@ -590,7 +643,7 @@ function deriveScore(h){if(!h||h.scoreAuto!==true)return; var c=scoreCalc(h); if
 function scoreOk(){const h=cur.holes[hole];h.scoreAuto=false;h.done=true;save();render();}
 function scoreAutoOn(){const h=cur.holes[hole];h.scoreAuto=true;h.done=true;save();render();}
 function teePenStrokes(h){return (h.par>3&&h.pen&&h.penTee)?(h.pen==='OB'?2:1):0;}
-function autoNo(h){return defNo(h)+teePenStrokes(h)+((h.par===4&&h.teeOut)?1:0);}
+function autoNo(h){return defNo(h)+teePenStrokes(h)+((h.par===4&&h.teeOut)?1:0)+(isLay(h)?1:0);}
 function appPen(h){return !!h.pen&&!h.penTee;}
 function shotNo(h){return h.appNo||autoNo(h);}
 function onGv(h){return (h.onG===true||h.onG===false)?h.onG:(h.gir===true?true:null);}
@@ -609,24 +662,26 @@ function p5Set(v){const h=cur.holes[hole];mark('p5');
   h.done=true;save();render();}
 function penSet(v,isTee){const h=cur.holes[hole];kpCommit();liveSec=isTee?'tee':'app';
   if(h.pen===v&&(!!h.penTee)===isTee){h.pen=null;h.penTee=null;}
-  else{h.pen=v;h.penTee=isTee?true:null;}
+  else{h.pen=v;h.penTee=isTee?true:null; if(!isTee){h.ss=null;h.rec=null;h.rec2=null;}}
   h.done=true;save();render();}
 function gridSet(fr,vr,fc,vc){const h=cur.holes[hole];mark(fr);
   if(h[fr]===vr&&h[fc]===vc){h[fr]=null;h[fc]=null;}else{h[fr]=vr;h[fc]=vc;}
-  if(fr==='appD'&&onGv(h)===true&&(!h.appD||!h.appL)){h.appD='pin';h.appL='ctr';}
+  if(fr==='appD'&&onGv(h)===true&&!h.aimOff&&(!h.appD||!h.appL)){h.appD='pin';h.appL='ctr';}
   h.done=true;save();render();}
-function eqFlag(){const h=cur.holes[hole];mark('appDist');if(h.appFlag)h.appDist=String(h.appFlag);h.done=true;save();render();}
+function eqFlag(){const h=cur.holes[hole];mark('appDist');var b=h.appTgt||h.appFlag;if(b){h.appDist=String(b);h.appPct=null;}h.done=true;save();render();}
+function tgtFlag(){const h=cur.holes[hole];mark('appTgt');if(h.appFlag)h.appTgt=String(h.appFlag);reTgt(h);h.done=true;save();render();}
+function reTgt(h){if(h.appPct!=null&&isFinite(+h.appPct)&&tgtOf(h))h.appDist=String(Math.round(tgtOf(h)*(1+h.appPct/100)));}
 function greenSet(v){const h=cur.holes[hole];mark('onG');
   if(h.onG===v){h.onG=null;}
   else{h.onG=v;
-    if(v){h.appD='pin';h.appL='ctr';h.aimOff=null;}
+    if(v){h.appD='pin';h.appL='ctr';h.aimOff=null;h.fringe=null;h.ss=null;h.rec=null;h.rec2=null;}
     else{if((h.appD==='pin'&&h.appL==='ctr')||h.aimOff){h.appD=null;h.appL=null;} h.gBall=null;h.aimOff=null;}}
   h.done=true;save();render();}
 function goSec(k){kpCommit();keepAnchor(k);liveSec=k;render();}
 
 /* keypad */
 function kpOpen(f,chain){kpCommit();const h=cur.holes[hole];
-  var v=f==='flag'?h.appFlag:(f==='play'?(h.appDist||(chain?h.appFlag:'')):(f==='fp'?(h.fpN==null?'':h.fpN):(pctOf(h)===null?'':pctOf(h))));
+  var v=f==='flag'?h.appFlag:(f==='tgt'?(h.appTgt||(chain?h.appFlag:'')):(f==='play'?(h.appDist||(chain?(h.appTgt||h.appFlag):'')):(f==='fp'?(h.fpN==null?'':h.fpN):(pctOf(h)===null?'':pctOf(h)))));
   kp={f:f,buf:String(v==null?'':v),fresh:!!chain&&String(v||'')!==''};var ks=(f==='fp')?'putt':'app';keepAnchor(ks,true);liveSec=ks;render();}
 function kpNext(f){kpOpen(f,true);}
 function kpCancel(){kp=null;render();}
@@ -638,18 +693,20 @@ function kpKey(k){if(!kp)return;
   else if(kp.buf.replace('-','').length<3)kp.buf+=k;
   render();}
 function kpCommit(){if(!kp)return;var k=kp;kp=null;const h=cur.holes[hole];
-  if(k.f==='flag'){h.appFlag=k.buf;h.done=true;save();}
-  else if(k.f==='play'){h.appDist=k.buf;h.done=true;save();}
+  if(k.f==='flag'){var old=h.appFlag; h.appFlag=k.buf; if(!h.appTgt||String(h.appTgt)===String(old))h.appTgt=k.buf; reTgt(h); h.done=true;save();}
+  else if(k.f==='tgt'){h.appTgt=k.buf; reTgt(h); h.done=true;save();}
+  else if(k.f==='play'){h.appDist=k.buf;h.appPct=null;h.done=true;save();}
   else if(k.f==='fp'){fpSet(k.buf);}
   else if(k.f==='pct'){pctSet(k.buf);}}
 function kpDone(){kpCommit();render();}
 function kpHTML(){if(!kp||RO)return '';const h=cur.holes[hole];
-  var L={flag:['Flag','yds'],play:['Play to','yds'],pct:['Adjust','%'],fp:['1st putt','steps']}[kp.f];
+  var L={flag:['Flag','yds'],tgt:['Play to','yds'],play:['Target','yds'],pct:['Conditions','%'],fp:['1st putt','steps']}[kp.f];
   var extra='';
-  if(kp.f==='pct'&&h.appFlag&&kp.buf&&isFinite(parseFloat(kp.buf)))
-    extra='plays '+Math.round(+h.appFlag*(1+parseFloat(kp.buf)/100))+' y';
+  if(kp.f==='pct'&&tgtOf(h)&&kp.buf&&isFinite(parseFloat(kp.buf)))
+    extra='play to '+tgtOf(h)+' \u2192 target '+Math.round(tgtOf(h)*(1+parseFloat(kp.buf)/100))+' y';
+  if(kp.f==='tgt'&&h.appFlag&&kp.buf!==''){var dt=+kp.buf-(+h.appFlag);extra=dt===0?'= flag':('flag '+(dt>0?'+':'')+dt+' y');}
   if(kp.f==='fp'&&kp.buf!=='')extra='band '+fpBucket(+kp.buf);
-  if(kp.f==='play'&&h.appFlag&&kp.buf!==''){var dd=+kp.buf-(+h.appFlag);extra=dd===0?'= flag':('adjust '+(dd>0?'+':'')+dd+' y');}
+  if(kp.f==='play'&&tgtOf(h)&&kp.buf!==''){var dd=+kp.buf-tgtOf(h);extra=dd===0?'= play to':('play to '+(dd>0?'+':'')+dd+' y');}
   var keys=['1','2','3','4','5','6','7','8','9',kp.f==='pct'?'neg':'',  '0','del'];
   return `<div class="kp" role="dialog" aria-label="${L[0]} entry">
     <div class="kp-in">
@@ -659,7 +716,9 @@ function kpHTML(){if(!kp||RO)return '';const h=cur.holes[hole];
       <div class="kp-k">${keys.map(k=>k===''?'<span></span>':
         `<button onclick="kpKey('${k}')">${k==='del'?'\u232b':(k==='neg'?'+/\u2212':k)}</button>`).join('')}</div>
       ${kp.f==='flag'
-        ?`<div style="display:flex;gap:6px"><button class="kp-ok" style="flex:1" onclick="kpNext('play')">Play to yds</button><button class="kp-ok" style="flex:1" onclick="kpNext('pct')">\u00b1 %</button></div>`
+        ?`<button class="kp-ok" onclick="kpNext('tgt')">Next: Play to \u203a</button>`
+        :kp.f==='tgt'
+        ?`<div style="display:flex;gap:6px"><button class="kp-ok" style="flex:2" onclick="kpNext('pct')">Next: \u00b1 % \u203a</button><button class="kp-ok" style="flex:1" onclick="kpNext('play')">Target yds</button></div>`
         :`<button class="kp-ok" onclick="kpDone()">Done</button>`}
     </div></div>`;}
 function vb(f,val,ph){return `<button class="vb ${kp&&kp.f===f?'kpon':''}" onclick="kpOpen('${f}')">${val!==''&&val!=null?esc(val):'<span style="opacity:.4">'+ph+'</span>'}</button>`;}
@@ -728,7 +787,10 @@ function holeScreenHTML(){
     <div><div class="eyebrow">Hole</div><div class="num" style="font-size:46px;line-height:.9">${hno(h,hole)}</div></div>
     <div style="flex:1">
       <div class="eyebrow">Par</div>
-      <div class="seg" ${RO?'style="pointer-events:none;opacity:.55"':''}>${[3,4,5].map(p=>`<button class="${h.par===p?'on':''}" onclick="setPar(${p})">${p}</button>`).join('')}</div>
+      ${parLocked(cur)?(function(){var hn=hno(h,hole), L=lenFor(cur.course,cur.tees,hn), si=siFor(cur.course,hn), m=strokeMap(cur), st=m?m[hole]:null;
+        return `<div style="display:flex;align-items:baseline;gap:10px;padding:4px 0"><span class="num" style="font-size:34px;line-height:.9">${h.par}</span>
+          <span class="hint" style="margin:0;font-size:13px">${[L?Math.round(L*1.0936)+' y':'',si?'SI '+si:'',st?((st>0?'+':'')+st+' stroke'+(Math.abs(st)===1?'':'s')):''].filter(Boolean).join(' \u00b7 ')}</span></div>`;})()
+      :`<div class="seg" ${RO?'style="pointer-events:none;opacity:.55"':''}>${[3,4,5].map(p=>`<button class="${h.par===p?'on':''}" onclick="setPar(${p})">${p}</button>`).join('')}</div>`}
     </div>
   </div>
   ${bookCardHTML(h)}
@@ -761,8 +823,8 @@ function holeScreenHTML(){
   var appSum=ag
     ? [h.appClub, (h.appFlag||'?')+(h.appDist&&h.appDist!==h.appFlag?'\u2192'+h.appDist:'')+' y',
        (og===false&&(h.appD||h.appL))?[lb(h.appD),lb(h.appL)].filter(Boolean).join(' '):'',
-       h.aimOff?'not where aimed':'', og===true?pinRel(h):pinLabel(h),
-       og===true?'on green':(og===false?'off green':''), h.appAlt?'not stock':'', h.con?lb(h.con):'',
+       (og===true&&!h.aimOff&&h.appD&&h.appD!=='pin')?(h.appD==='short'?'short of plan':'past plan'):'', og===true?pinRel(h):pinLabel(h),
+       og===true?'on green':(og===false?(h.fringe?'fringe':'off green'):''), isLay(h)?'laid up':'', h.appAlt?'not stock':'', h.con?lb(h.con):'',
        appPen(h)?'penalty '+lb(h.pen):''].filter(Boolean).join(' \u00b7 ')
     : ['Never at it','shot '+shotNo(h),h.con?h.con:''].filter(Boolean).join(' \u00b7 ');
   var penRow=`<div class="row"><div class="lab">Penalty</div><div class="seg">
@@ -772,16 +834,24 @@ function holeScreenHTML(){
   out+=sec('app','Approach',appSum,
     `${ag?'':`<div class="banner" style="margin:8px 0 0;display:flex;align-items:center;gap:8px"><span style="flex:1">Logged as never at the green (older entry).</span>
       <button style="padding:4px 9px;font-size:11px" onclick="kindSet('green')">Make it an approach</button></div>`}
+    ${h.par===4?`<div style="padding:9px 0 0"><div class="chips">${chip('lay',true,'Laid up first','on')}</div>
+      <p class="hint" style="margin:5px 0 0">${isLay(h)?'Adds a shot. Log the shot that went at the green below.':'Tick when you chose not to go for the green.'}</p></div>`:''}
     <div class="row"><div class="lab">Shot #</div><span class="hint" style="margin:0;flex:1">${h.appNo?'set by hand':'counted from par, tee and penalties'}</span>
       <div class="step" style="flex:0 0 auto;gap:4px"><button style="width:34px;height:42px;font-size:18px" onclick="bumpNo(-1)">\u2013</button>
         <div class="num" style="min-width:34px;text-align:center;font-size:20px" title="${h.appNo?'set by hand':'derived'}">#${shotNo(h)}</div>
         <button style="width:34px;height:42px;font-size:18px" onclick="bumpNo(1)">+</button></div></div>
     ${ag?`
     <div class="row"><div class="lab">Flag</div>${vb('flag',h.appFlag,'yds')}<span class="hint" style="margin:0">laser</span></div>
-    <div class="row"><div class="lab">Play to</div>${vb('play',h.appDist,'yds')}
-      <button class="${h.appFlag&&h.appDist&&h.appDist===String(h.appFlag)?'on':''}" style="padding:10px 11px" onclick="eqFlag()">= flag</button>
-      ${vb('pct',pctOf(h)===null?'':((pctOf(h)>0?'+':'')+pctOf(h)+'%'),'\u00b1%')}</div>
-    ${adj(h)!==null&&adj(h)!==0?`<p class="hint" style="margin:5px 0 4px;color:${Math.abs(adj(h))>=5?'var(--blue)':'var(--ink2)'}">Adjustment <b>${adj(h)>0?'+':''}${adj(h)} y</b></p>`:''}
+    <div class="row" ${h.appFlag?'':'style="opacity:.4;pointer-events:none"'}><div class="lab">Play to</div>${vb('tgt',h.appTgt,'yds')}
+      <button class="${h.appFlag&&h.appTgt&&String(h.appTgt)===String(h.appFlag)?'on':''}" style="padding:10px 11px" onclick="tgtFlag()">= flag</button>
+      <span class="hint" style="margin:0">landing spot, no conditions</span></div>
+    <div class="row" ${tgtOf(h)?'':'style="opacity:.4;pointer-events:none"'}><div class="lab">Target</div>${vb('pct',pctOf(h)===null?'':((pctOf(h)>0?'+':'')+pctOf(h)+'%'),'\u00b1%')}
+      ${vb('play',h.appDist,'yds')}
+      <button class="${tgtOf(h)&&h.appDist&&+h.appDist===tgtOf(h)?'on':''}" style="padding:10px 11px" onclick="eqFlag()">= play to</button></div>
+    ${(function(){var f=+h.appFlag||0,t=tgtOf(h),p=+h.appDist||0; if(!f||!p)return '';
+      var a=t-f, b=p-t; if(!a&&!b)return '';
+      var sg=function(x){return (x>0?'+':'')+x+' y';};
+      return `<p class="hint" style="margin:5px 0 4px">${a?'Play to <b>'+sg(a)+'</b>':''}${a&&b?' \u00b7 ':''}${b?'Conditions <b>'+sg(b)+'</b>':''}</p>`;})()}
     <div class="row" style="align-items:flex-start"><div class="lab" style="padding-top:9px">Club</div>
       <div class="chips" style="flex:1">${CLUBS.filter(c=>c!=='Dr').map(c=>chip('appClub',c,c,null,c===sugC?'data':false)).join('')}</div></div>
     ${(function(){var m=clubMedians(),n=Object.keys(m).length;
@@ -794,14 +864,14 @@ function holeScreenHTML(){
       <button class="${og===true?'on-pine':''}" onclick="greenSet(true)">On the green</button>
       <button class="${og===false?'on':''}" onclick="greenSet(false)">Off the green</button></div></div>
     ${og===false?`<div style="padding:10px 0 4px">${g9('appD','appL',['long','pin','short'],['left','ctr','right'],['Long','Pin high','Short'],['Left','On line','Right'],true)}
-      <p class="hint" style="margin:6px 0 0">Which way it missed the green, against <b>Play to</b> and your target line.</p></div>`
-     :(og===true?`<div style="padding:9px 0 0"><div class="chips"><button class="${h.aimOff?'on-ochre':''}" onclick="aimTick(${h.aimOff?'false':'true'})">${h.aimOff?'\u2713 ':''}Not where I aimed</button></div>
-         <p class="hint" style="margin:5px 0 0">${h.aimOff?'Counts as a miss of your target; no direction.':'Unticked = on number and on line.'}</p></div>${greenGridHTML(h)}`:'')}
+      <p class="hint" style="margin:6px 0 0">Which way it missed the green, against your <b>Target</b> and line.</p>
+      <div class="chips" style="margin-top:8px">${chip('fringe',true,'Fringe','on-ochre')}</div></div>`
+     :(og===true?`${h.aimOff?'<p class="hint" style="margin:9px 0 0">Older entry: ticked as not where aimed.</p>':''}${greenGridHTML(h)}`:'')}
     <div style="padding:9px 0;border-bottom:1px solid var(--line)">
-      <div class="chips">${chip('appAlt',true,'Not a stock swing','on-ochre')}${chip('con','fat','Fat','on-red')}${chip('con','hosel','Hosel','on-red')}</div></div>`
+      <div class="chips">${chip('appAlt',true,'Not a stock swing','on-ochre')}${chip('con','fat','Fat','on-red')}${chip('con','thin','Thin','on-red')}${chip('con','hosel','Hosel','on-red')}</div></div>`
     :`<p class="hint" style="margin:5px 0 4px">Event only \u2014 no numbers. Counts as off the green.</p>
     <div style="padding:9px 0;border-bottom:1px solid var(--line)">
-      <div class="chips">${chip('con','fat','Fat','on-red')}${chip('con','hosel','Hosel','on-red')}</div></div>`}
+      <div class="chips">${chip('con','fat','Fat','on-red')}${chip('con','thin','Thin','on-red')}${chip('con','hosel','Hosel','on-red')}</div></div>`}
     ${og===false?penRow:''}
     <p class="hint" style="margin:6px 0 0">GIR ${h.gir===true?'<b>yes</b>':(h.gir===false?'<b>no</b>':'\u2014')} \u00b7 worked out from where this shot finished and its shot number.</p>`);
   /* OFF THE GREEN */
@@ -883,7 +953,7 @@ function missList(x,t2){
   if(x.par===5&&!x.p5)b.push('par-5 2nd shot');
   if(atGreen(x)){
     if(!x.appFlag)b.push('flag');
-    if(!x.appDist)b.push('play to');
+    if(!x.appDist)b.push('target');
     if(!x.appClub)b.push('approach club');
     if(onGv(x)!==true){ if(!x.appD)b.push('distance miss'); if(!x.appL)b.push('line miss'); }
     else if(x.gBall==null)b.push('ball on green');
@@ -908,7 +978,8 @@ function cellHTML(x,i){
   if(x.pu){ c='p'; } else if(x.done){ c = d<=-2?'e':(d===-1?'bi':(d===0?'g':(d===1?'b':'d'))); }
   const m=RO?0:missTier(x);
   const star=m?`<span class="st t1">\u2605</span>`:'';
-  return `<button class="cell ${c} ${i===hole?'cur':''}" onclick="${RO?`vwGo(${i})`:`kpCommit();liveSec=null;hole=${i};save();render()`}">${hno(x,i)}${star}</button>`;
+  const inner=x.pu?`<span class="hn">${hno(x,i)}</span>\u2013`:(x.done?`<span class="hn">${hno(x,i)}</span><span class="sc">${x.score}</span>`:hno(x,i));
+  return `<button class="cell ${c} ${i===hole?'cur':''}" onclick="${RO?`vwGo(${i})`:`kpCommit();liveSec=null;hole=${i};save();render()`}">${inner}${star}</button>`;
 }
 function sBtn(f,v,label,cls){const h=cur.holes[hole];
   return `<button class="${h[f]===v?(cls||'on'):''}" onclick="tog('${f}',${typeof v==='boolean'?v:"'"+v+"'"})">${label}</button>`;}
@@ -951,7 +1022,8 @@ function runningTotal(){
   var P=played(); if(!P.length)return 'not started';
   var S=scored(), u=puCount();
   if(!S.length)return P.length+' holes logged \u00b7 no score';
-  return toPar(S)+' thru '+S.length+(u?' \u00b7 '+u+' picked up':'');}
+  var sf=stableford(cur);
+  return toPar(S)+' thru '+S.length+(u?' \u00b7 '+u+' picked up':'')+(sf&&sf.n?' \u00b7 '+sf.pts+' pts':'');}
 function finalTotal(){
   var S=scored(), u=puCount();
   if(!S.length)return 'no score';
@@ -1041,12 +1113,14 @@ function setCourse(c){db.lastCourse=c;
   if(!teeList(c).includes(db.lastTee))db.lastTee=defaultTee(c);
   save();render();}
 function setTeeDefault(t){db.lastTee=t;save();render();}
+function setHi(v){db.lastHi=hiParse(v);save();render();}
 function start(n){
   const C=db.lastCourse||courseList()[0];
   cur=newRound(n,C,db.startHole||1);
   if(db.lastTee&&CD[C]&&CD[C].tees[db.lastTee]){
     const T=CD[C].tees[db.lastTee];
     cur.tees=db.lastTee; cur.cr=T[0]; cur.slope=T[1];}
+  applyTeePars(cur); cur.hi=(db.lastHi===undefined?null:db.lastHi);
   t2Open=db.t2default!==false; cur.t2open=t2Open; finishing=false;
   hole=0;save();render();window.scrollTo(0,0);}
 function finish(){
@@ -1066,13 +1140,18 @@ function renderFinish(){
   el.innerHTML=`<div class="card">
     <div class="eyebrow">Close out</div>
     <h2 class="num" style="font-size:34px;margin:4px 0 4px">${finalTotal()}</h2>
+    ${(function(){var r={holes:cur.holes.slice(0,endCount()),course:cur.course,cr:cur.cr,slope:cur.slope,hi:cur.hi,n:endCount()};
+      var sf=stableford(r); return sf?`<p class="num" style="font-size:20px;margin:0 0 4px">${sf.pts} Stableford pts <span class="hint" style="font-size:12px">course hcp ${courseHcp(r)}</span></p>`:'';})()}
     <p class="hint" style="margin:0 0 10px">${endCount()} holes${endCount()===18?' · counts for handicap':(endCount()===9?' · 9-hole score':' · partial round, stats only')}${cur.endAt&&cur.endAt<cur.n?' · holes '+(cur.endAt+1)+'-'+cur.n+' dropped':''}</p>
     <div class="row"><div class="lab">Course</div><select onchange="meta('course',this.value);finish()">
       ${courseList().map(c=>`<option value="${c}" ${cur.course===c?'selected':''}>${CLABEL[c]||c}</option>`).join('')}</select></div>
     ${teeList(cur.course).length?`<div class="row"><div class="lab">Tees</div><div class="seg" style="flex-wrap:wrap">
       ${teeList(cur.course).map(t=>`<button class="${cur.tees===t?'on':''}" style="flex:1 1 44%;font-size:12px" onclick="setTee('${t}')">${t}</button>`).join('')}
     </div></div>`:`<div class="row"><div class="lab">Tees</div><input value="${esc(cur.tees)}" placeholder="tee · CR · slope" onchange="meta('tees',this.value)"></div>`}
-    ${cur.cr?`<p class="hint" style="margin:6px 0 0">CR ${cur.cr} · slope ${cur.slope} → differential ${diffLabel({holes:cur.holes.slice(0,endCount()),cr:cur.cr,slope:cur.slope,n:endCount()})}${endCount()===9?` \u2014 9 holes, so that figure is already doubled against half the course rating. Approximate: it assumes the nine you played rates as half the eighteen.`:''}</p>`:''}
+    ${cur.cr?`<p class="hint" style="margin:6px 0 0">CR ${cur.cr} · slope ${cur.slope} → differential ${diffLabel({holes:cur.holes.slice(0,endCount()),cr:cur.cr,slope:cur.slope,n:endCount(),course:cur.course,hi:cur.hi})+(function(){var r={holes:cur.holes.slice(0,endCount()),cr:cur.cr,slope:cur.slope,n:endCount(),course:cur.course,hi:cur.hi};
+      var g=agsOf(r); if(g===null)return (siFor(r.course,1)&&(r.hi===null||r.hi===undefined))?' \u2014 add your index to cap blow-up holes':'';
+      var raw=r.holes.some(function(h){return h.pu;})?null:r.holes.reduce(function(a,h){return a+h.score;},0);
+      return (raw!==null&&raw>g)?' (capped at net double bogey; raw '+raw+' \u2192 '+g+')':(raw===null?' (pick-ups count as net double bogey)':'');})()}${endCount()===9?` \u2014 9 holes, so that figure is already doubled against half the course rating. Approximate: it assumes the nine you played rates as half the eighteen.`:''}</p>`:''}
     <div class="row"><div class="lab">Date</div><input type="date" value="${cur.date}" onchange="meta('date',this.value)"></div>
     <div class="row"><div class="lab">Bag</div><div class="seg">
       ${[['carry','Carried'],['trolley','Push cart'],['cart','Buggy']].map(c=>
@@ -1231,7 +1310,7 @@ function vwSet(f,v){var r=vwRound(); if(!r)return;
   r[f]=v; save(); render();}
 function vwTee(t){var r=vwRound(); if(!r)return;
   var T=CD[r.course]&&CD[r.course].tees[t];
-  vwSet('tees',t); if(T){vwSet('cr',T[0]); vwSet('slope',T[1]);}}
+  vwSet('tees',t); if(T){vwSet('cr',T[0]); vwSet('slope',T[1]);} applyTeePars(r); save(); render();}
 function vwUndo(i){var r=vwRound(); if(!r||!r.edits||!r.edits[i])return;
   var e=r.edits[i]; r[e.f]=e.from; r.edits.splice(i,1);
   if(!r.edits.length)delete r.edits; armed=''; save(); render();}
@@ -1292,14 +1371,16 @@ ${roundMetaHTML(r,'vwSet')}
 
 function diffOf(r){
   if(!r.cr||!r.slope||r.n!==18)return null;
+  var g=agsOf(r); if(g!==null)return Math.round((g-r.cr)*113/r.slope*10)/10;
   if((r.holes||[]).some(function(h){return h.pu;}))return null;
   const s=r.holes.reduce((a,x)=>a+x.score,0);
   return Math.round((s-r.cr)*113/r.slope*10)/10;
 }
 function diff9(r){
   if(!r.cr||!r.slope||r.n!==9)return null;
-  if((r.holes||[]).some(function(h){return h.pu;}))return null;
-  var s=r.holes.reduce(function(a,x){return a+x.score},0);
+  var g=agsOf(r);
+  if(g===null&&(r.holes||[]).some(function(h){return h.pu;}))return null;
+  var s=g!==null?g:r.holes.reduce(function(a,x){return a+x.score},0);
   var d9=(s-r.cr/2)*113/r.slope;
   return {d9:Math.round(d9*10)/10, eq:Math.round(d9*20)/10};
 }
@@ -1330,14 +1411,16 @@ function sum(r){
     fir,firN:l45.length,firPct:l45.length?Math.round(100*fir/l45.length):0,
     pen:all.filter(x=>x.pen).length, ob:all.filter(x=>x.pen==='OB').length,
     birdie:hs.filter(x=>x.score<x.par).length,
-    miss:hs.filter(x=>x.gir===false).length,
-    ud:hs.filter(x=>x.gir===false&&x.putts===1).length,
-    sand:hs.filter(x=>x.rec==='bunker').length,
-    sandSave:hs.filter(x=>x.rec==='bunker'&&x.putts===1).length,
-    chipN:hs.filter(x=>x.rec==='chip').length,
-    chipUD:hs.filter(x=>x.rec==='chip'&&x.putts===1).length,
-    pitchN:hs.filter(x=>x.rec==='pitch').length,
-    pitchUD:hs.filter(x=>x.rec==='pitch'&&x.putts===1).length};
+    miss:hs.filter(isOff).length,
+    ud:hs.filter(x=>isOff(x)&&udOK(x)).length,
+    scrN:hs.filter(x=>x.gir===false).length,
+    scr:hs.filter(x=>x.gir===false&&x.score<=x.par).length,
+    sand:hs.filter(x=>recOf(x)==='bunker').length,
+    sandSave:hs.filter(x=>recOf(x)==='bunker'&&udOK(x)).length,
+    chipN:hs.filter(x=>recOf(x)==='chip').length,
+    chipUD:hs.filter(x=>recOf(x)==='chip'&&udOK(x)).length,
+    pitchN:hs.filter(x=>recOf(x)==='pitch').length,
+    pitchUD:hs.filter(x=>recOf(x)==='pitch'&&udOK(x)).length};
 }
 
 /* ---------- STATS ---------- */
@@ -1417,7 +1500,8 @@ function renderStats(){
     <div class="kv"><span>Short / on number / long</span><b>${sh} · ${pin} · ${lo}</b></div>
     <div class="kv"><span>Left / on line / right</span><b>${le} · ${ct} · ${ri}</b></div>
     <div class="kv"><span>Hit your number</span><b>${A.length?Math.round(100*pin/A.length):0}%</b></div>
-    <div class="kv"><span>Up and down</span><b>${S.reduce((a,s)=>a+s.miss,0)?Math.round(100*S.reduce((a,s)=>a+s.ud,0)/S.reduce((a,s)=>a+s.miss,0))+'%':'—'} (${S.reduce((a,s)=>a+s.ud,0)}/${S.reduce((a,s)=>a+s.miss,0)})</b></div>
+    <div class="kv"><span>Scrambling <span style="color:var(--ink2)">par or better after a missed GIR</span></span><b>${S.reduce((a,s)=>a+s.scrN,0)?Math.round(100*S.reduce((a,s)=>a+s.scr,0)/S.reduce((a,s)=>a+s.scrN,0))+'%':'—'} (${S.reduce((a,s)=>a+s.scr,0)}/${S.reduce((a,s)=>a+s.scrN,0)})</b></div>
+    <div class="kv"><span>Up and down <span style="color:var(--ink2)">approach off the green</span></span><b>${S.reduce((a,s)=>a+s.miss,0)?Math.round(100*S.reduce((a,s)=>a+s.ud,0)/S.reduce((a,s)=>a+s.miss,0))+'%':'—'} (${S.reduce((a,s)=>a+s.ud,0)}/${S.reduce((a,s)=>a+s.miss,0)})</b></div>
     <div class="kv"><span>&nbsp;&nbsp;from a chip</span><b>${S.reduce((a,s)=>a+s.chipN,0)?S.reduce((a,s)=>a+s.chipUD,0)+' of '+S.reduce((a,s)=>a+s.chipN,0):'—'}</b></div>
     <div class="kv"><span>&nbsp;&nbsp;from a pitch</span><b>${S.reduce((a,s)=>a+s.pitchN,0)?S.reduce((a,s)=>a+s.pitchUD,0)+' of '+S.reduce((a,s)=>a+s.pitchN,0):'—'}</b></div>
     <div class="kv"><span>&nbsp;&nbsp;from a bunker</span><b>${S.reduce((a,s)=>a+s.sand,0)?S.reduce((a,s)=>a+s.sandSave,0)+' of '+S.reduce((a,s)=>a+s.sand,0):'—'}</b></div>
@@ -1427,6 +1511,8 @@ function renderStats(){
   ${fpNBlock(R)}
 
   ${ssBlock(R)}
+
+  ${decBlock(R)}
 
   ${adjBlock(R)}
 
@@ -1488,12 +1574,12 @@ function fpNBlock(R){
   'Treat any row under n=10 as unread.</p>';
 }
 function ssBlock(R){
-  var MS=R.flatMap(function(r){return r.holes}).filter(function(h){return h.gir===false&&!h.pu;});
+  var MS=R.flatMap(function(r){return r.holes}).filter(isOff);
   var L=MS.filter(function(h){return h.ss===true||h.ss===false;});
   if(!L.length)return '';
   var SS=L.filter(function(h){return h.ss===true;}), RM=L.filter(function(h){return h.ss===false;});
   var pct=function(a,b){return b?Math.round(100*a/b)+'%':'\u2014';};
-  var ud=function(g){return g.filter(function(h){return h.putts===1;}).length;};
+  var ud=function(g){return g.filter(udOK).length;};
   var dbl=function(g){return g.filter(function(h){return h.score-h.par>=2;}).length;};
   var unlogged=MS.length-L.length;
   var rate=L.length?SS.length/L.length:0;
@@ -1527,6 +1613,31 @@ function ssBlock(R){
   '<p class="hint">Short-sided is roughly a 10\u201315% up-and-down proposition against 30\u201335% with room \u2014 call it two strokes a round between an all-short-sided and an all-room round, which is a large share of the 10\u21925 gap. It is also decided entirely at club selection, so it moves without a swing change. Compare the two up-and-down figures above once both have about 25 events: if they come out equal, the position is not costing you what theory says and this field retires.</p>';
 }
 
+function decData(R){
+  var RX=R.filter(function(r){return r.fx;}), H=RX.flatMap(function(r){return r.holes||[];}).filter(function(h){return !h.pu&&h.done!==false;});
+  var vp=function(g){return g.length?(g.reduce(function(a,h){return a+h.score-h.par;},0)/g.length):null;};
+  var dbl=function(g){return g.filter(function(h){return h.score-h.par>=2;}).length;};
+  var reg=RX.flatMap(function(r){return r.holes||[];}).filter(function(h){return h.gir===true||h.gir===false;});
+  var fr=reg.filter(function(h){return h.gir===false&&h.onG===false&&h.fringe===true&&shotNo(h)<=h.par-2;});
+  var offAll=RX.flatMap(function(r){return r.holes||[];}).filter(isOff);
+  return {nR:RX.length,risk:H.filter(function(h){return h.risk===true;}),rest:H.filter(function(h){return h.risk!==true;}),
+    lay:H.filter(isLay),reg:reg,gir:reg.filter(function(h){return h.gir===true;}).length,fr:fr.length,
+    off:offAll.length,offFr:offAll.filter(function(h){return h.fringe===true;}).length,vp:vp,dbl:dbl};}
+function decBlock(R){var d=decData(R); if(!d.nR)return '';
+  var f=function(x){return x===null?'\u2014':((x>=0?'+':'')+x.toFixed(2));};
+  var pc=function(a,b){return b?Math.round(100*a/b)+'%':'\u2014';};
+  return '<h3 class="eyebrow" style="margin:20px 0 6px">Decisions \u00b7 fringe, lay-ups</h3>'+
+  '<p class="hint" style="margin:0 0 8px">Only rounds logged from v3.3 on ('+d.nR+'). Older rounds have no fringe or lay-up field.</p>'+
+  '<div class="card">'+
+    '<div class="kv"><span>GIR / near GIR (incl. fringe)</span><b>'+pc(d.gir,d.reg.length)+' \u00b7 '+pc(d.gir+d.fr,d.reg.length)+'</b></div>'+
+    '<div class="kv"><span>Green misses on the fringe</span><b>'+d.offFr+' of '+d.off+'</b></div>'+
+    '<div class="kv"><span>Par-4 lay-ups</span><b>'+d.lay.length+(d.lay.length?' \u00b7 '+f(d.vp(d.lay))+' vs par':'')+'</b></div>'+
+  '</div>';}
+function decText(R){var d=decData(R); if(!d.nR)return '';
+  var f=function(x){return x===null?'-':((x>=0?'+':'')+x.toFixed(2));};
+  return '\ndecisions (v3.3+ rounds: '+d.nR+'):\n  gir '+d.gir+'/'+d.reg.length+'  near-gir incl fringe '+(d.gir+d.fr)+'/'+d.reg.length+
+    '\n  fringe misses '+d.offFr+' of '+d.off+'\n  par-4 lay-ups '+d.lay.length+' vs par '+f(d.vp(d.lay))+
+'\n';}
 function adjBlock(R){
   var A=R.flatMap(function(r){return r.holes}).filter(function(h){
     return atGreen(h)&&(h.appD||h.appL);});
@@ -1774,7 +1885,7 @@ function renderData(){
   <h3 class="eyebrow" style="margin:22px 0 6px">Legend</h3>
   <p class="hint" style="margin:0 0 8px">Every field, what it means and why it is shaped that way. The hole screen stays short on purpose — this is where the definitions live.</p>
   <button class="big ghost" onclick="legend=!legend;render()">${legend?'Hide legend':'Show legend'}</button>
-  ${legend?`<div class="card" style="margin-top:2px"><h3 class="eyebrow" style="margin:18px 0 6px">Tee</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Result</div><p class="hint" style="margin:0">Where the ball finished laterally: <b>Fairway / Left / Right / Other</b>. Other is on line but not in the fairway \u2014 short, topped, a fairway bunker on your line. Side is what costs you strokes, not depth, which is why the field only measures side. A drive OB left is Left plus OB.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Club</div><p class="hint" style="margin:0">Tee club. Feeds the driver-versus-3W comparison, which is confounded by selection: 3W gets used on the harder holes. Dashed outline = the club you hit on this hole last time; a reminder, not a recommendation.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Missed-fairway chips</div><p class="hint" style="margin:0"><b>Next shot just back in play</b>: you could not go at the green; on a par 4 it makes the approach shot #3. <b>Bunker</b>: finished in sand, either side. <b>Water / Other penalty / OB</b>: tee-shot penalties. They add to the approach shot number \u2014 OB +2, the others +1. Other is unplayable, lost ball that is not OB, staked trees, rules penalties, so OB and Water stay clean.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">2nd shot (par 5)</div><p class="hint" style="margin:0">Went = you took on the green with the second. Laid up = you chose not to. Never on = no choice existed. <b>Went \u00b7 on green</b> and <b>Went \u00b7 missed</b> also set where the approach finished.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Approach</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Shot #</div><p class="hint" style="margin:0">Which stroke the approach was \u2014 the shot you actually went at the green with. Counted from par, the par-5 second shot, tee penalties and back in play. Tap \u2013 or + to correct; once set by hand it stays. Older holes logged as <b>Never at it</b> show a banner and can be turned into an approach.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Flag</div><p class="hint" style="margin:0">Lasered distance to the flag. Objective, no adjustment applied. The keypad offers <b>Play to yds</b> or <b>\u00b1 %</b> next; \u2715 closes any keypad without saving.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Play to / \u00b1%</div><p class="hint" style="margin:0">The number you committed to hit after wind, elevation and lie. Opens pre-filled with the flag, so Done means you played the flag number. \u00b1% fills Play to from the flag; play-to is stored in whole yards and the percentage is worked back from it. Wind reference: 1.25% per mph into, 0.5% per mph downwind.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Club</div><p class="hint" style="margin:0">Light blue = the club whose median play-to in your club log sits within 12 y of this number (needs 3+ logged shots; stock, on-number shots preferred). A logging aid \u2014 you enter approach fields after the shot, so it does not choose the club.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Pin</div><p class="hint" style="margin:0">Every approach, hit or miss. The whole green in thirds \u2014 front, middle, back by left, centre, right \u2014 front being your side. Near a line, take the third the flag is in. Hazards do not move the pin; a pin tucked behind a bunker is still the third it sits in. Recorded on misses too: a pin is a condition of the shot, and logging it only on hits would hide exactly the pins that cost you greens.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Finished</div><p class="hint" style="margin:0"><b>On the green</b> or <b>Off the green</b> \u2014 where the ball physically came to rest. Fringe is not on. GIR is worked out from this and the shot number, never entered.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">On the green</div><p class="hint" style="margin:0">Counts as on number and on line. Tap where the ball finished on the same thirds grid; with the pin it gives ball-versus-pin direction, and first-putt steps give the distance. <b>Not where I aimed</b> is a separate yes/no judged against your target, not the pin: ticked, the shot counts as a miss with no direction and drops out of the carry column and the short:long ratio.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Off the green</div><p class="hint" style="margin:0">Which way it missed, against Play to and the target you committed to before the swing, shape included \u2014 a fade that did not fade is left. No centre cell: a missed green always has a direction. Short:long is the documented 5:1 leak.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Not a stock swing</div><p class="hint" style="margin:0">Stock means your normal swing with that club, whatever number you gave it today. Flag only knockdowns, three-quarters, punches and shaped shots. If it fires on every windy hole it carries no signal.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Fat / Hosel</div><p class="hint" style="margin:0">Blank by default and blank almost always. Only unambiguous strikes. An event log for wrist load and early extension, not a strike-quality grade.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Penalty (approach)</div><p class="hint" style="margin:0">Shows only when the approach finished off the green. An approach penalty hides the off-the-green block: a drop is not a missed-green position, and recovery data from it would contaminate the short game.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Off the green</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Position</div><p class="hint" style="margin:0">Short-sided = under roughly 8 m of green between ball and flag, or a bunker, water or severe slope on the line. Judge it standing over the ball before the recovery. Two buttons on purpose: blank means you forgot, not that you had room.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Recovery</div><p class="hint" style="margin:0">The first recovery shot only. Chip is greenside and running. Pitch is a full-ish wedge that flies, roughly 25 m and up. Bunker is from sand. Putted on is from off the surface.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">After it</div><p class="hint" style="margin:0">Where the ball was once that first recovery came to rest \u2014 on the putting surface or not. Fringe counts as not on. Crossed against Position, this separates a greenside strike problem from an approach aiming problem.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Putting</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Putts</div><p class="hint" style="margin:0">Count for the hole. Holed out from off the green = 0, which hides the putt fields.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">1st putt</div><p class="hint" style="margin:0">Paced steps from the ball to the hole, never an estimate in feet. Pace it as part of the read. If the number is gone by the next tee, leave it blank \u2014 a reconstructed number is worse than a gap.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">First-putt grid</div><p class="hint" style="margin:0">Speed (past / hole high / short) by line (high / on / low) in one tap. The centre is <b>Holed</b> and sets one putt; any miss sets at least two \u2014 + for a three-putt. Magnitude stays out deliberately.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Score</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Score</div><p class="hint" style="margin:0">Calculated from shot number, where the approach finished, the recovery and putts. Tap \u2013 or + and it is yours; a <b>Use</b> link brings the calculation back. When the app has to assume \u2014 needed another, or an approach penalty \u2014 it says Check and stars the hole until you tap Correct. Holes from before 3.1 keep the score you typed.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Picked up / given</div><p class="hint" style="margin:0">Voids score and putts for the hole, keeps every other field. Use it rather than guessing a number.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Gap stars</div><p class="hint" style="margin:0">One star per hole with an empty field. Only holes you have touched are checked. The close-out list names what is missing.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Round close</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Intent / Format / Team</div><p class="hint" style="margin:0">Intent: Tournament or Casual. Format: Stroke, Match or Skins \u2014 no default, so a forgotten match-play day cannot pass as stroke play. Team is a separate tick because a team event can be either format.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Bag</div><p class="hint" style="margin:0">Carried, push cart or buggy. Fatigue and forearm load in one field.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Warm-up</div><p class="hint" style="margin:0">Balls / putts / minutes as numbers, plus the route as a multi-select: Putting, Range, Short game, Bunker \u2014 or None, which clears the rest. Balls carry wrist load, putts do not.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Wind</div><p class="hint" style="margin:0">Average and gust in mph from the weather app. The category follows the average \u2014 Calm 0\u20135, Breezy 6\u201312, Windy 13+ \u2014 and can be overridden. Gusts are kept separately. No direction.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Wrist</div><p class="hint" style="margin:0">Symptoms after the round, on the same record as the load that produced them. Next-morning check is the cleaner recovery signal.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Close out after X</div><p class="hint" style="margin:0">Drops the remaining holes at save. Back to holes restores every hole exactly as it was.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Rules of the block</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Paces, not feet</div><p class="hint" style="margin:0">Every short-game distance is paced steps, converted by the stride figure below. Yards from the rangefinder for everything full-swing. Never mix the two.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Categorical before measured</div><p class="hint" style="margin:0">Fairway, green, miss directions and putt count are robust and carry the diagnosis. Yards and steps carry measurement error. When the two disagree, trust the categorical read.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Entry timing</div><p class="hint" style="margin:0">Approach fields after the approach shot. Putting and score on the walk to the next tee, never on the green. Anything reconstructed later is worth less than a blank.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">No conclusions before round 20</div><p class="hint" style="margin:0">Block-level findings wait. Single rounds are anecdotes, and a good score can be built on poor ball-striking that the short game covered.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">9 versus 18</div><p class="hint" style="margin:0">A 9-hole differential is doubled to an 18-hole equivalent and marked \u2248. Never compare a raw 9-hole number with an 18-hole one.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Definition changes</div><p class="hint" style="margin:0">3.1 made GIR a derived field and the green the tolerance band for a hit approach. 3.2 records the pin on every approach. Compare across those lines with care.</p></div></div>`:''}
+  ${legend?`<div class="card" style="margin-top:2px"><h3 class="eyebrow" style="margin:18px 0 6px">Tee</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Result</div><p class="hint" style="margin:0">Where the ball finished laterally: <b>Fairway / Left / Right / Other</b>. Other is on line but not in the fairway \u2014 short, topped, a fairway bunker on your line. Side is what costs you strokes, not depth, which is why the field only measures side. A drive OB left is Left plus OB.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Club</div><p class="hint" style="margin:0">Tee club. Feeds the driver-versus-3W comparison, which is confounded by selection: 3W gets used on the harder holes. Dashed outline = the club you hit on this hole last time; a reminder, not a recommendation.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Missed-fairway chips</div><p class="hint" style="margin:0"><b>Next shot just back in play</b>: you could not go at the green; on a par 4 it makes the approach shot #3. <b>Bunker</b>: finished in sand, either side. <b>Water / Other penalty / OB</b>: tee-shot penalties. They add to the approach shot number \u2014 OB +2, the others +1. Other is unplayable, lost ball that is not OB, staked trees, rules penalties, so OB and Water stay clean.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">2nd shot (par 5)</div><p class="hint" style="margin:0">Went = you took on the green with the second. Laid up = you chose not to. Never on = no choice existed. <b>Went \u00b7 on green</b> and <b>Went \u00b7 missed</b> also set where the approach finished.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Approach</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Shot #</div><p class="hint" style="margin:0">Which stroke the approach was \u2014 the shot you actually went at the green with. Counted from par, the par-5 second shot, tee penalties and back in play. Tap \u2013 or + to correct; once set by hand it stays. Older holes logged as <b>Never at it</b> show a banner and can be turned into an approach.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Laid up first (par 4)</div><p class="hint" style="margin:0">Tick when you chose not to go for the green. Adds one to the shot number; the approach logged is the shot that went at the green.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Flag</div><p class="hint" style="margin:0">Lasered distance to the flag. Objective, no adjustment applied. The order is fixed: Flag, then Play to, then Target; each row unlocks once the one before it is filled. \u2715 closes any keypad without saving.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Play to</div><p class="hint" style="margin:0">The standardised landing spot \u2014 where you want the ball to land on a still day. Fills itself with the flag; change it only when you play away from the pin (e.g. middle of the green for a back pin).</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Target / \u00b1%</div><p class="hint" style="margin:0">The number you actually swing at: Play to plus conditions (wind, temperature, elevation). Enter the % and Target fills itself; or type Target directly, which clears the %. Changing Play to later re-applies the same %. Wind reference: 1.25% per mph into, 0.5% per mph downwind.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Club</div><p class="hint" style="margin:0">Grey dashed = the club whose median target in your club log sits within 12 y of this number (needs 3+ logged shots; stock, on-number shots preferred). A logging aid \u2014 you enter approach fields after the shot, so it does not choose the club.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Pin</div><p class="hint" style="margin:0">Every approach, hit or miss. The whole green in thirds \u2014 front, middle, back by left, centre, right \u2014 front being your side. Near a line, take the third the flag is in. Hazards do not move the pin; a pin tucked behind a bunker is still the third it sits in. Recorded on misses too: a pin is a condition of the shot, and logging it only on hits would hide exactly the pins that cost you greens.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Finished</div><p class="hint" style="margin:0"><b>On the green</b> or <b>Off the green</b> \u2014 where the ball physically came to rest. Fringe is not on. GIR is worked out from this and the shot number, never entered.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">On the green</div><p class="hint" style="margin:0">Tap pin and ball on the thirds grid. Depth is judged automatically against your plan: the band from your Play to spot to the pin is on number. Ball short of that band counts as short, past it as long. Aim sideways is your choice, so a green hit never counts as a left or right miss.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Off the green</div><p class="hint" style="margin:0">Which way it missed, against Play to and the target you committed to before the swing, shape included \u2014 a fade that did not fade is left. No centre cell: a missed green always has a direction. Short:long is the documented 5:1 leak.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Fringe</div><p class="hint" style="margin:0">Ticked when the approach stopped on the fringe. Still off the green and still a missed GIR \u2014 it only feeds the near-GIR line in Stats.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Not a stock swing</div><p class="hint" style="margin:0">Stock means your normal swing with that club, whatever number you gave it today. Flag only knockdowns, three-quarters, punches and shaped shots. If it fires on every windy hole it carries no signal.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Fat / Thin / Hosel</div><p class="hint" style="margin:0">Blank by default and blank almost always. Only unambiguous strikes \u2014 a blatant thin, not a slightly low one. An event log for strike faults, not a strike-quality grade.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Penalty (approach)</div><p class="hint" style="margin:0">Shows only when the approach finished off the green. An approach penalty hides the off-the-green block: a drop is not a missed-green position, and recovery data from it would contaminate the short game.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Off the green</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Position</div><p class="hint" style="margin:0">Short-sided = under roughly 8 m of green between ball and flag, or a bunker, water or severe slope on the line. Judge it standing over the ball before the recovery. Two buttons on purpose: blank means you forgot, not that you had room.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Recovery</div><p class="hint" style="margin:0">The first recovery shot only. Chip is greenside and running. Pitch is a full-ish wedge that flies, roughly 25 m and up. Bunker is from sand. Putted on is from off the surface.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">After it</div><p class="hint" style="margin:0">Where the ball was once that first recovery came to rest \u2014 on the putting surface or not. Fringe counts as not on. Crossed against Position, this separates a greenside strike problem from an approach aiming problem.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Putting</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Putts</div><p class="hint" style="margin:0">Count for the hole. Holed out from off the green = 0, which hides the putt fields.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">1st putt</div><p class="hint" style="margin:0">Paced steps from the ball to the hole, never an estimate in feet. Pace it as part of the read. If the number is gone by the next tee, leave it blank \u2014 a reconstructed number is worse than a gap.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">First-putt grid</div><p class="hint" style="margin:0">Speed (past / hole high / short) by line (high / on / low) in one tap. The centre is <b>Holed</b> and sets one putt; any miss sets at least two \u2014 + for a three-putt. Magnitude stays out deliberately.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Score</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Score</div><p class="hint" style="margin:0">Calculated from shot number, where the approach finished, the recovery and putts. Tap \u2013 or + and it is yours; a <b>Use</b> link brings the calculation back. When the app has to assume \u2014 needed another, or an approach penalty \u2014 it says Check and stars the hole until you tap Correct. Holes from before 3.1 keep the score you typed.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Picked up / given</div><p class="hint" style="margin:0">Voids score and putts for the hole, keeps every other field. Use it rather than guessing a number.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Stableford \u00b7 handicap index</div><p class="hint" style="margin:0">Index set on the start screen, carried to the next round. Strokes come from the scorecard stroke index. A pick-up scores 0 points and counts as net double bogey, so the differential stays valid; every hole is capped at net double bogey for the differential.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Gap stars</div><p class="hint" style="margin:0">One star per hole with an empty field. Only holes you have touched are checked. The close-out list names what is missing.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Round close</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Intent / Format / Team</div><p class="hint" style="margin:0">Intent: Tournament or Casual. Format: Stroke, Match or Skins \u2014 no default, so a forgotten match-play day cannot pass as stroke play. Team is a separate tick because a team event can be either format.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Bag</div><p class="hint" style="margin:0">Carried, push cart or buggy. Fatigue and forearm load in one field.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Warm-up</div><p class="hint" style="margin:0">Balls / putts / minutes as numbers, plus the route as a multi-select: Putting, Range, Short game, Bunker \u2014 or None, which clears the rest. Balls carry wrist load, putts do not.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Wind</div><p class="hint" style="margin:0">Average and gust in mph from the weather app. The category follows the average \u2014 Calm 0\u20135, Breezy 6\u201312, Windy 13+ \u2014 and can be overridden. Gusts are kept separately. No direction.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Wrist</div><p class="hint" style="margin:0">Symptoms after the round, on the same record as the load that produced them. Next-morning check is the cleaner recovery signal.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Close out after X</div><p class="hint" style="margin:0">Drops the remaining holes at save. Back to holes restores every hole exactly as it was.</p></div><h3 class="eyebrow" style="margin:18px 0 6px">Rules of the block</h3><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Paces, not feet</div><p class="hint" style="margin:0">Every short-game distance is paced steps, converted by the stride figure below. Yards from the rangefinder for everything full-swing. Never mix the two.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Categorical before measured</div><p class="hint" style="margin:0">Fairway, green, miss directions and putt count are robust and carry the diagnosis. Yards and steps carry measurement error. When the two disagree, trust the categorical read.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Entry timing</div><p class="hint" style="margin:0">Approach fields after the approach shot. Putting and score on the walk to the next tee, never on the green. Anything reconstructed later is worth less than a blank.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">No conclusions before round 20</div><p class="hint" style="margin:0">Block-level findings wait. Single rounds are anecdotes, and a good score can be built on poor ball-striking that the short game covered.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">9 versus 18</div><p class="hint" style="margin:0">A 9-hole differential is doubled to an 18-hole equivalent and marked \u2248. Never compare a raw 9-hole number with an 18-hole one.</p></div><div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-weight:600;font-size:13px;margin-bottom:3px">Definition changes</div><p class="hint" style="margin:0">3.1 made GIR a derived field and the green the tolerance band for a hit approach. 3.2 records the pin on every approach. 3.3: up and down counts only approaches that finished off the green and includes chip-ins; scrambling (par or better after a missed GIR) is the benchmark figure; \u00b1% works from the target; differentials use net double bogey once an index is set. Compare across those lines with care.</p></div></div>`:''}
 
   <h3 class="eyebrow" style="margin:22px 0 6px">Courses</h3>
   <p class="hint" style="margin:0 0 8px">Every course in the picker, with its par sequence and tee ratings. A course added here is permanent and appears everywhere.</p>
@@ -1986,13 +2097,16 @@ function summaryText(){
          '  vs par '+(d>=0?'+':'')+d.toFixed(2)+
          '  birdies '+g.filter(function(h){return h.score<h.par}).length+'\n';});
   }
-  var ms=R.flatMap(function(r){return r.holes}).filter(function(h){return h.gir===false&&!h.pu});
-  var uds=ms.filter(function(h){return h.putts===1});
+  var ms=R.flatMap(function(r){return r.holes}).filter(isOff);
+  var uds=ms.filter(udOK);
+  var scrH=R.flatMap(function(r){return r.holes}).filter(function(h){return h.gir===false&&!h.pu});
+  o+='\nscrambling (par or better after missed GIR): '+scrH.filter(function(h){return h.score<=h.par}).length+' of '+scrH.length+'\n';
   o+='\nup and down: '+uds.length+' of '+ms.length+
      (ms.length?' ('+Math.round(100*uds.length/ms.length)+'%)':'')+'\n';
   ['chip','pitch','bunker','putt'].forEach(function(k){
-    var g=R.flatMap(function(r){return r.holes}).filter(function(h){return h.rec===k});
-    if(g.length)o+='  '+(k+'      ').slice(0,7)+g.filter(function(h){return h.putts===1}).length+' of '+g.length+'\n';});
+    var g=R.flatMap(function(r){return r.holes}).filter(function(h){return recOf(h)===k});
+    if(g.length)o+='  '+(k+'      ').slice(0,7)+g.filter(udOK).length+' of '+g.length+'\n';});
+  o+=decText(R);
   var fpNH=R.flatMap(function(r){return r.holes}).filter(function(h){
     return !h.pu&&h.fpN!==null&&h.fpN!==undefined&&h.putts>0;});
   if(fpNH.length){
@@ -2007,7 +2121,7 @@ function summaryText(){
   var ssL=ms.filter(function(h){return h.ss===true||h.ss===false});
   if(ssL.length){
     var ssY=ssL.filter(function(h){return h.ss===true}),ssN=ssL.filter(function(h){return h.ss===false});
-    var u=function(g){return g.filter(function(h){return h.putts===1}).length};
+    var u=function(g){return g.filter(udOK).length};
     var dd=function(g){return g.filter(function(h){return h.score-h.par>=2}).length};
     o+='\nshort-sided: '+ssY.length+' of '+ssL.length+' logged misses ('+
        Math.round(100*ssY.length/ssL.length)+'%)'+
