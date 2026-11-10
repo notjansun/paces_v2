@@ -114,6 +114,18 @@ pre{white-space:pre-wrap;word-break:break-word;font-size:12px;background:var(--b
 .sheet .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .sheet .btns.one{grid-template-columns:1fr}
 .sheet .btns .cta{font-size:20px;margin-top:0}
+.tstrip{display:flex;gap:4px;height:58px;margin:8px 0 0}
+.tz{border:0;flex:1;border-radius:7px;background:var(--cell);color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;padding:0}
+.tz.fw{flex:1.5;background:color-mix(in srgb,var(--rg-edge) 22%,var(--cell));color:var(--ink);font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:600}
+.tz.way{flex:.85;background:var(--red-soft);color:var(--red);box-shadow:inset 0 0 0 1px var(--wine)}
+.tz.wl{border-radius:29px 7px 7px 29px}.tz.wr{border-radius:7px 29px 29px 7px}
+.tz.sel{background:var(--rg-hi);color:#fff;box-shadow:0 0 0 1.5px var(--flag)}
+.tz.way.sel{background:var(--wine-hi);color:#fff}
+.tstrip.has-sel .tz:not(.sel){opacity:.45}
+.tdepth{display:flex;gap:8px;justify-content:center;margin-top:8px}
+.tdepth .chip{min-height:32px;min-width:0;padding:3px 14px;font-size:13px;border-radius:999px;font-weight:500}
+.tsplit{border-top:1px solid var(--line);margin:14px 0 0;padding-top:12px}
+.tsplit .q{margin-top:0}
 .dpad{display:grid;grid-template-columns:44px 1fr 88px 1fr 44px;grid-template-rows:42px 112px 42px;gap:6px;max-width:340px;margin:8px auto 0}
 .dp{border:0;background:var(--cell);color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:14px;padding:0}
 .dp svg{width:22px;height:22px;stroke:currentColor;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
@@ -215,7 +227,8 @@ const PRED=[{k:"score",name:"Score",min:70,max:100,avg:85,goal:80,low:true},{k:"
   {k:"dbl",name:"Doubles or worse",min:0,max:8,avg:3.5,goal:1.5,low:true},{k:"tp",name:"3-putts",min:0,max:6,avg:1.6,goal:1,low:true}];
 function predDef(p,n){ if(n!==9) return p; const half=x=>Math.round(x*5)/10; return p.k==="score"?{...p,min:34,max:52,avg:42.5,goal:40}:{...p,max:Math.ceil(p.max/2),avg:half(p.avg),goal:half(p.goal)}; }
 function predFmt(p,v,n){ return p.k==="gir"?`${v} (${Math.round(v/(n||18)*100)}%)`:String(v); }
-const TEE_DIRS={c:"Fairway",l:"Left rough",r:"Right rough",ll:"Way left",rr:"Way right",up:"Long",down:"Short"};
+const TEE_DIRS={c:"Fairway",l:"Left",r:"Right",ll:"Way left",rr:"Way right",up:"Long",down:"Short"};
+const teeTxt=h=>(TEE_DIRS[h.dir]||"-")+(h.teeDepth?" "+h.teeDepth:"")+(h.bunker?" bunker":"");
 const MISS=[["Long left","↖"],["Long","↑"],["Long right","↗"],["Left","←"],[null,""],["Right","→"],["Short left","↙"],["Short","↓"],["Short right","↘"]];
 const REC_DIST=["Under 10 y","10–30 y","30–60 y","Over 60 y"];
 const CAUSES=["Penalty","Tee shot","Approach","Short-sided","Recovery","3-putt","Other"];
@@ -233,7 +246,8 @@ let useIdb=false, saveErr=null;
 async function load(){
   try{ await idb.open(); useIdb=true; const v=await idb.get(KEY); if(v) DB=JSON.parse(v); }
   catch(e){ try{ const v=localStorage.getItem(KEY); if(v) DB=JSON.parse(v); }catch(_){} }
-  DB.settings=Object.assign({hi:10.3,wpct:0},DB.settings||{}); DB.trackman=DB.trackman||{}; DB.legacy=DB.legacy||[]; DB.rounds=DB.rounds||[];
+  DB.settings=Object.assign({hi:10.3,wpct:0},DB.settings||{});
+  (DB.rounds||[]).forEach(r=>r.holes.forEach(h=>{ if(h.dir==="up"||h.dir==="down"){ h.teeDepth=h.dir==="up"?"long":"short"; h.dir="c"; } })); DB.trackman=DB.trackman||{}; DB.legacy=DB.legacy||[]; DB.rounds=DB.rounds||[];
   if(!DB.rounds.length&&!DB.legacy.length){ try{ const old=localStorage.getItem("golf:v1"); if(old){ importLegacy(JSON.parse(old)); await save(); } }catch(_){} }
 }
 async function save(){
@@ -261,13 +275,14 @@ const carryOf=c=>(DB.trackman[c]&&DB.trackman[c].carry)||CARRY_DEFAULT[c];
 
 /* ---------- hole logic ---------- */
 const isP3=h=>h.par===3, isP5=h=>h.par===5;
-const teeDone=h=>isP3(h)||(h.teeClub&&h.dir&&(!h.pen||(h.penType&&h.penCause)));
+const isWay=h=>h.dir==="ll"||h.dir==="rr";
+const teeDone=h=>isP3(h)||(h.teeClub&&h.dir&&(!h.pen||(h.penType&&h.penCause))&&(!isWay(h)||h.pen||h.wayCause));
 const p5Done=h=>!isP5(h)||h.p5;
 function appNoDefault(h){ if(isP3(h)) return 1; let n=h.par-2; if(isP5(h)&&h.p5==="Went for it") n=2;
   if(h.pen) n+=h.penType==="OB"?2:1; if(h.layup&&h.par===4) n+=1; return n; }
 const appNo=h=>Math.max(1,appNoDefault(h)+h.appAdj);
 function lieDefault(h){ if(isP3(h)) return "Tee"; if(isP5(h)&&h.p5&&h.p5!=="Went for it") return h.p5==="Laid up"?"Fairway":null;
-  if(h.pen) return null; if(h.bunker) return "Bunker"; if(h.dir==="c") return "Fairway"; if(["l","r","up","down"].includes(h.dir)) return "Rough"; return null; }
+  if(h.pen) return null; if(h.bunker) return "Bunker"; if(h.dir==="c"&&!h.teeDepth) return "Fairway"; if(["l","r","c"].includes(h.dir)) return "Rough"; return null; }
 const lie=h=>h.lie||lieDefault(h);
 const playTo=h=>h.playTo??h.flag;
 const wp=(h,r)=>h.wpct??(r&&r.wpct)??0;
@@ -292,7 +307,7 @@ function causeDefault(h){ if(h.pen) return "Penalty"; if(h.dir==="ll"||h.dir==="
 const isDbl=h=>score(h)-h.par>=2;
 const cause=h=>isDbl(h)?(h.cause||causeDefault(h)):null;
 const holeReady=h=>teeDone(h)&&p5Done(h)&&approachDone(h)&&recDone(h)&&puttsDone(h);
-function missing(h){ const n=[]; if(!isP3(h)){ if(!h.teeClub) n.push("tee club"); if(!h.dir) n.push("tee result"); if(h.pen&&!h.penType) n.push("penalty type"); if(h.pen&&!h.penCause) n.push("penalty cause"); if(isP5(h)&&!h.p5) n.push("second shot"); }
+function missing(h){ const n=[]; if(!isP3(h)){ if(!h.teeClub) n.push("tee club"); if(!h.dir) n.push("tee result"); if(h.pen&&!h.penType) n.push("penalty type"); if(h.pen&&!h.penCause) n.push("penalty cause"); if(isWay(h)&&!h.pen&&!h.wayCause) n.push("miss cause"); if(isP5(h)&&!h.p5) n.push("second shot"); }
   if(!lie(h)) n.push("approach lie"); if(h.pin==null) n.push("pin"); if(!h.flag) n.push("flag"); if(!h.club) n.push("approach club"); if(!h.green) n.push("result");
   if(h.green==="on"&&h.ball==null) n.push("ball position"); if(h.green==="off"&&!h.miss) n.push("miss side"); if(h.green==="off"&&!h.fringe&&!h.recDist) n.push("distance to pin");
   if(h.green==="off"&&!h.recType) n.push("recovery shot"); if(!puttsDone(h)) n.push("putting"); return n; }
@@ -307,7 +322,7 @@ function strokesOn(r,hno){ const ch=courseHcp(r), si=siOf(r,hno); if(ch==null||s
 function normHole(h,r){
   const sc=score(h), miss=h.green==="off"?h.miss:null;
   const depth=onGreen(h)?null:(miss?(miss.startsWith("Short")?"Short":miss.startsWith("Long")?"Long":"Hole-high"):null);
-  return {hno:h.hno,par:h.par,score:sc,putts:putts(h),gir:gir(h),fwKnown:h.par>3&&!!h.dir,fwHit:h.dir==="c",teeDir:h.dir,teePen:h.pen?1:0,penType:h.penType,penCause:h.penCause,
+  return {hno:h.hno,par:h.par,score:sc,putts:putts(h),gir:gir(h),fwKnown:h.par>3&&!!h.dir,fwHit:h.dir==="c"&&!h.bunker&&!h.teeDepth&&!h.pen,teeDir:h.dir,teeDepth:h.teeDepth||null,teePen:h.pen?1:0,penType:h.penType,penCause:h.penCause,wayCause:isWay(h)&&!h.pen?h.wayCause||null:null,way:isWay(h),
     dbl:sc-h.par>=2,excess:Math.max(0,sc-h.par-1),onGreen:onGreen(h),depth,miss,ss:!onGreen(h)&&h.ss,fringe:!onGreen(h)&&h.fringe,
     saved:!gir(h)&&sc<=h.par,goMiss:p5GoMiss(h),club:h.club,adj:adj(h,r),flag:h.flag,playTo:playTo(h),wpct:showW(h)?wp(h,r):0,holeHigh:onGreen(h)||depth==="Hole-high",
     fp:h.holedOut?null:h.fp,threeP:putts(h)>=3,cause:cause(h),recType:onGreen(h)?null:h.recType,recDist:onGreen(h)||h.fringe?null:h.recDist,p5:h.p5,
@@ -333,7 +348,8 @@ function metrics(nr){
     threeP:H.filter(h=>h.threeP).length,short:H.filter(h=>h.depth==="Short").length,long:H.filter(h=>h.depth==="Long").length,
     ss:H.filter(h=>h.ss).length,saves:missed.filter(h=>h.saved).length,missedN:missed.length,
     first3:H.slice(0,3).reduce((a,h)=>a+h.score-h.par,0),
-    decision:H.filter(h=>h.penCause==="Decision").length,execution:H.filter(h=>h.penCause==="Execution").length};
+    decision:H.filter(h=>h.penCause==="Decision").length,execution:H.filter(h=>h.penCause==="Execution").length,
+    way:H.filter(h=>h.way).length,wayDec:H.filter(h=>h.wayCause==="Decision").length,wayExe:H.filter(h=>h.wayCause==="Execution").length};
 }
 const per18=(v,n)=>n?v*18/n:0;
 const f1=v=>v==null||isNaN(v)?"–":(Math.round(v*10)/10).toString();
@@ -387,13 +403,13 @@ function packText(r){
   const pr=r.pred||{};
   L.push(`PREDICTIONS vs ACTUAL: score ${pr.score??"–"} / ${m.score} | GIR ${pr.gir??"–"} / ${m.gir} | doubles+ ${pr.dbl??"–"} / ${m.dbl} | 3-putts ${pr.tp??"–"} / ${m.threeP}`);
   L.push(`SCORE: ${m.score} (${tp(m.score-m.par)}) | differential ${d?(d.approx?"≈":"")+d.v:"–"}${sf!=null?` | Stableford ${sf}`:""}`);
-  L.push(`CORE: GIR ${m.gir}/${m.n} | FW ${m.fw}/${m.fwN} | putts ${m.putts} | 3-putts ${m.threeP} | tee penalties ${m.teePen} (decision ${m.decision}, execution ${m.execution}) | doubles+ ${m.dbl} (excess ${m.excess}) | scrambling ${m.saves}/${m.missedN} | misses short:long ${m.short}:${m.long} | short-sided ${m.ss} | first 3 holes ${tp(m.first3)}`);
+  L.push(`CORE: GIR ${m.gir}/${m.n} | FW ${m.fw}/${m.fwN} | putts ${m.putts} | 3-putts ${m.threeP} | tee penalties ${m.teePen} (decision ${m.decision}, execution ${m.execution}) | way misses without penalty ${m.wayDec+m.wayExe} (decision ${m.wayDec}, execution ${m.wayExe}) | doubles+ ${m.dbl} (excess ${m.excess}) | scrambling ${m.saves}/${m.missedN} | misses short:long ${m.short}:${m.long} | short-sided ${m.ss} | first 3 holes ${tp(m.first3)}`);
   L.push(`BASELINES (all sources): last 5 diff ${f1(b5.diff)}, GIR ${f1(b5.gir)}, tee pen ${f1(b5.pen)}, dbl ${f1(b5.dbl)}, 3-putts ${f1(b5.tp3)} | last 20 diff ${f1(b20.diff)}, GIR ${f1(b20.gir)}, tee pen ${f1(b20.pen)}, dbl ${f1(b20.dbl)}, 3-putts ${f1(b20.tp3)}`);
   L.push(`DOUBLES LEDGER:`); nr.holes.filter(h=>h.dbl).forEach(h=>L.push(`  H${h.hno} par ${h.par}: ${h.score} (+${h.excess} over bogey), cause ${h.cause}${h.penType?`, ${h.penType} ${h.penCause||""}`:""}`));
   if(!nr.holes.some(h=>h.dbl)) L.push("  none");
   L.push(`HOLES (hno par score | tee | lie flag/play-to/adj club result | rec | first putt steps, putts):`);
   r.holes.filter(h=>h.done).forEach(h=>{ const n=normHole(h,r);
-    L.push(`  H${h.hno} p${h.par} ${n.score} | ${h.par>3?(h.teeClub||"-")+" "+(TEE_DIRS[h.dir]||"-")+(h.pen?` PEN ${h.penType}/${h.penCause}`:""):"-"}${h.p5?" | 2nd: "+h.p5:""} | ${n.lie||"-"} ${h.flag||"-"}/${playTo(h)||"-"}/${n.adj||"-"} ${h.club||"-"}${h.notStock?` (not stock${h.swing?": "+h.swing:""})`:""} ${n.onGreen?"on green":"missed "+(h.miss||"-")+(h.fringe?" fringe":"")+(h.ss?" short-sided":"")} | ${n.recType?n.recType+" "+(n.recDist||""):"-"} | ${h.holedOut?"holed out":(h.fp===0?"tap-in":h.fp+" steps")}, ${n.putts} putts${h.note?` | note: ${h.note}`:""}`); });
+    L.push(`  H${h.hno} p${h.par} ${n.score} | ${h.par>3?(h.teeClub||"-")+" "+teeTxt(h)+(h.pen?` PEN ${h.penType}/${h.penCause}`:h.wayCause?` (${h.wayCause.toLowerCase()})`:""):"-"}${h.p5?" | 2nd: "+h.p5:""} | ${n.lie||"-"} ${h.flag||"-"}/${playTo(h)||"-"}/${n.adj||"-"} ${h.club||"-"}${h.notStock?` (not stock${h.swing?": "+h.swing:""})`:""} ${n.onGreen?"on green":"missed "+(h.miss||"-")+(h.fringe?" fringe":"")+(h.ss?" short-sided":"")} | ${n.recType?n.recType+" "+(n.recDist||""):"-"} | ${h.holedOut?"holed out":(h.fp===0?"tap-in":h.fp+" steps")}, ${n.putts} putts${h.note?` | note: ${h.note}`:""}`); });
   if(r.note) L.push(`ROUND NOTE: ${r.note}`);
   return L.join("\n");
 }
@@ -493,10 +509,10 @@ function holeHeader(r,h){
   return `<header class="top"><div><div class="hl"><span class="hole">Hole ${h.hno}</span><span class="par">Par ${h.par}</span></div><div class="sub"><span>${len?yd(len)+" y":"– y"}</span><span>SI ${si||"–"}</span>${strokesOn(r,h.hno)?`<span>${"•".repeat(strokesOn(r,h.hno))} stroke${strokesOn(r,h.hno)>1?"s":""}</span>`:""}</div></div>
   <div class="right"><b>${done.length?tp(tot):"–"}</b>thru ${done.length}</div></header>`;
 }
-function dpad(h){
-  const b=(k,cls,txt,lab)=>`<button class="dp ${cls} ${h.dir===k?"sel":""}" data-a="dir" data-v="${k}" aria-label="${lab}" aria-pressed="${h.dir===k}">${txt}</button>`;
-  const ch=d=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
-  return `<div class="dpad ${h.dir?"has-sel":""}">${b("up","up",ch("M6 15l6-6 6 6"),"Long")}${b("ll","ll",ch("M12 6l-6 6 6 6M19 6l-6 6 6 6"),"Way left")}${b("l","l",ch("M15 6l-6 6 6 6"),"Left rough")}${b("c","c","FW","Fairway")}${b("r","r",ch("M9 6l6 6-6 6"),"Right rough")}${b("rr","rr",ch("M5 6l6 6-6 6M12 6l6 6-6 6"),"Way right")}${b("down","down",ch("M6 9l6 6 6-6"),"Short")}</div>`;
+function teeStrip(h){
+  const z=(k,cls,label,aria)=>`<button class="tz ${cls} ${h.dir===k?"sel":""}" data-a="dir" data-v="${k}" aria-label="${aria}" aria-pressed="${h.dir===k}">${label}</button>`;
+  return `<div class="tstrip ${h.dir?"has-sel":""}">${z("ll","way wl","Way L","Way left")}${z("l","","Left","Left")}${z("c","fw","FW","Fairway")}${z("r","","Right","Right")}${z("rr","way wr","Way R","Way right")}</div>
+  <div class="tdepth">${chip("teeDepth","short","Short",h.teeDepth==="short")}${chip("teeDepth","long","Long",h.teeDepth==="long")}</div>`;
 }
 function pinGrid(h){ let s=`<div class="grid g3" role="group" aria-label="Pin position">`;
   for(let i=0;i<9;i++) s+=`<button class="cell green ${h.pin===i?"sel":""}" data-a="pin" data-v="${i}" aria-label="pin cell ${i+1}">${h.pin===i?"⚑":""}</button>`;
@@ -528,11 +544,13 @@ function holeView(){
   if(!isP3(h)){
     out+=`<section><h2>Tee shot</h2><div class="q">Club</div><div class="chips">${TEE_CLUBS.map(c=>chip("teeClub",c,c,h.teeClub===c,c===lastTee(r,h.hno)?"dot":"")).join("")}</div>
     <div class="hint"><span class="d"></span>last time on this hole</div>`;
-    if(h.teeClub){ out+=`<div class="q">Where it finished</div>${dpad(h)}
-      <div class="hint" style="text-align:center">Single arrows: rough. Red: way off line, trees or worse.</div>
-      <div class="chips" style="margin-top:10px">${chip("bunker",1,"Bunker",h.bunker)}${chip("pen",1,"Penalty",h.pen)}${chip("mishit",1,"Mis-hit",h.mishit)}</div>`;
+    if(h.teeClub){ out+=`<div class="q">Where it finished</div>${teeStrip(h)}
+      <div class="hint" style="text-align:center">Way: no full swing at the green possible.</div>
+      ${isWay(h)&&!h.pen?`<div class="q">Cause of the miss</div><div class="chips">${["Decision","Execution"].map(v=>chip("wayCause",v,v,h.wayCause===v,"wide")).join("")}</div>`:""}
+      <div class="tsplit"><div class="q">Lie or penalty (optional, one)</div><div class="chips">${chip("bunker",1,"Bunker",h.bunker,"wide")}${chip("pen",1,"Penalty",h.pen,"wide")}</div>`;
       if(h.pen) out+=`<div class="q">Penalty</div><div class="chips">${["OB","Water","Unplayable"].map(v=>chip("penType",v,v,h.penType===v)).join("")}</div>
-        <div class="q">Cause</div><div class="chips">${["Decision","Execution"].map(v=>chip("penCause",v,v,h.penCause===v,"wide")).join("")}</div>`; }
+        <div class="q">Cause</div><div class="chips">${["Decision","Execution"].map(v=>chip("penCause",v,v,h.penCause===v,"wide")).join("")}</div>`;
+      out+=`</div><div class="tsplit"><div class="q">Strike</div><div class="chips">${chip("mishit",1,"Mis-hit",h.mishit)}</div></div>`; }
     out+=`</section>`;
     if(!teeDone(h)) return out+closeLinks()+`</main>`;
     if(isP5(h)){ out+=`<section><h2>Second shot</h2><div class="chips">${["Went for it","Laid up","Never on"].map(v=>chip("p5",v,v,h.p5===v)).join("")}</div></section>`;
@@ -620,13 +638,14 @@ function reportView(r){
   const T=(lab,val,target,good)=>`<tr><td class="lab">${lab}</td><td class="n ${good==null?"":good?"ok":"bad"}">${val}</td><td class="n">${target}</td></tr>`;
   out+=`<section><h2>Tracked numbers</h2><table><tr><th></th><th class="n">Round</th><th class="n">Target</th></tr>
    ${T("Tee penalties",m.teePen+(m.decision+m.execution?` (${m.decision} dec / ${m.execution} exe)`:""),"≤ 0.5",m.teePen<=(m.n<18?0:0.5))}
+   ${T("Way misses off the tee",m.way+(m.wayDec+m.wayExe?` (${m.wayDec} dec / ${m.wayExe} exe)`:""),"–",null)}
    ${T("Approach misses short : long",`${m.short} : ${m.long}`,"≤ 1.5 : 1",m.long?m.short/m.long<=1.5:m.short<=1)}
    ${T("Greens in regulation",m.gir,"8",per18(m.gir,m.n)>=8)}
    ${T("Short-sided",m.ss,"≤ 1",m.ss<=1)}
    ${T("3-putts",m.threeP,"≤ 1",m.threeP<=1)}
    ${T("Holes 1–3 vs par",tp(m.first3),"≤ +2",m.first3<=2)}
    ${T("Scrambling",`${m.saves}/${m.missedN}`,"–",null)}</table></section>`;
-  out+=`<section><h2>Hole by hole</h2><div class="scroll"><table><tr><th>H</th><th>Par</th><th>Sc</th><th>Tee</th><th>Approach</th><th class="n">Putts</th></tr>${nr.holes.map(h=>`<tr><td>${h.hno}</td><td>${h.par}</td><td>${h.score}</td><td>${h.par>3?(h.teeClub||"")+" "+(TEE_DIRS[h.teeDir]||"–")+(h.teePen?" P":""):"–"}</td><td>${h.club||""} ${h.onGreen?"green":(h.depth?h.depth.toLowerCase():"miss")}${h.ss?" ss":""}</td><td class="n">${h.putts}</td></tr>`).join("")}</table></div></section>`;
+  out+=`<section><h2>Hole by hole</h2><div class="scroll"><table><tr><th>H</th><th>Par</th><th>Sc</th><th>Tee</th><th>Approach</th><th class="n">Putts</th></tr>${nr.holes.map(h=>`<tr><td>${h.hno}</td><td>${h.par}</td><td>${h.score}</td><td>${h.par>3?(h.teeClub||"")+" "+(TEE_DIRS[h.teeDir]||"–")+(h.teeDepth?" "+h.teeDepth:"")+(h.teePen?" P":""):"–"}</td><td>${h.club||""} ${h.onGreen?"green":(h.depth?h.depth.toLowerCase():"miss")}${h.ss?" ss":""}</td><td class="n">${h.putts}</td></tr>`).join("")}</table></div></section>`;
   if(r.note) out+=`<section><h2>Round note</h2>${esc(r.note)}</section>`;
   if(!r.legacy) out+=`<section><h2>Analysis pack</h2><div class="hint" style="margin-top:0">Copy and paste into the Golf project for the coaching review.</div><button class="cta" data-a="copyPack" data-v="${r.id}">Copy analysis pack</button><div id="packmsg" class="hint"></div></section>`;
   out+=`<button class="cta alt" data-a="closeView">Back</button>${r.legacy?"":`<button class="cta danger" data-a="delRound" data-v="${r.id}">${S.arm==="delRound:"+r.id?"Tap again to delete permanently":"Delete round"}</button>`}</main>`;
@@ -659,7 +678,7 @@ function statsView(){
   const R=(a,b)=>`<tr><td class="lab">${a}</td><td class="n">${b}</td></tr>`;
   out+=`<section><h2>Scoring</h2><div class="kpi"><div><b>${full.length?f1(full.reduce((a,r)=>a+metrics(r).score,0)/full.length):"–"}</b><span>avg 18-hole score</span></div><div><b>${ds.length?f1(ds.reduce((a,b)=>a+b,0)/ds.length):"–"}</b><span>avg differential</span></div><div><b>${rs.length}</b><span>rounds, ${H} holes</span></div></div>
   <table style="margin-top:10px">${R("Par 3 / 4 / 5 vs par",`${byPar(3)} / ${byPar(4)} / ${byPar(5)}`)}${R("Doubles or worse per 18",f1(per18(tot("dbl"),H)))}${R("Strokes over bogey per 18",f1(per18(tot("excess"),H)))}${R("Holes 1–3 vs par per round",f1(ms.reduce((a,m)=>a+m.first3,0)/ms.length))}</table></section>`;
-  out+=`<section><h2>Long game</h2><table>${R("Fairways",pct(tot("fw"),tot("fwN")))}${R("Tee penalties per 18",f1(per18(tot("teePen"),H)))}${R("Penalties: decision / execution",`${tot("decision")} / ${tot("execution")}`)}${R("Greens in regulation per 18",f1(per18(tot("gir"),H)))}${R("Approach misses short : long",`${tot("short")} : ${tot("long")}`)}${R("Short-sided per 18",f1(per18(tot("ss"),H)))}</table></section>`;
+  out+=`<section><h2>Long game</h2><table>${R("Fairways",pct(tot("fw"),tot("fwN")))}${R("Tee penalties per 18",f1(per18(tot("teePen"),H)))}${R("Penalties: decision / execution",`${tot("decision")} / ${tot("execution")}`)}${R("Way misses: decision / execution",`${tot("wayDec")} / ${tot("wayExe")}`)}${R("Greens in regulation per 18",f1(per18(tot("gir"),H)))}${R("Approach misses short : long",`${tot("short")} : ${tot("long")}`)}${R("Short-sided per 18",f1(per18(tot("ss"),H)))}</table></section>`;
   out+=`<section><h2>Short game and putting</h2><table>${R("Scrambling (par or better after missed GIR)",pct(tot("saves"),tot("missedN")))}${R("Putts per 18",f1(per18(tot("putts"),H)))}${R("3-putts per 18",f1(per18(tot("threeP"),H)))}</table></section>`;
   // clubs
   const ap=rs.flatMap(r=>r.holes).filter(h=>h.club&&h.adj);
@@ -682,7 +701,7 @@ function csvRounds(){ const head=["id","date","course","tees","cr","slope","hi",
   const rows=DB.rounds.filter(r=>r.finished).map(r=>{ const nr=normRound(r), m=metrics(nr)||{}, d=diffOf(nr);
     return [r.id,r.date,r.course,r.tees,r.cr,r.slope,r.hi,r.type,r.format,r.n,m.n,m.score,m.par,d?d.v:"",m.gir,m.fw,m.fwN,m.putts,m.threeP,m.teePen,m.dbl,r.temp,r.wpct,r.wind?.avg,r.wind?.gust,r.pred?.score,r.pred?.gir,r.pred?.dbl,r.pred?.tp]; });
   return [head,...rows].map(a=>a.map(v=>v==null?"":/[",\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(",")).join("\n"); }
-function csvHoles(){ const keys=["hno","par","score","putts","gir","teeClub","teeDir","teePen","penType","penCause","p5","layup","lie","appNo","flag","playTo","wpct","adj","club","notStock","swing","onGreen","miss","depth","fringe","ss","recType","recDist","fp","holedOut","threeP","dbl","cause","contact","mishit","bunker"];
+function csvHoles(){ const keys=["hno","par","score","putts","gir","teeClub","teeDir","teeDepth","teePen","penType","penCause","wayCause","p5","layup","lie","appNo","flag","playTo","wpct","adj","club","notStock","swing","onGreen","miss","depth","fringe","ss","recType","recDist","fp","holedOut","threeP","dbl","cause","contact","mishit","bunker"];
   const rows=[]; DB.rounds.filter(r=>r.finished).forEach(r=>normRound(r).holes.forEach(h=>rows.push([r.id,r.date,r.course,...keys.map(k=>h[k])])));
   return [["round_id","date","course",...keys],...rows].map(a=>a.map(v=>v==null?"":/[",\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(",")).join("\n"); }
 function dataView(){
@@ -697,7 +716,8 @@ ${S.pending?`<div class="rot" style="display:block">Backup from file: ${(S.pendi
 <button class="cta danger" data-a="doImport">${S.arm==="doImport:"?"Tap again to replace all data":"Replace all data with this backup"}</button><button class="cta alt" data-a="cancelImport">Cancel</button></div>`:""}</section>
 <section><h2>Storage</h2><table><tr><td class="lab">Paces 4 rounds</td><td class="n">${DB.rounds.filter(r=>r.finished).length}</td></tr><tr><td class="lab">Imported v3 rounds</td><td class="n">${DB.legacy.length}</td></tr><tr><td class="lab">Stored in</td><td class="n">${useIdb?"IndexedDB":"localStorage"}</td></tr><tr><td class="lab">Version</td><td class="n">${VERSION}</td></tr></table></section>
 <section><details><summary style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:600;cursor:pointer">Legend</summary><table style="margin-top:8px">
-${[["Tee result","Single arrows: rough left or right. Red double arrows: way off line, trees or worse. Long and short: through or short of the fairway."],
+${[["Tee result","FW: on the fairway. Left / Right: missed, but a full swing at the green is possible. Way left / right: no full swing at the green (trees, blocked, punch-out). Short / long: finished before or beyond the fairway, combinable with a side."],
+["Bunker / penalty","One or the other, on top of where it finished. A bunker in the middle of the fairway is FW + Bunker and counts as a missed fairway."],
 ["Approach is shot","Shot number of the approach. Pre-set from par, penalties, lay-ups and the par-5 choice."],
 ["Laid up first","Par 4 only. A deliberate lay-up before the approach. Adds one to the approach shot."],
 ["Par-5 second shot","Went for it: the green is the target, even if it needs a perfect strike. Laid up: you could reach but aimed short. Never on: out of reach or blocked."],
@@ -789,9 +809,11 @@ document.addEventListener("click",async e=>{
     /* hole */
     case "goHole": r.cur=+v; S.screen="hole"; window.scrollTo(0,0); break;
     case "teeClub": tog(h,"teeClub",v); break;
-    case "dir": h.dir=h.dir===v?null:v; h.lie=null; break;
-    case "bunker": h.bunker=!h.bunker; h.lie=null; break;
-    case "pen": h.pen=!h.pen; h.appAdj=0; h.lie=null; if(!h.pen){h.penType=null;h.penCause=null;} break;
+    case "dir": h.dir=h.dir===v?null:v; h.lie=null; if(!isWay(h)) h.wayCause=null; break;
+    case "wayCause": h.wayCause=v; break;
+    case "bunker": h.bunker=!h.bunker; if(h.bunker){ h.pen=false; h.penType=null; h.penCause=null; h.appAdj=0; } h.lie=null; break;
+    case "pen": h.pen=!h.pen; h.appAdj=0; h.lie=null; if(h.pen) h.bunker=false; else {h.penType=null;h.penCause=null;} break;
+    case "teeDepth": h.teeDepth=h.teeDepth===v?null:v; h.lie=null; break;
     case "penType": h.penType=v; h.appAdj=0; break;
     case "penCause": h.penCause=v; break;
     case "mishit": h.mishit=!h.mishit; break;
