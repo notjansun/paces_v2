@@ -169,14 +169,15 @@ select.sel{appearance:none;-webkit-appearance:none;font-family:"Barlow Condensed
 .wh-top .name{font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase}
 .wh-top .v{font-family:"Barlow Condensed",sans-serif;font-size:28px;font-weight:700}
 .wh-top .v.unset{color:var(--muted);font-size:17px;font-weight:500}
-.wh-row{position:relative;height:22px;font-size:12px;color:var(--muted)}
-.wh-row span{position:absolute;transform:translateX(-50%);white-space:nowrap;line-height:22px}
-.wh-row.up span::after{content:" ▼";color:#fff}
-.wh-row.dn span::before{content:"▲ ";color:var(--flag)}
-.wh-row.dn span{color:var(--flag);font-weight:600}
-.wh-bar{position:relative;height:28px;display:flex;gap:3px;align-items:center}
-.wh-bar i{flex:1;height:7px;border-radius:2px}
-.wh-bar input[type=range]{position:absolute;inset:0;width:100%;height:28px;opacity:0;margin:0;cursor:pointer}
+.wh-row{position:relative;height:34px;font-size:12px;color:var(--muted)}
+.wh-row span{position:absolute;transform:translateX(-50%);white-space:nowrap;display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.wh-row.up span{bottom:0}
+.wh-row.dn span{top:0;color:var(--flag);font-weight:600}
+.wh-row span i{font-style:normal;font-size:11px;line-height:1}
+.wh-row.up span i{color:#fff}
+.wh-bar{position:relative;height:30px;display:flex;gap:2px;align-items:center;cursor:pointer;touch-action:none;outline:none}
+.wh-bar:focus-visible{box-shadow:0 0 0 2px var(--flag);border-radius:6px}
+.wh-bar b{flex:1;height:8px;border-radius:2px}
 .wh-cur{position:absolute;top:2px;width:6px;height:24px;border-radius:3px;background:#fff;transform:translateX(-50%);box-shadow:0 0 0 2px var(--bg);pointer-events:none}
 .wh-ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:2px}
 .rot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--rg);border:1px solid var(--rg-edge);font-size:14px}
@@ -422,16 +423,30 @@ function padView(){ if(!S.pad) return "";
   return `<div class="sheet-bg" data-a="padClose"></div><div class="sheet" role="dialog" aria-label="${P.label}">
    <div class="lab">${P.label}</div><div class="readout">${v?(S.pad.neg?"−":"")+v:(P.get()??"–")}<small>${P.unit}</small></div>
    <div class="keypad">${keys}</div><div class="btns ${P.next?"":"one"}"><button class="cta ${P.next?"alt":""}" data-a="padOk">OK</button>${P.next?`<button class="cta" data-a="padNext">${P.nextLab}</button>`:""}</div></div>`; }
-function slider(p0,F){ const p=predDef(p0,F.n), val=F.pred[p.k], pos=x=>Math.max(4,Math.min(96,(x-p.min)/(p.max-p.min)*100)).toFixed(1);
-  const segs=10, better=(a,b)=>p.low?a<b:a>b; let bar="";
-  for(let i=0;i<segs;i++){ const mid=p.min+(i+.5)*(p.max-p.min)/segs; const c=better(mid,p.goal)?"#1D5FA6":better(mid,p.avg)?"#8CCBF2":"#E0A53B"; const dim=better(mid,p.avg)||better(mid,p.goal)?1:(p.low?.55+.45*(1-(mid-p.avg)/(p.max-p.avg)):.55+.45*((mid-p.min)/(p.avg-p.min||1))); bar+=`<i style="background:${c};opacity:${dim.toFixed(2)}"></i>`; }
+function predPos(p,v){ const n=p.max-p.min+1; return (v-p.min+0.5)/n*100; }
+function slider(p0,F){ const p=predDef(p0,F.n), val=F.pred[p.k], better=(a,b)=>p.low?a<b:a>b;
+  const clamp=x=>Math.max(7,Math.min(93,x)).toFixed(1); let bar="";
+  for(let v=p.min;v<=p.max;v++){ const c=better(v,p.goal)||v===p.goal?"#1D5FA6":better(v,p.avg)?"#8CCBF2":"#E0A53B";
+    const span=Math.abs(v-p.avg)/Math.max(1,p.low?p.max-p.avg:p.avg-p.min); const op=(c==="#E0A53B")?(1-.45*Math.min(1,span)):1;
+    bar+=`<b style="background:${c};opacity:${op.toFixed(2)}"></b>`; }
   const v=val??Math.round(p.avg);
   return `<div class="wh"><div class="wh-top"><span class="name">${p.name}</span><span class="v ${val==null?"unset":""}" id="pv-${p.k}">${val==null?"Not set":predFmt(p,val,F.n)}</span></div>
-  <div class="wh-row up"><span style="left:${pos(p.avg)}%">Avg ${p.k==="gir"?predFmt(p,p.avg,F.n):p.avg}</span></div>
-  <div class="wh-bar">${bar}<div class="wh-cur" id="pc-${p.k}" style="left:${((v-p.min)/(p.max-p.min)*100).toFixed(1)}%;${val==null?"opacity:.35":""}"></div>
-  <input type="range" min="${p.min}" max="${p.max}" step="1" value="${v}" data-pred="${p.k}" aria-label="${p.name} prediction"></div>
-  <div class="wh-row dn"><span style="left:${pos(p.goal)}%">Goal ${p.k==="gir"?predFmt(p,p.goal,F.n):p.goal}</span></div>
+  <div class="wh-row up"><span style="left:${clamp(predPos(p,p.avg))}%">Avg ${p.k==="gir"?predFmt(p,p.avg,F.n):p.avg}<i>▼</i></span></div>
+  <div class="wh-bar" data-predbar="${p.k}" role="slider" tabindex="0" aria-label="${p.name} prediction" aria-valuemin="${p.min}" aria-valuemax="${p.max}" aria-valuenow="${v}">${bar}<div class="wh-cur" id="pc-${p.k}" style="left:${predPos(p,v).toFixed(1)}%;${val==null?"opacity:.35":""}"></div></div>
+  <div class="wh-row dn"><span style="left:${clamp(predPos(p,p.goal))}%"><i>▲</i>Goal ${p.k==="gir"?predFmt(p,p.goal,F.n):p.goal}</span></div>
   <div class="wh-ends"><span>${p.min}</span><span>${p.max}</span></div></div>`; }
+function setPred(k,v){ const F=S.newR, p=predDef(PRED.find(x=>x.k===k),F.n); v=Math.max(p.min,Math.min(p.max,v)); F.pred[k]=v;
+  const el=document.getElementById("pv-"+k); if(el){ el.textContent=predFmt(p,v,F.n); el.classList.remove("unset"); }
+  const c=document.getElementById("pc-"+k); if(c){ c.style.left=predPos(p,v).toFixed(1)+"%"; c.style.opacity=1; }
+  const bar=document.querySelector(`[data-predbar="${k}"]`); if(bar) bar.setAttribute("aria-valuenow",v); }
+let predDrag=null;
+function predFromX(bar,x){ const k=bar.dataset.predbar, p=predDef(PRED.find(q=>q.k===k),S.newR.n), r=bar.getBoundingClientRect(), n=p.max-p.min+1;
+  const idx=Math.max(0,Math.min(n-1,Math.floor((x-r.left)/r.width*n))); setPred(k,p.min+idx); }
+document.addEventListener("pointerdown",e=>{ const bar=e.target.closest&&e.target.closest("[data-predbar]"); if(!bar) return; predDrag=bar; try{bar.setPointerCapture(e.pointerId);}catch(_){} predFromX(bar,e.clientX); e.preventDefault(); });
+document.addEventListener("pointermove",e=>{ if(predDrag) predFromX(predDrag,e.clientX); });
+document.addEventListener("pointerup",()=>{ predDrag=null; });
+document.addEventListener("keydown",e=>{ const bar=e.target.closest&&e.target.closest("[data-predbar]"); if(!bar) return; const k=bar.dataset.predbar, cur=S.newR.pred[k]??+bar.getAttribute("aria-valuenow");
+  if(e.key==="ArrowRight"||e.key==="ArrowUp"){ setPred(k,cur+1); e.preventDefault(); } if(e.key==="ArrowLeft"||e.key==="ArrowDown"){ setPred(k,cur-1); e.preventDefault(); } });
 const tabs=()=>`<nav class="tabs">${[["play","Play"],["rounds","Rounds"],["stats","Stats"],["data","Data"]].map(([k,l])=>`<button class="${S.tab===k?"on":""}" data-a="tab" data-v="${k}">${l}</button>`).join("")}</nav>`;
 const topBar=(title,right="",sub="")=>`<header class="top"><div><div class="hl"><span class="hole">${title}</span></div>${sub}</div>${right?`<div class="right">${right}</div>`:""}</header>`;
 
