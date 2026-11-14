@@ -37,8 +37,18 @@ main{max-width:520px;margin:0 auto;padding:8px 14px 96px}
 section{background:var(--surface);border-radius:14px;padding:14px 14px 16px;margin-top:12px;border:1px solid var(--line)}
 h2{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:22px;margin:0 0 10px;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
 h2::before{content:"";width:4px;height:18px;border-radius:2px;background:var(--head);box-shadow:inset 0 0 0 1px var(--rg-edge)}
-.q{font-size:14px;color:var(--muted);margin:12px 0 6px}
-.q:first-of-type{margin-top:0}
+.q{font-size:13px;font-weight:600;letter-spacing:.2px;color:#C9D0CB;margin:14px 0 6px}
+.q2{font-size:12px;font-weight:500;color:var(--muted);margin:8px 0 4px}
+.chips.eq{flex-wrap:nowrap}.chips.eq .chip{flex:1;min-width:0;padding:8px 4px;font-size:15px}
+.chip.pill{min-height:32px;padding:3px 14px;font-size:13px;border-radius:999px;font-weight:500;min-width:0}
+.subbox{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 10px 10px;margin-top:10px}
+.subbox .q:first-child{margin-top:0}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.g4 .chip{min-width:0;padding:6px 0}
+.fprow2{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:stretch}.fprow2 .chip{white-space:nowrap;padding:8px 10px;font-size:15px}
+h2+.q,h2+div>.q:first-child{margin-top:0}
+.g3c{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.g3c .chip{min-width:0;padding:8px 4px;font-size:15px}
+td.n{white-space:nowrap}
+td .tl{display:block;font-size:12px;color:#7D857F;margin-top:1px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{position:relative;min-height:46px;min-width:52px;padding:8px 14px;border-radius:10px;border:1.5px solid var(--line);background:transparent;font-weight:600;font-size:17px;cursor:pointer}
 .chip.sel{background:var(--rg-hi);border-color:var(--rg-edge);color:#fff}
@@ -66,8 +76,8 @@ h2::before{content:"";width:4px;height:18px;border-radius:2px;background:var(--h
 .mini{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:100%;height:100%;padding:4px}
 .mini span{display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--ink)}
 .axis{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:4px auto 0;width:min(100%,240px)}
-.pg{display:grid;grid-template-columns:52px repeat(3,1fr);gap:4px;width:min(100%,300px);margin:0 auto;align-items:center}
-.pg .rl{font-size:12px;color:var(--muted);text-align:right;padding-right:4px}
+.pg{display:grid;grid-template-columns:66px repeat(3,1fr);gap:4px;width:min(100%,300px);margin:0 auto;align-items:center}
+.pg .rl{font-size:12px;color:var(--muted);text-align:right;padding-right:6px;white-space:nowrap}
 .pg .cl{font-size:12px;color:var(--muted);text-align:center}
 .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
 .key{min-height:50px;border-radius:10px;border:1.5px solid var(--line);background:transparent;font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:600;cursor:pointer}
@@ -175,6 +185,45 @@ textarea{min-height:80px}
 .kpi b{display:block;font-family:"Barlow Condensed",sans-serif;font-size:26px;line-height:1.1}
 .kpi span{font-size:12px;color:var(--muted)}
 .ok{color:var(--good)}.bad{color:var(--red)}
+.kg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.kt{background:var(--rg);border:1px solid #2A5A43;border-radius:10px;padding:8px 10px}
+.kt .t{font-size:12px;font-weight:600;letter-spacing:.2px}
+.kt .row{display:flex;align-items:center;gap:0}
+.kt .v{display:flex;align-items:flex-start;gap:4px;font-family:"Barlow Condensed",sans-serif;font-size:28px;font-weight:600;line-height:1.1}
+.kt .v small{font-family:"Barlow",sans-serif;font-size:12px;color:var(--muted);font-weight:400;line-height:1;margin-top:4px}
+.kt .a{margin-left:auto;font-size:18px;line-height:1}
+.kt .c{font-size:12px;color:#7D857F;margin-top:1px}
+.a.good{color:var(--good)}.a.bad{color:var(--red)}.a.flat{color:var(--muted)}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:10px;align-items:center}
+.leg span{display:inline-flex;align-items:center;gap:5px;line-height:1}
+.leg i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:22px;height:12px;font-size:10px;line-height:1}
+.card9{display:grid;grid-template-columns:30px repeat(9,minmax(0,1fr)) 32px;gap:3px;align-items:center;font-size:11px;margin-bottom:12px}
+.card9 .lb{color:var(--muted);font-size:10px}
+.card9 .hn,.card9 .pr{text-align:center;color:var(--muted)}
+.card9 .scx{height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:"Barlow Condensed",sans-serif;font-size:18px;font-weight:600;background:var(--surface);border:1px solid var(--line);color:var(--ink);padding:0;cursor:pointer}
+.card9 .scx.e{background:var(--eagle);color:#fff;border-color:var(--eagle)}
+.card9 .scx.b{background:var(--birdie);color:var(--birdie-ink);border-color:var(--birdie)}
+.card9 .scx.p{background:var(--rg);color:#fff;border:2px solid var(--rg-edge)}
+.card9 .scx.bo{background:#33383A}
+.card9 .scx.d{background:var(--red-soft);color:var(--red);border-color:var(--wine)}
+.card9 .scx.cur{box-shadow:0 0 0 1.5px var(--flag)}
+.card9 .run{text-align:center;font-size:11px}
+.card9 .mk{text-align:center;height:11px;line-height:11px;font-size:9px}
+.card9 .tot{text-align:center;font-family:"Barlow Condensed",sans-serif;font-size:17px;font-weight:600}
+.hd{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.hd .badge{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:600}
+.loss{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;line-height:1.5;margin-bottom:6px}
+.st{display:grid;grid-template-columns:78px 1fr;gap:8px;font-size:14px;padding:7px 0;border-bottom:1px solid var(--line)}
+.st:last-child{border-bottom:0}
+.st span:first-child{color:var(--muted)}
+.sumcard{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;background:var(--rg);border:1px solid #2A5A43;border-radius:10px;padding:10px 12px}
+.sumcard .t{font-weight:600}
+.sumcard .m{font-size:13px;color:var(--muted);margin-top:2px;line-height:1.5}
+.edbtn{border:1px solid var(--rg-edge);border-radius:8px;padding:4px 10px;font-size:13px;background:transparent;color:var(--ink);cursor:pointer}
+.lock{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.lock:last-child{border-bottom:0}
+.lock em{font-style:normal;color:var(--muted);font-size:14px}
+.hdrbtn{background:none;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:7px;padding:2px 8px;font-size:12px;margin-top:6px;cursor:pointer}
 select.sel{appearance:none;-webkit-appearance:none;font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:600;padding:10px 40px 10px 14px;border:1.5px solid var(--rg-edge);border-radius:10px;background:var(--rg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center/20px;color:#fff;width:100%}
 .wh{margin:14px 0 6px}
 .wh-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
@@ -201,7 +250,7 @@ select.sel{appearance:none;-webkit-appearance:none;font-family:"Barlow Condensed
 <div id="pad"></div>
 <script>
 /* ================= Paces 4.0 ================= */
-const VERSION="4.0";
+const VERSION="4.1";
 /* ---------- course data ---------- */
 const COURSES={
  "Stolpe Ost":{tees:{Gelb:[6025,72.2,129],Weiss:[6403,74.3,129],Blau:[5563,69.9,121]},par:[4,4,3,5,4,4,4,3,5,4,4,5,4,3,4,4,3,5],
@@ -247,7 +296,8 @@ async function load(){
   try{ await idb.open(); useIdb=true; const v=await idb.get(KEY); if(v) DB=JSON.parse(v); }
   catch(e){ try{ const v=localStorage.getItem(KEY); if(v) DB=JSON.parse(v); }catch(_){} }
   DB.settings=Object.assign({hi:10.3,wpct:0},DB.settings||{});
-  (DB.rounds||[]).forEach(r=>r.holes.forEach(h=>{ if(h.dir==="up"||h.dir==="down"){ h.teeDepth=h.dir==="up"?"long":"short"; h.dir="c"; } })); DB.trackman=DB.trackman||{}; DB.legacy=DB.legacy||[]; DB.rounds=DB.rounds||[];
+  (DB.rounds||[]).forEach(r=>r.holes.forEach(h=>{ if(h.dir==="up"||h.dir==="down"){ h.teeDepth=h.dir==="up"?"long":"short"; h.dir="c"; }
+    if(h.contact){ if(h.contact==="Heel") h.conF="Heel"; else h.conD=h.contact; delete h.contact; } })); DB.trackman=DB.trackman||{}; DB.legacy=DB.legacy||[]; DB.rounds=DB.rounds||[];
   if(!DB.rounds.length&&!DB.legacy.length){ try{ const old=localStorage.getItem("golf:v1"); if(old){ importLegacy(JSON.parse(old)); await save(); } }catch(_){} }
 }
 async function save(){
@@ -267,8 +317,9 @@ function siOf(r,hno){ return C(r).si?C(r).si[hno-1]:null; }
 function newHole(hno,par){ return {hno,par,done:false,teeClub:null,dir:null,bunker:false,pen:false,penType:null,penCause:null,mishit:false,p5:null,lie:null,
  pin:null,flag:null,playTo:null,wpct:null,club:null,appAdj:0,layup:false,notStock:false,green:null,ball:null,aimOff:false,miss:null,recDist:null,ss:false,fringe:false,contact:null,
  recType:null,awk:false,fp:null,pres:null,putts:null,holedOut:false,scoreAdj:0,cause:null,note:""}; }
-function newRoundForm(){ const last=DB.rounds[DB.rounds.length-1];
-  return {course:last?last.course:"Stolpe Ost",tees:last?last.tees:"Gelb",hi:DB.settings.hi,start:1,n:18,type:"Casual",format:"Stroke",warm:[],wuMin:null,temp:null,wpct:DB.settings.wpct??0,pred:{score:null,gir:null,dbl:null,tp:null}}; }
+function lastPlayed(){ const all=[...DB.rounds.filter(r=>r.finished),...DB.legacy].filter(r=>COURSES[r.course]).sort((a,b)=>(b.date||"").localeCompare(a.date||"")); return all[0]||null; }
+function newRoundForm(){ const last=lastPlayed();
+  return {course:last?last.course:"Stolpe West",tees:last&&COURSES[last.course].tees[last.tees]?last.tees:"Gelb",hi:DB.settings.hi,start:1,n:18,type:"Casual",format:"Stroke",warm:[],wuMin:null,temp:null,wpct:DB.settings.wpct??0,pred:{score:null,gir:null,dbl:null,tp:null}}; }
 
 /* ---------- carry ---------- */
 const carryOf=c=>(DB.trackman[c]&&DB.trackman[c].carry)||CARRY_DEFAULT[c];
@@ -277,9 +328,11 @@ const carryOf=c=>(DB.trackman[c]&&DB.trackman[c].carry)||CARRY_DEFAULT[c];
 const isP3=h=>h.par===3, isP5=h=>h.par===5;
 const isWay=h=>h.dir==="ll"||h.dir==="rr";
 const teeDone=h=>isP3(h)||(h.teeClub&&h.dir&&(!h.pen||(h.penType&&h.penCause))&&(!isWay(h)||h.pen||h.wayCause));
-const p5Done=h=>!isP5(h)||h.p5;
+const layOn=h=>(isP5(h)&&h.p5&&h.p5!=="Went for it")||(h.par===4&&h.layup);
+const p5Done=h=>!isP5(h)||(h.p5&&(!h.layPen||(h.layPenType&&h.layPenCause)));
+const penPick=(pre,type,cause)=>`<div class="subbox"><div class="q">Penalty type</div><div class="chips">${["OB","Water","Unplayable"].map(v=>chip(pre+"Type",v,v,type===v)).join("")}</div><div class="q">Cause</div><div class="chips">${["Decision","Execution"].map(v=>chip(pre+"Cause",v,v,cause===v,"wide")).join("")}</div></div>`;
 function appNoDefault(h){ if(isP3(h)) return 1; let n=h.par-2; if(isP5(h)&&h.p5==="Went for it") n=2;
-  if(h.pen) n+=h.penType==="OB"?2:1; if(h.layup&&h.par===4) n+=1; return n; }
+  if(h.pen) n+=h.penType==="OB"?2:1; if(h.layup&&h.par===4) n+=1; if(layOn(h)&&h.layPen) n+=h.layPenType==="OB"?2:1; return n; }
 const appNo=h=>Math.max(1,appNoDefault(h)+h.appAdj);
 function lieDefault(h){ if(isP3(h)) return "Tee"; if(isP5(h)&&h.p5&&h.p5!=="Went for it") return h.p5==="Laid up"?"Fairway":null;
   if(h.pen) return null; if(h.bunker) return "Bunker"; if(h.dir==="c"&&!h.teeDepth) return "Fairway"; if(["l","r","c"].includes(h.dir)) return "Rough"; return null; }
@@ -290,19 +343,20 @@ const showW=h=>(playTo(h)||0)>=98;
 const adj=(h,r)=>playTo(h)==null?null:(showW(h)?Math.round(playTo(h)*(1+wp(h,r)/100)):playTo(h));
 function suggestClub(h,r){ const t=adj(h,r); if(!t) return null; const ok=APP_CLUBS.filter(c=>carryOf(c)>=t); return ok.length?ok[ok.length-1]:APP_CLUBS[0]; }
 const onGreen=h=>h.green==="on";
-const resultDone=h=>(h.green==="on"&&h.ball!=null)||(h.green==="off"&&h.miss!=null&&(h.fringe||h.recDist));
+const resultDone=h=>((h.green==="on"&&h.ball!=null)||(h.green==="off"&&h.miss!=null&&(h.fringe||h.recDist)&&(!h.appPen||(h.appPenType&&h.appPenCause))))&&(!(h.par===4&&h.layup&&h.layPen)||(h.layPenType&&h.layPenCause));
 const approachDone=h=>lie(h)&&h.pin!=null&&h.flag&&h.club&&resultDone(h);
 const recDone=h=>onGreen(h)||h.recType;
 const puttDefault=h=>h.pres===4?1:2;
 const putts=h=>h.holedOut?0:(h.putts??(h.fp===0?1:puttDefault(h)));
 const puttsDone=h=>h.holedOut||h.fp===0||(h.fp!=null&&h.pres!=null);
-const scoreMin=h=>appNo(h)+(onGreen(h)?0:1)+putts(h);
+const appPenS=h=>!onGreen(h)&&h.appPen?1:0;
+const scoreMin=h=>appNo(h)+(onGreen(h)?0:1)+appPenS(h)+putts(h);
 const score=h=>scoreMin(h)+(onGreen(h)?0:h.scoreAdj);
-const recShots=h=>onGreen(h)?0:score(h)-putts(h)-appNo(h);
+const recShots=h=>onGreen(h)?0:score(h)-putts(h)-appNo(h)-appPenS(h);
 const p5GoMiss=h=>isP5(h)&&h.p5==="Went for it"&&h.green==="off";
 const gir=h=>(onGreen(h)&&appNo(h)<=h.par-2)||(p5GoMiss(h)&&appNo(h)+1<=h.par-2&&recShots(h)===1);
 const recLabel=h=>p5GoMiss(h)?"Third shot":"Recovery";
-function causeDefault(h){ if(h.pen) return "Penalty"; if(h.dir==="ll"||h.dir==="rr") return "Tee shot";
+function causeDefault(h){ if(h.pen||appPenS(h)||(layOn(h)&&h.layPen)) return "Penalty"; if(h.dir==="ll"||h.dir==="rr") return "Tee shot";
   if(putts(h)>=3) return "3-putt"; if(h.ss) return "Short-sided"; if(recShots(h)>=2) return "Recovery"; return "Other"; }
 const isDbl=h=>score(h)-h.par>=2;
 const cause=h=>isDbl(h)?(h.cause||causeDefault(h)):null;
@@ -310,7 +364,7 @@ const holeReady=h=>teeDone(h)&&p5Done(h)&&approachDone(h)&&recDone(h)&&puttsDone
 function missing(h){ const n=[]; if(!isP3(h)){ if(!h.teeClub) n.push("tee club"); if(!h.dir) n.push("tee result"); if(h.pen&&!h.penType) n.push("penalty type"); if(h.pen&&!h.penCause) n.push("penalty cause"); if(isWay(h)&&!h.pen&&!h.wayCause) n.push("miss cause"); if(isP5(h)&&!h.p5) n.push("second shot"); }
   if(!lie(h)) n.push("approach lie"); if(h.pin==null) n.push("pin"); if(!h.flag) n.push("flag"); if(!h.club) n.push("approach club"); if(!h.green) n.push("result");
   if(h.green==="on"&&h.ball==null) n.push("ball position"); if(h.green==="off"&&!h.miss) n.push("miss side"); if(h.green==="off"&&!h.fringe&&!h.recDist) n.push("distance to pin");
-  if(h.green==="off"&&!h.recType) n.push("recovery shot"); if(!puttsDone(h)) n.push("putting"); return n; }
+  if(h.green==="off"&&h.appPen&&(!h.appPenType||!h.appPenCause)) n.push("approach penalty"); if(layOn(h)&&h.layPen&&(!h.layPenType||!h.layPenCause)) n.push("lay-up penalty"); if(h.green==="off"&&!h.recType) n.push("recovery shot"); if(!puttsDone(h)) n.push("putting"); return n; }
 
 /* ---------- handicap ---------- */
 function roundPar(r){ return r.holes.reduce((a,h)=>a+h.par,0); }
@@ -322,11 +376,11 @@ function strokesOn(r,hno){ const ch=courseHcp(r), si=siOf(r,hno); if(ch==null||s
 function normHole(h,r){
   const sc=score(h), miss=h.green==="off"?h.miss:null;
   const depth=onGreen(h)?null:(miss?(miss.startsWith("Short")?"Short":miss.startsWith("Long")?"Long":"Hole-high"):null);
-  return {hno:h.hno,par:h.par,score:sc,putts:putts(h),gir:gir(h),fwKnown:h.par>3&&!!h.dir,fwHit:h.dir==="c"&&!h.bunker&&!h.teeDepth&&!h.pen,teeDir:h.dir,teeDepth:h.teeDepth||null,teePen:h.pen?1:0,penType:h.penType,penCause:h.penCause,wayCause:isWay(h)&&!h.pen?h.wayCause||null:null,way:isWay(h),
+  return {hno:h.hno,par:h.par,score:sc,putts:putts(h),gir:gir(h),fwKnown:h.par>3&&!!h.dir,fwHit:h.dir==="c"&&!h.bunker&&!h.teeDepth&&!h.pen,teeDir:h.dir,teeDepth:h.teeDepth||null,teePen:h.pen?1:0,penType:h.penType,penCause:h.penCause,appPen:appPenS(h),appPenType:appPenS(h)?h.appPenType:null,appPenCause:appPenS(h)?h.appPenCause:null,layPen:layOn(h)&&h.layPen?1:0,layPenType:layOn(h)&&h.layPen?h.layPenType:null,layPenCause:layOn(h)&&h.layPen?h.layPenCause:null,wayCause:isWay(h)&&!h.pen?h.wayCause||null:null,way:isWay(h),
     dbl:sc-h.par>=2,excess:Math.max(0,sc-h.par-1),onGreen:onGreen(h),depth,miss,ss:!onGreen(h)&&h.ss,fringe:!onGreen(h)&&h.fringe,
     saved:!gir(h)&&sc<=h.par,goMiss:p5GoMiss(h),club:h.club,adj:adj(h,r),flag:h.flag,playTo:playTo(h),wpct:showW(h)?wp(h,r):0,holeHigh:onGreen(h)||depth==="Hole-high",
     fp:h.holedOut?null:h.fp,threeP:putts(h)>=3,cause:cause(h),recType:onGreen(h)?null:h.recType,recDist:onGreen(h)||h.fringe?null:h.recDist,p5:h.p5,
-    layup:h.layup,notStock:h.notStock,swing:h.notStock?h.swing||null:null,contact:h.contact,holedOut:h.holedOut,lie:lie(h),appNo:appNo(h),teeClub:h.teeClub,mishit:h.mishit,bunker:h.bunker};
+    layup:h.layup,notStock:h.notStock,swing:h.notStock?h.swing||null:null,contact:[h.conD,h.conF].filter(Boolean).join("+")||null,conD:h.conD||null,conF:h.conF||null,teeConD:h.mishit?h.teeConD||null:null,teeConF:h.mishit?h.teeConF||null:null,appAwk:!!h.appAwk,holedOut:h.holedOut,lie:lie(h),appNo:appNo(h),teeClub:h.teeClub,mishit:h.mishit,bunker:h.bunker};
 }
 function normRound(r){ if(r.legacy) return r; return {...r,holes:r.holes.filter(h=>h.done).map(h=>normHole(h,r))}; }
 function stableford(r){ let p=0; for(const h of r.holes){ if(!h.done) continue; const s=strokesOn(r,h.hno); if(s==null) return null; p+=Math.max(0,2+h.par+s-score(h)); } return p; }
@@ -349,6 +403,7 @@ function metrics(nr){
     ss:H.filter(h=>h.ss).length,saves:missed.filter(h=>h.saved).length,missedN:missed.length,
     first3:H.slice(0,3).reduce((a,h)=>a+h.score-h.par,0),
     decision:H.filter(h=>h.penCause==="Decision").length,execution:H.filter(h=>h.penCause==="Execution").length,
+    appPen:sum(h=>h.appPen),layPen:sum(h=>h.layPen),allPen:sum(h=>(h.teePen||0)+(h.appPen||0)+(h.layPen||0)),
     way:H.filter(h=>h.way).length,wayDec:H.filter(h=>h.wayCause==="Decision").length,wayExe:H.filter(h=>h.wayCause==="Execution").length};
 }
 const per18=(v,n)=>n?v*18/n:0;
@@ -403,9 +458,9 @@ function packText(r){
   const pr=r.pred||{};
   L.push(`PREDICTIONS vs ACTUAL: score ${pr.score??"–"} / ${m.score} | GIR ${pr.gir??"–"} / ${m.gir} | doubles+ ${pr.dbl??"–"} / ${m.dbl} | 3-putts ${pr.tp??"–"} / ${m.threeP}`);
   L.push(`SCORE: ${m.score} (${tp(m.score-m.par)}) | differential ${d?(d.approx?"≈":"")+d.v:"–"}${sf!=null?` | Stableford ${sf}`:""}`);
-  L.push(`CORE: GIR ${m.gir}/${m.n} | FW ${m.fw}/${m.fwN} | putts ${m.putts} | 3-putts ${m.threeP} | tee penalties ${m.teePen} (decision ${m.decision}, execution ${m.execution}) | way misses without penalty ${m.wayDec+m.wayExe} (decision ${m.wayDec}, execution ${m.wayExe}) | doubles+ ${m.dbl} (excess ${m.excess}) | scrambling ${m.saves}/${m.missedN} | misses short:long ${m.short}:${m.long} | short-sided ${m.ss} | first 3 holes ${tp(m.first3)}`);
+  L.push(`CORE: GIR ${m.gir}/${m.n} | FW ${m.fw}/${m.fwN} | putts ${m.putts} | 3-putts ${m.threeP} | tee penalties ${m.teePen} (decision ${m.decision}, execution ${m.execution}) | lay-up penalties ${m.layPen} | approach penalties ${m.appPen} | way misses without penalty ${m.wayDec+m.wayExe} (decision ${m.wayDec}, execution ${m.wayExe}) | doubles+ ${m.dbl} (excess ${m.excess}) | scrambling ${m.saves}/${m.missedN} | misses short:long ${m.short}:${m.long} | short-sided ${m.ss} | first 3 holes ${tp(m.first3)}`);
   L.push(`BASELINES (all sources): last 5 diff ${f1(b5.diff)}, GIR ${f1(b5.gir)}, tee pen ${f1(b5.pen)}, dbl ${f1(b5.dbl)}, 3-putts ${f1(b5.tp3)} | last 20 diff ${f1(b20.diff)}, GIR ${f1(b20.gir)}, tee pen ${f1(b20.pen)}, dbl ${f1(b20.dbl)}, 3-putts ${f1(b20.tp3)}`);
-  L.push(`DOUBLES LEDGER:`); nr.holes.filter(h=>h.dbl).forEach(h=>L.push(`  H${h.hno} par ${h.par}: ${h.score} (+${h.excess} over bogey), cause ${h.cause}${h.penType?`, ${h.penType} ${h.penCause||""}`:""}`));
+  L.push(`DOUBLES LEDGER:`); nr.holes.filter(h=>h.dbl).forEach(h=>L.push(`  H${h.hno} par ${h.par}: ${h.score} (+${h.excess} over bogey), cause ${h.cause}${h.penType?`, tee ${h.penType} ${h.penCause||""}`:""}${h.layPenType?`, lay-up ${h.layPenType} ${h.layPenCause||""}`:""}${h.appPenType?`, approach ${h.appPenType} ${h.appPenCause||""}`:""}`));
   if(!nr.holes.some(h=>h.dbl)) L.push("  none");
   L.push(`HOLES (hno par score | tee | lie flag/play-to/adj club result | rec | first putt steps, putts):`);
   r.holes.filter(h=>h.done).forEach(h=>{ const n=normHole(h,r);
@@ -422,6 +477,11 @@ const yd=m=>m==null?null:Math.round(m*1.0936);
 function field(key,val,unit,extra=""){ return `<button class="field ${val==null?"empty":""}" data-a="open" data-v="${key}"><span class="fv">${val==null?"Tap":val}</span><span class="fu">${val==null?"":unit}</span><span class="fx">${extra}</span></button>`; }
 function PADS(key){ const F=S.newR, r=active(), h=hc();
   return ({
+  fp:{label:"First putt",unit:"steps",max:2,get:()=>h.fp,set:v=>{ if(v===0){ h.fp=0; h.holedOut=false; } else { h.fp=v; h.holedOut=false; } h.pres=null; h.putts=null; h.scoreAdj=0; }},
+  rsHi:{label:"Handicap index",unit:"",max:4,dec:true,get:()=>r.hi,set:v=>{r.hi=v;}},
+  rsTemp:{label:"Temperature",unit:"°C",max:2,neg:true,get:()=>r.temp,set:v=>{r.temp=v;}},
+  rsWpct:{label:"Weather adjustment",unit:"%",max:2,neg:true,get:()=>r.wpct,set:v=>{r.wpct=v;}},
+  rsWu:{label:"Warm-up minutes",unit:"min",max:3,get:()=>r.wuMin,set:v=>{r.wuMin=v;}},
   wuMin:{label:"Warm-up minutes",unit:"min",max:3,get:()=>F.wuMin,set:v=>{F.wuMin=v;}},
   hi:{label:"Handicap index",unit:"",max:4,dec:true,get:()=>F.hi,set:v=>{F.hi=v;}},
   start:{label:"Start on hole",unit:"",max:2,get:()=>F.start,set:v=>{if(v>=1&&v<=18)F.start=v;}},
@@ -472,7 +532,7 @@ function prologue(){
   return topBar("Before the round")+`<main>
 <section><h2>Course</h2>
 <select class="sel" data-sel="course" aria-label="Course">${Object.keys(COURSES).map(x=>`<option ${F.course===x?"selected":""}>${x}</option>`).join("")}</select>
-<div class="q">Tees</div><div class="chips">${Object.keys(c.tees).map(x=>chip("tees",x,x,F.tees===x)).join("")}</div>
+<div class="q">Tees</div><div class="chips eq">${Object.keys(c.tees).map(x=>chip("tees",x,x,F.tees===x)).join("")}</div>
 <div class="hint">${yd(t[0])} y, CR ${t[1]}, slope ${t[2]}${c.si?"":". No stroke index stored, so no net-double-bogey cap or Stableford here."}</div>
 <div class="pair" style="margin-top:12px"><div><div class="q">Holes</div><div class="chips">${chip("holes",18,"18",F.n===18,"wide")}${chip("holes",9,"9",F.n===9,"wide")}</div></div>
 <div><div class="q">Start on hole</div>${field("start",F.start,"",`Par ${parOf(F.course,F.tees,F.start)}`)}</div></div>
@@ -480,9 +540,9 @@ function prologue(){
 </section>
 <section><h2>Round</h2>
 <div class="q">Round type</div><div class="chips">${["Casual","Tournament"].map(v=>chip("type",v,v,F.type===v,"wide")).join("")}</div>
-<div class="q">Format</div><div class="chips">${FORMATS.map(v=>chip("format",v,v,F.format===v)).join("")}</div>
+<div class="q">Format</div><div class="g3c">${FORMATS.map(v=>chip("format",v,v,F.format===v)).join("")}</div>
 </section>
-<section><h2>Warm-up</h2><div class="chips">${WARM.map(v=>chip("warm",v,v,F.warm.includes(v))).join("")}</div>
+<section><h2>Warm-up</h2><div class="g3c">${WARM.map(v=>chip("warm",v,v,F.warm.includes(v))).join("")}</div>
 <div class="q">Minutes in total (optional)</div>${field("wuMin",F.wuMin,"min")}</section>
 <section><h2>Conditions</h2><div class="pair">
 <div><div class="q">Temperature</div>${field("temp",F.temp,"°C")}</div>
@@ -507,8 +567,11 @@ function holeHeader(r,h){
   const len=lenOf(r,h.hno), si=siOf(r,h.hno), done=r.holes.filter(x=>x.done);
   const tot=done.reduce((a,x)=>a+score(x)-x.par,0);
   return `<header class="top"><div><div class="hl"><span class="hole">Hole ${h.hno}</span><span class="par">Par ${h.par}</span></div><div class="sub"><span>${len?yd(len)+" y":"– y"}</span><span>SI ${si||"–"}</span>${strokesOn(r,h.hno)?`<span>${"•".repeat(strokesOn(r,h.hno))} stroke${strokesOn(r,h.hno)>1?"s":""}</span>`:""}</div></div>
-  <div class="right"><b>${done.length?tp(tot):"–"}</b>thru ${done.length}</div></header>`;
+  <div class="right"><b>${done.length?tp(tot):"–"}</b>thru ${done.length}<br><button class="hdrbtn" data-a="openSettings">Round settings</button></div></header>`;
 }
+function contactPick(h,pre){ const D=h[pre+"D"], F=h[pre+"F"];
+  return `<div class="q">Contact (optional)</div><div class="q2" style="margin-top:2px">Depth</div><div class="chips">${["Fat","Thin"].map(v=>chip(pre+"D",v,v,D===v,"wide")).join("")}</div>
+  <div class="q2">Face</div><div class="chips eq">${["Hosel","Heel","Toe"].map(v=>chip(pre+"F",v,v,F===v)).join("")}</div>`; }
 function teeStrip(h){
   const z=(k,cls,label,aria)=>`<button class="tz ${cls} ${h.dir===k?"sel":""}" data-a="dir" data-v="${k}" aria-label="${aria}" aria-pressed="${h.dir===k}">${label}</button>`;
   return `<div class="tstrip ${h.dir?"has-sel":""}">${z("ll","way wl","Way L","Way left")}${z("l","","Left","Left")}${z("c","fw","FW","Fairway")}${z("r","","Right","Right")}${z("rr","way wr","Way R","Way right")}</div>
@@ -516,7 +579,7 @@ function teeStrip(h){
 }
 function pinGrid(h){ let s=`<div class="grid g3" role="group" aria-label="Pin position">`;
   for(let i=0;i<9;i++) s+=`<button class="cell green ${h.pin===i?"sel":""}" data-a="pin" data-v="${i}" aria-label="pin cell ${i+1}">${h.pin===i?"⚑":""}</button>`;
-  return s+`</div><div class="axis"><span>Left</span><span>Back at top</span><span>Right</span></div>`; }
+  return s+`</div><div class="axis"><span>Left</span><span>Right</span></div>`; }
 function ballGrid(h){ let s=`<div class="grid g3" role="group" aria-label="Ball position on the green">`;
   for(let i=0;i<9;i++){ const isPin=h.pin===i, sel=h.ball===i;
     s+=`<button class="cell green ${sel?"pick":""} ${isPin?"pin":""}" data-a="ball" data-v="${i}" aria-label="ball cell ${i+1}"><span class="bwrap">${isPin?'<span class="pf">⚑</span>':""}${sel?BALL:""}</span></button>`; }
@@ -542,23 +605,22 @@ function holeView(){
   const r=active(), h=hc(); let out=holeHeader(r,h)+`<main>${strip(r)}`;
   if(saveErr) out+=`<div class="warn">${saveErr}</div>`;
   if(!isP3(h)){
-    out+=`<section><h2>Tee shot</h2><div class="q">Club</div><div class="chips">${TEE_CLUBS.map(c=>chip("teeClub",c,c,h.teeClub===c,c===lastTee(r,h.hno)?"dot":"")).join("")}</div>
+    out+=`<section><h2>Tee shot</h2><div class="q">Club</div><div class="g4">${TEE_CLUBS.map(c=>chip("teeClub",c,c,h.teeClub===c,c===lastTee(r,h.hno)?"dot":"")).join("")}</div>
     <div class="hint"><span class="d"></span>last time on this hole</div>`;
     if(h.teeClub){ out+=`<div class="q">Where it finished</div>${teeStrip(h)}
       <div class="hint" style="text-align:center">Way: no full swing at the green possible.</div>
       ${isWay(h)&&!h.pen?`<div class="q">Cause of the miss</div><div class="chips">${["Decision","Execution"].map(v=>chip("wayCause",v,v,h.wayCause===v,"wide")).join("")}</div>`:""}
       <div class="tsplit"><div class="q">Lie or penalty (optional, one)</div><div class="chips">${chip("bunker",1,"Bunker",h.bunker,"wide")}${chip("pen",1,"Penalty",h.pen,"wide")}</div>`;
-      if(h.pen) out+=`<div class="q">Penalty</div><div class="chips">${["OB","Water","Unplayable"].map(v=>chip("penType",v,v,h.penType===v)).join("")}</div>
-        <div class="q">Cause</div><div class="chips">${["Decision","Execution"].map(v=>chip("penCause",v,v,h.penCause===v,"wide")).join("")}</div>`;
-      out+=`</div><div class="tsplit"><div class="q">Strike</div><div class="chips">${chip("mishit",1,"Mis-hit",h.mishit)}</div></div>`; }
+      if(h.pen) out+=penPick("pen",h.penType,h.penCause);
+      out+=`</div><div class="tsplit"><div class="q">Strike</div><div class="chips">${chip("mishit",1,"Mis-hit",h.mishit)}</div>${h.mishit?contactPick(h,"teeCon"):""}</div>`; }
     out+=`</section>`;
     if(!teeDone(h)) return out+closeLinks()+`</main>`;
-    if(isP5(h)){ out+=`<section><h2>Second shot</h2><div class="chips">${["Went for it","Laid up","Never on"].map(v=>chip("p5",v,v,h.p5===v)).join("")}</div></section>`;
+    if(isP5(h)){ out+=`<section><h2>Second shot</h2><div class="chips">${["Went for it","Laid up","Never on"].map(v=>chip("p5",v,v,h.p5===v)).join("")}</div>${layOn(h)?`<div class="tsplit"><div class="chips">${chip("layPen",1,"Penalty on this shot",h.layPen)}</div>${h.layPen?penPick("layPen",h.layPenType,h.layPenCause):""}</div>`:""}</section>`;
       if(!p5Done(h)) return out+closeLinks()+`</main>`; }
   }
   out+=`<section><h2>${isP3(h)?"Tee shot":"Approach"}</h2>`;
-  if(!isP3(h)) out+=`<div class="q">Approach is shot</div><div class="row">${stepper("appNo",appNo(h),appNo(h)===appNoDefault(h)?"calculated":"changed by you")}</div>${h.par===4?`<div class="chips" style="margin-top:8px">${chip("layup",1,"Laid up first",h.layup)}</div>`:""}
-    <div class="q">Lie${lieDefault(h)?" (pre-set, tap to change)":""}</div><div class="chips">${["Fairway","Rough","Bunker","Other"].map(v=>chip("lie",v,v,lie(h)===v)).join("")}</div>`;
+  if(!isP3(h)) out+=`<div class="q">Approach is shot</div><div class="row">${stepper("appNo",appNo(h),appNo(h)===appNoDefault(h)?"calculated":"changed by you")}</div>${h.par===4?`<div class="chips" style="margin-top:8px">${chip("layup",1,"Laid up first",h.layup)}${h.layup?chip("layPen",1,"Penalty on the lay-up",h.layPen):""}</div>${h.layup&&h.layPen?penPick("layPen",h.layPenType,h.layPenCause):""}`:""}
+    <div class="q">Lie${lieDefault(h)?" (pre-set, tap to change)":""}</div><div class="chips eq">${["Fairway","Rough","Bunker","Other"].map(v=>chip("lie",v,v,lie(h)===v)).join("")}</div><div class="chips" style="margin-top:8px">${chip("appAwk",1,"Awkward lie",h.appAwk,"pill")}</div>`;
   out+=`<div class="q">Pin position</div>${pinGrid(h)}`;
   if(h.pin!=null){ out+=`<div class="pair" style="margin-top:12px"><div><div class="q">Flag (laser)</div>${field("flag",h.flag,"y")}</div>`;
     out+=h.flag?`<div><div class="q">Play-to</div>${field("playTo",playTo(h),"y",playTo(h)===h.flag?"at pin":(playTo(h)>h.flag?"+":"−")+Math.abs(playTo(h)-h.flag))}</div>`:"<div></div>";
@@ -574,22 +636,21 @@ function holeView(){
     out+=`<div class="q">Result</div><div class="chips">${chip("green","on","On green",h.green==="on","wide")}${chip("green","off","Missed green",h.green==="off","wide")}</div>`;
     if(h.green==="on") out+=`<div class="q">Where on the green</div>${ballGrid(h)}<div class="chips" style="margin-top:10px">${chip("aimOff",1,"Not where I aimed",h.aimOff)}</div>`;
     if(h.green==="off") out+=`<div class="q">Where it missed</div>${missGrid(h)}
-      <div class="chips" style="margin-top:10px">${chip("ss",1,"Short-sided",h.ss)}${chip("fringe",1,"Fringe",h.fringe)}</div>
-      ${h.fringe?"":`<div class="q">Distance to the pin</div><div class="chips">${REC_DIST.map(v=>chip("recDist",v,v,h.recDist===v)).join("")}</div>`}`;
-    if(h.green) out+=`<div class="q">Contact (optional)</div><div class="chips">${["Fat","Heel","Thin"].map(v=>chip("contact",v,v,h.contact===v)).join("")}</div>`;
+      <div class="chips" style="margin-top:10px">${chip("ss",1,"Short-sided",h.ss)}${chip("fringe",1,"Fringe",h.fringe)}${chip("appPen",1,"Penalty",h.appPen)}</div>${h.appPen?penPick("appPen",h.appPenType,h.appPenCause):""}
+      ${h.fringe?"":`<div class="q">Distance to the pin (yards)</div><div class="chips eq">${REC_DIST.map(v=>chip("recDist",v,v.replace(" y",""),h.recDist===v)).join("")}</div>`}`;
+    if(h.green) out+=contactPick(h,"con");
   }
-  if(!approachDone(h)&&h.green){ const need=missing(h).filter(x=>["approach lie","pin","flag","ball position","miss side","distance to pin"].includes(x)); if(need.length) out+=`<div class="warn">Still needed: ${need.join(", ")}</div>`; }
+  if(!approachDone(h)&&h.green){ const need=missing(h).filter(x=>["approach lie","pin","flag","ball position","miss side","distance to pin","approach penalty","lay-up penalty"].includes(x)); if(need.length) out+=`<div class="warn">Still needed: ${need.join(", ")}</div>`; }
   out+=`</section>`;
   if(!approachDone(h)) return out+closeLinks()+`</main>`;
   if(!onGreen(h)){
-    out+=`<section><h2>${recLabel(h)}</h2><div class="chips">${(h.fringe?["Chip","Putter"]:["Chip","Pitch","Bunker","Putter"]).map(v=>chip("recType",v,v,h.recType===v)).join("")}</div>
-    <div class="chips" style="margin-top:10px">${chip("awk",1,"Awkward lie",h.awk)}</div></section>`;
+    out+=`<section><h2>${recLabel(h)}</h2><div class="chips eq">${(h.fringe?["Chip","Putter"]:["Chip","Pitch","Bunker","Putter"]).map(v=>chip("recType",v,v,h.recType===v)).join("")}</div>
+    <div class="chips" style="margin-top:8px">${chip("awk",1,"Awkward lie",h.awk,"pill")}</div></section>`;
     if(!recDone(h)) return out+closeLinks()+`</main>`;
   }
   out+=`<section><h2>Putting</h2><div class="q">First putt length</div>
-  <div class="range-wrap"><div class="readout">${h.holedOut?"Holed out":(h.fp==null?"–":h.fp===0?"Tap-in":(h.fp>=13?"13+":h.fp))}<small>${h.holedOut||h.fp===0?"":"steps"}</small></div>
-  <div class="fprow"><button class="chip ho ${h.holedOut?"sel":""}" data-a="holedOut" style="${h.fp===0?"":"visibility:hidden"}">Holed out</button><div>
-  <input type="range" min="0" max="13" step="1" value="${h.fp??4}" data-fp="1" aria-label="First putt steps"><div class="ticks"><span>0</span><span>4</span><span>8</span><span>13+</span></div></div></div></div>`;
+  <div class="fprow2">${h.fp!=null&&h.fp!==0?field("fp",h.fp,`steps (${(h.fp*0.9144).toFixed(1)} m)`):field("fp",null,"steps")}
+  ${chip("tapIn",1,"Tap-in",h.fp===0&&!h.holedOut)}${chip("holedOut",1,"Holed out",h.holedOut)}</div>`;
   if(h.fp!=null&&h.fp!==0&&!h.holedOut){ out+=`<div class="q">First putt result</div>${puttGrid(h)}`;
     if(h.pres!=null){ const ms=makeStats(h.fp,h), metres=h.fp*0.9144, rng=ms.lo===ms.hi?`${h.fp}`:`${ms.lo}–${ms.hi}`;
       out+=`<div class="hint">From ${rng} steps (about ${metres.toFixed(1)} m): ${ms.n?`you holed ${ms.m} of ${ms.n} (${Math.round(100*ms.m/ms.n)}%)`:"no history yet"}${ms.n&&ms.n<5?", small sample":""}. Scratch golfers hole about ${scratchPct(metres)}%.</div>`; } }
@@ -598,7 +659,7 @@ function holeView(){
   if(!puttsDone(h)) return out+closeLinks()+`</main>`;
   const sc=score(h), names=["Albatross","Eagle","Birdie","Par","Bogey","Double","Triple"], st=strokesOn(r,h.hno);
   out+=`<section><h2>Score</h2>${onGreen(h)?`<div class="readout">${sc}</div><div class="hint">Approach shot ${appNo(h)} plus ${putts(h)} putt${putts(h)===1?"":"s"}.</div>`:stepper("score",sc,"tap + only for extra shots")}
-  <div class="calc"><span class="tag">${names[sc-h.par+3]||"+"+(sc-h.par)}</span><span class="tag">${p5GoMiss(h)?"Shots to the green":"Recovery shots"}: ${recShots(h)}</span>${gir(h)?`<span class="tag">GIR</span>`:""}${!gir(h)&&sc<=h.par?`<span class="tag">Saved</span>`:""}${r.format==="Stableford"&&st!=null?`<span class="tag">${Math.max(0,2+h.par+st-sc)} pts</span>`:""}</div>`;
+  <div class="calc"><span class="tag">${names[sc-h.par+3]||"+"+(sc-h.par)}</span><span class="tag">${p5GoMiss(h)?"Shots to the green":"Recovery shots"}: ${recShots(h)}</span>${(()=>{ const n=(h.pen?(h.penType==="OB"?2:1):0)+(layOn(h)&&h.layPen?(h.layPenType==="OB"?2:1):0)+appPenS(h); return n?`<span class="tag w">Penalty strokes: ${n}</span>`:""; })()}${gir(h)?`<span class="tag">GIR</span>`:""}${!gir(h)&&sc<=h.par?`<span class="tag">Saved</span>`:""}${r.format==="Stableford"&&st!=null?`<span class="tag">${Math.max(0,2+h.par+st-sc)} pts</span>`:""}</div>`;
   if(isDbl(h)) out+=`<div class="q">Main cause${h.cause?" (changed by you)":" (pre-set, tap to change)"}</div><div class="chips">${CAUSES.map(v=>chip("cause",v,v,cause(h)===v)).join("")}</div>`;
   out+=`<div class="q">Hole note (optional)</div><textarea data-note="hole" rows="2">${esc(h.note)}</textarea>`;
   out+=`<button class="cta" data-a="saveHole">${r.holes.every((x,i)=>x.done||x.out||i===r.cur)?"Save hole and close out":"Save hole, next"}</button></section>`;
@@ -607,11 +668,23 @@ function holeView(){
 const closeLinks=()=>`<div class="row" style="justify-content:space-between;margin-top:12px"><button class="link" data-a="toClose">End round here</button><span class="hint" style="margin:0">Saved automatically after every tap</span></div>`;
 
 /* ---------- close-out ---------- */
+function sumCard(r){ return `<div class="sumcard"><div><div class="t">${r.course}, ${r.tees}</div><div class="m">${r.type}, ${r.format.toLowerCase()}${r.hi!=null?`, index ${r.hi}`:""}<br>${r.temp!=null?r.temp+" °C, ":""}weather ${fmtPct(r.wpct??0)}${r.wuMin?`, warm-up ${r.wuMin} min`:""}${(r.warm||[]).length?` (${r.warm.join(", ").toLowerCase()})`:""}</div></div><button class="edbtn" data-a="openSettings">Edit</button></div>`; }
+function settingsView(){ const r=active(), c=COURSES[r.course];
+  return topBar("Round settings")+`<main>
+<section><h2>Locked</h2><div class="lock">Course<em>${r.course}</em></div><div class="lock">Start hole<em>${r.start}</em></div><div class="lock">Predictions<em>locked at the first tee</em></div></section>
+<section><h2>Editable</h2><div class="q">Tees</div><div class="chips eq">${Object.keys(c.tees).map(x=>chip("rsTees",x,x,r.tees===x)).join("")}</div>
+<div class="q">Handicap index</div>${field("rsHi",r.hi,"")}
+<div class="q">Round type</div><div class="chips">${["Casual","Tournament"].map(v=>chip("rsType",v,v,r.type===v,"wide")).join("")}</div>
+<div class="q">Format</div><div class="g3c">${FORMATS.map(v=>chip("rsFormat",v,v,r.format===v)).join("")}</div>
+<div class="q">Warm-up</div><div class="g3c">${WARM.map(v=>chip("rsWarm",v,v,(r.warm||[]).includes(v))).join("")}</div>
+<div class="q">Warm-up minutes</div>${field("rsWu",r.wuMin,"min")}
+<div class="pair"><div><div class="q">Temperature</div>${field("rsTemp",r.temp,"°C")}</div><div><div class="q">Weather adjustment</div>${field("rsWpct",fmtPct(r.wpct??0),"")}</div></div>
+<div class="hint">A new weather adjustment applies to holes not saved yet. Saved holes keep the adjustment they were played with.</div></section>
+<button class="cta" data-a="closeSettings">Done</button></main>`; }
 function closeView(){
   const r=active(), open=r.holes.filter(h=>!h.done);
-  return topBar("Close out",`<b>${tp(r.holes.filter(h=>h.done).reduce((a,h)=>a+score(h)-h.par,0))}</b>${r.holes.filter(h=>h.done).length} holes`)+`<main>${strip(r)}
-<section><h2>Round details</h2>
-<div class="q">Round type</div><div class="chips">${["Casual","Tournament"].map(v=>chip("rtype",v,v,r.type===v,"wide")).join("")}</div>
+  return topBar("Close out",`<b>${tp(r.holes.filter(h=>h.done).reduce((a,h)=>a+score(h)-h.par,0))}</b>${r.holes.filter(h=>h.done).length} holes`)+`<main><section><h2>Scorecard</h2>${scorecard(r.holes.filter(h=>h.done).map(h=>normHole(h,r)),false)}</section>
+<section><h2>Round details</h2>${sumCard(r)}
 <div class="pair" style="margin-top:12px"><div><div class="q">Wind average</div>${field("windAvg",r.wind.avg,"mph")}</div><div><div class="q">Wind gust</div>${field("windGust",r.wind.gust,"mph")}</div></div>
 <div class="q">Round note</div><textarea data-note="round">${esc(r.note)}</textarea></section>
 ${open.length?`<section><h2>Open holes</h2><div class="hint" style="margin-top:0">These holes have no saved data. Finishing now records the round as closed out after ${r.holes.filter(h=>h.done).length} holes.</div>
@@ -620,6 +693,51 @@ ${open.length?`<section><h2>Open holes</h2><div class="hint" style="margin-top:0
 <button class="cta alt" data-a="backToHole">Back to the round</button>
 <button class="cta danger" data-a="discard">${S.arm==="discard:"?"Tap again to delete this round":"Discard round"}</button></main>`;
 }
+/* ---------- report helpers (4.1) ---------- */
+const FIXED_BAND={score:1.5,diff:1.5,fw:5,gir:1,putts:1.5,tp:0.5,pen:0.5,dbl:0.5};
+function roundVals(nr){ const m=metrics(nr); if(!m) return null; const k=18/m.n, d=diffOf(nr);
+  return {score:m.n===18?m.score:null,diff:d?d.v:null,fw:m.fwN?100*m.fw/m.fwN:null,gir:m.gir*k,putts:m.putts*k,tp:m.threeP*k,pen:m.teePen*k,dbl:m.dbl*k}; }
+function trendBase(excludeId){ const rs=allRounds("all").filter(r=>r.id!==excludeId).sort((a,b)=>(b.date||"").localeCompare(a.date||"")).slice(0,20).map(roundVals).filter(Boolean);
+  const out={}; for(const k of Object.keys(FIXED_BAND)){ const xs=rs.map(v=>v[k]).filter(v=>v!=null); if(!xs.length){ out[k]=null; continue; }
+    const mean=xs.reduce((a,b)=>a+b,0)/xs.length, sd=Math.sqrt(xs.reduce((a,b)=>a+(b-mean)**2,0)/Math.max(1,xs.length-1));
+    out[k]={mean,band:xs.length>=8?0.5*sd:FIXED_BAND[k],n:xs.length}; } return out; }
+function tile(name,val,small,key,cur,base,lowGood,fmtAvg){ const b=base[key]; let arrow="",cls="flat";
+  if(b&&cur!=null){ const d=cur-b.mean; if(Math.abs(d)<=b.band) arrow="▬"; else { arrow=d>0?"▲":"▼"; cls=(lowGood?d<0:d>0)?"good":"bad"; } }
+  return `<div class="kt"><div class="t">${name}</div><div class="row"><div class="v">${val}${small?`<small>(${small})</small>`:""}</div>${arrow?`<span class="a ${cls}">${arrow}</span>`:""}</div><div class="c">${b?"avg "+fmtAvg(b.mean):"no history yet"}</div></div>`; }
+function headline(r,nr,m){ const base=trendBase(r.id), v=roundVals(nr), d=diffOf(nr), f1x=x=>(Math.round(x*10)/10).toFixed(1);
+  return `<div class="kg">${tile("Score",m.score,tp(m.score-m.par),"score",v.score,base,true,f1x)}${tile("Differential",d?(d.approx?"≈":"")+d.v:"–","","diff",v.diff,base,true,f1x)}
+  ${tile("Fairways",m.fwN?Math.round(100*m.fw/m.fwN)+"%":"–",m.fwN?m.fw+"/"+m.fwN:"","fw",v.fw,base,false,x=>Math.round(x)+"%")}${tile("Greens in regulation",Math.round(100*m.gir/m.n)+"%",m.gir+"/"+m.n,"gir",v.gir,base,false,x=>Math.round(100*x/18)+"%")}
+  ${tile("Putts",m.putts,"","putts",v.putts,base,true,f1x)}${tile("3-putts",m.threeP,"","tp",v.tp,base,true,f1x)}${tile("Tee penalties",m.teePen,"","pen",v.pen,base,true,f1x)}${tile("Doubles or worse",m.dbl,"","dbl",v.dbl,base,true,f1x)}</div>
+  <div class="leg"><span><i class="good" style="color:var(--good)">▲▼</i>better than last 20</span><span><i style="color:var(--red)">▲▼</i>worse</span><span><i style="color:var(--muted)">▬</i>about the same</span></div>${m.n<18?`<div class="hint">${m.n} holes: counts compared per 18 holes.</div>`:""}`; }
+function scoreCls(h){ const d=h.score-h.par; return d<=-2?"e":d<0?"b":d===0?"p":d===1?"bo":"d"; }
+function scorecard(H,markers,rid){ if(!H.length) return `<div class="hint" style="margin-top:0">No holes saved yet.</div>`;
+  const sorted=[...H].sort((a,b)=>a.hno-b.hno); let run=0; const runOf={}; [...H].forEach(h=>{ run+=h.score-h.par; runOf[h.hno]=run; });
+  const half=(lo,hi,lab)=>{ const hs=sorted.filter(h=>h.hno>=lo&&h.hno<=hi); if(!hs.length) return "";
+    const cell=(f)=>hs.map(f).join(""); const tot=hs.reduce((a,h)=>a+h.score,0), par=hs.reduce((a,h)=>a+h.par,0), pad=9-hs.length, empty="<span></span>".repeat(pad);
+    return `<div class="card9"><span class="lb">Hole</span>${cell(h=>`<span class="hn">${h.hno}</span>`)}${empty}<span class="hn">${lab}</span>
+    <span class="lb">Par</span>${cell(h=>`<span class="pr">${h.par}</span>`)}${empty}<span class="pr">${par}</span>
+    <span></span>${cell(h=>`<button class="scx ${scoreCls(h)} ${S.detail===h.hno&&rid?"cur":""}" ${rid?`data-a="detail" data-v="${h.hno}"`:""} aria-label="Hole ${h.hno}: ${h.score}">${h.score}</button>`)}${empty}<span class="tot">${tot}</span>
+    <span class="lb">±</span>${cell(h=>`<span class="run">${tp(runOf[h.hno])}</span>`)}${empty}<span class="run">${tp(tot-par)}</span>
+    ${markers?`<span></span>${cell(h=>`<span class="mk">${h.teePen||h.appPen||h.layPen?'<span style="color:var(--red)">▲</span>':""}${h.gir?'<span style="color:var(--good)">●</span>':""}${h.threeP?'<span style="color:var(--muted)">3</span>':""}</span>`)}${empty}<span></span>`:""}</div>`; };
+  return half(1,9,"Out")+half(10,18,"In")+(markers?`<div class="leg" style="margin-top:0"><span><i style="color:var(--good)">●</i>GIR</span><span><i style="color:var(--red)">▲</i>penalty</span><span><i>3</i>3-putt</span>${rid?"<span>Tap a hole for details</span>":""}</div>`:""); }
+function strokesLost(h){ const L=[]; if(h.teePen) L.push([`${h.penType||"Penalty"} off the tee${h.penCause?", "+h.penCause.toLowerCase():""}`,h.penType==="OB"?2:1]);
+  if(h.layPen) L.push([`${h.layPenType||"Penalty"} on the lay-up${h.layPenCause?", "+h.layPenCause.toLowerCase():""}`,h.layPenType==="OB"?2:1]);
+  if(h.appPen) L.push([`${h.appPenType||"Penalty"} on the approach${h.appPenCause?", "+h.appPenCause.toLowerCase():""}`,1]);
+  if(!h.onGreen&&!h.goMiss&&h.gir===false) L.push([`Missed the green${(h.miss||h.depth)?" ("+(h.miss||h.depth).toLowerCase()+(h.ss?", short-sided":"")+")":""}`,1]);
+  if(h.appNo!=null&&!h.onGreen){ const rec=h.score-h.putts-h.appNo-1-(h.appPen||0); if(rec>0) L.push([`${rec} extra shot${rec>1?"s":""} around the green`,rec]); }
+  if(h.putts>2) L.push([`${h.putts} putts${h.fp?" from "+h.fp+" steps":""}`,h.putts-2]); return L; }
+function holeDetail(r,nr){ const h=nr.holes.find(x=>x.hno===S.detail); if(!h) return "";
+  const raw=r.legacy?null:r.holes.find(x=>x.hno===h.hno), L=strokesLost(h), cls=scoreCls(h);
+  const bg={e:"var(--eagle)",b:"var(--birdie)",p:"var(--rg)",bo:"#33383A",d:"var(--red-soft)"}[cls], fg={e:"#fff",b:"var(--birdie-ink)",p:"#fff",bo:"var(--ink)",d:"var(--red)"}[cls];
+  const rows=[]; if(h.par>3) rows.push(["Tee",`${h.teeClub||"–"}, ${(TEE_DIRS[h.teeDir]||"–").toLowerCase()}${h.teeDepth?", "+h.teeDepth:""}${h.bunker?", bunker":""}${h.teePen?`, ${h.penType} (${(h.penCause||"–").toLowerCase()})`:h.wayCause?` (${h.wayCause.toLowerCase()})`:""}${h.mishit?", mis-hit"+([h.teeConD,h.teeConF].filter(Boolean).length?" ("+[h.teeConD,h.teeConF].filter(Boolean).join(", ").toLowerCase()+")":""):""}`]);
+  if(h.p5) rows.push(["2nd shot",h.p5+(h.layPen?`, ${h.layPenType} (${(h.layPenCause||"–").toLowerCase()})`:"")]);
+  else if(h.layup) rows.push(["Lay-up","laid up first"+(h.layPen?`, ${h.layPenType} (${(h.layPenCause||"–").toLowerCase()})`:"")]);
+  if(h.club) rows.push(["Approach",`${h.par>3?"shot "+h.appNo+", ":""}${(h.lie||"").toLowerCase()}${h.appAwk?" (awkward)":""}, ${h.flag?h.flag+" y flag":""}${h.adj&&h.adj!==h.flag?", played "+h.adj+" y":""}, ${h.club}${h.swing?" "+h.swing:h.notStock?" not stock":""}: ${h.onGreen?"on the green":"missed "+(h.miss||h.depth||"").toLowerCase()+(h.ss?", short-sided":"")+(h.fringe?", fringe":h.recDist?", "+h.recDist:"")+(h.appPen?`, ${h.appPenType} (${(h.appPenCause||"–").toLowerCase()})`:"")}${h.contact?", "+h.contact.replace("+",", ").toLowerCase():""}`]);
+  if(h.recType) rows.push([h.goMiss?"Third shot":"Recovery",`${h.recType}${raw&&raw.awk?", awkward lie":""}`]);
+  rows.push(["Putting",h.holedOut?"holed out":h.fp===0?"tap-in, "+h.putts+" putt"+(h.putts>1?"s":""):(h.fp!=null?h.fp+" steps ("+(h.fp*0.9144).toFixed(1)+" m), ":"")+h.putts+" putt"+(h.putts===1?"":"s")]);
+  if(raw&&raw.note) rows.push(["Note",esc(raw.note)]);
+  return `<div class="hd"><div class="badge" style="background:${bg};color:${fg}">${h.score}</div><div><div style="font-weight:600">Hole ${h.hno}, par ${h.par}</div><div class="hint" style="margin:0">${tp(h.score-h.par)}${h.cause?", cause: "+h.cause.toLowerCase():""}</div></div></div>
+  ${L.length?`<div class="loss">Strokes lost: ${L.map(([t,n])=>`${t} (+${n})`).join(". ")}.</div>`:""}${rows.map(([a,b])=>`<div class="st"><span>${a}</span><span>${b}</span></div>`).join("")}`; }
 /* ---------- report ---------- */
 function reportView(r){
   const nr=normRound(r), m=metrics(nr); if(!m) return topBar("Round")+`<main><section>No holes recorded.</section></main>`;
@@ -627,25 +745,25 @@ function reportView(r){
   const row=(a,b,c="")=>`<tr><td class="lab">${a}</td><td class="n">${b}</td><td class="n">${c}</td></tr>`;
   const vs=(p,a,lowGood=true)=>p==null?"–":`<span class="${(lowGood?a<=p:a>=p)?"ok":"bad"}">${p}</span>`;
   let out=topBar(r.course,`<b>${m.score}</b>${tp(m.score-m.par)}`,`<div class="sub"><span>${r.date}</span><span>${r.tees}</span><span>${r.type}</span>${r.legacy?"<span>v3</span>":""}</div>`)+`<main>`;
-  out+=`<section><h2>Headline</h2><div class="kpi"><div><b>${m.score}</b><span>${tp(m.score-m.par)}, ${m.n} holes</span></div><div><b>${d?(d.approx?"≈":"")+d.v:"–"}</b><span>differential${d&&d.gross?" (gross)":""}</span></div><div><b>${sf!=null?sf:m.gir}</b><span>${sf!=null?"Stableford":"GIR"}</span></div></div>
-  <div class="hint">Last 20 rounds: differential ${f1(b20.diff)}, GIR ${f1(b20.gir)}, doubles ${f1(b20.dbl)} per 18.</div></section>`;
+  out+=`<section><h2>Headline</h2>${headline(r,nr,m)}${sf!=null?`<div class="hint">Stableford: ${sf} points.</div>`:""}${d&&d.gross?`<div class="hint">Differential from gross score (v3 round).</div>`:""}</section>`;
+  out+=`<section><h2>Scorecard</h2>${scorecard(nr.holes,true,r.id)}${S.detail!=null?`<div style="margin-top:10px">${holeDetail(r,nr)}</div>`:""}</section>`;
   if(!r.legacy) out+=`<section><h2>Predictions vs actual</h2><table><tr><th></th><th class="n">Predicted</th><th class="n">Actual</th></tr>
    ${row("Score",pr.score??"–",`<span class="${pr.score==null?"":m.score<=pr.score?"ok":"bad"}">${m.score}</span>`)}
    ${row("GIR",pr.gir??"–",`<span class="${pr.gir==null?"":m.gir>=pr.gir?"ok":"bad"}">${m.gir}</span>`)}
    ${row("Doubles or worse",pr.dbl??"–",`<span class="${pr.dbl==null?"":m.dbl<=pr.dbl?"ok":"bad"}">${m.dbl}</span>`)}
    ${row("3-putts",pr.tp??"–",`<span class="${pr.tp==null?"":m.threeP<=pr.tp?"ok":"bad"}">${m.threeP}</span>`)}</table></section>`;
   out+=`<section><h2>Where the strokes went</h2>${nr.holes.some(h=>h.dbl)?`<table><tr><th>Hole</th><th>Score</th><th>Cause</th><th class="n">Over bogey</th></tr>${nr.holes.filter(h=>h.dbl).map(h=>`<tr><td>${h.hno} (par ${h.par})</td><td>${h.score}</td><td>${h.cause||(h.teePen?"Penalty":"–")}${h.penCause?` (${h.penCause.toLowerCase()})`:""}</td><td class="n">+${h.excess}</td></tr>`).join("")}</table>`:`<div class="hint" style="margin-top:0">No doubles or worse.</div>`}</section>`;
-  const T=(lab,val,target,good)=>`<tr><td class="lab">${lab}</td><td class="n ${good==null?"":good?"ok":"bad"}">${val}</td><td class="n">${target}</td></tr>`;
+  const T=(lab,val,target,good,sub)=>`<tr><td class="lab">${lab}${sub?`<span class="tl">${sub}</span>`:""}</td><td class="n ${good==null?"":good?"ok":"bad"}">${val}</td><td class="n">${target}</td></tr>`;
   out+=`<section><h2>Tracked numbers</h2><table><tr><th></th><th class="n">Round</th><th class="n">Target</th></tr>
-   ${T("Tee penalties",m.teePen+(m.decision+m.execution?` (${m.decision} dec / ${m.execution} exe)`:""),"≤ 0.5",m.teePen<=(m.n<18?0:0.5))}
-   ${T("Way misses off the tee",m.way+(m.wayDec+m.wayExe?` (${m.wayDec} dec / ${m.wayExe} exe)`:""),"–",null)}
-   ${T("Approach misses short : long",`${m.short} : ${m.long}`,"≤ 1.5 : 1",m.long?m.short/m.long<=1.5:m.short<=1)}
+   ${T("Tee penalties",m.teePen,"≤ 0.5",m.teePen<=(m.n<18?0:0.5),m.decision+m.execution?`${m.decision} decision, ${m.execution} execution`:"")}
+   ${T("Other penalties",(m.layPen||0)+(m.appPen||0),"0",(m.layPen||0)+(m.appPen||0)===0,(m.layPen||0)+(m.appPen||0)?`${m.layPen||0} lay-up, ${m.appPen||0} approach`:"")}
+   ${T("Way misses off the tee",m.way,"–",null,m.wayDec+m.wayExe?`${m.wayDec} decision, ${m.wayExe} execution`:"")}
+   ${T("Misses short : long",`${m.short} : ${m.long}`,"≤ 1.5 : 1",m.long?m.short/m.long<=1.5:m.short<=1)}
    ${T("Greens in regulation",m.gir,"8",per18(m.gir,m.n)>=8)}
    ${T("Short-sided",m.ss,"≤ 1",m.ss<=1)}
    ${T("3-putts",m.threeP,"≤ 1",m.threeP<=1)}
    ${T("Holes 1–3 vs par",tp(m.first3),"≤ +2",m.first3<=2)}
    ${T("Scrambling",`${m.saves}/${m.missedN}`,"–",null)}</table></section>`;
-  out+=`<section><h2>Hole by hole</h2><div class="scroll"><table><tr><th>H</th><th>Par</th><th>Sc</th><th>Tee</th><th>Approach</th><th class="n">Putts</th></tr>${nr.holes.map(h=>`<tr><td>${h.hno}</td><td>${h.par}</td><td>${h.score}</td><td>${h.par>3?(h.teeClub||"")+" "+(TEE_DIRS[h.teeDir]||"–")+(h.teeDepth?" "+h.teeDepth:"")+(h.teePen?" P":""):"–"}</td><td>${h.club||""} ${h.onGreen?"green":(h.depth?h.depth.toLowerCase():"miss")}${h.ss?" ss":""}</td><td class="n">${h.putts}</td></tr>`).join("")}</table></div></section>`;
   if(r.note) out+=`<section><h2>Round note</h2>${esc(r.note)}</section>`;
   if(!r.legacy) out+=`<section><h2>Analysis pack</h2><div class="hint" style="margin-top:0">Copy and paste into the Golf project for the coaching review.</div><button class="cta" data-a="copyPack" data-v="${r.id}">Copy analysis pack</button><div id="packmsg" class="hint"></div></section>`;
   out+=`<button class="cta alt" data-a="closeView">Back</button>${r.legacy?"":`<button class="cta danger" data-a="delRound" data-v="${r.id}">${S.arm==="delRound:"+r.id?"Tap again to delete permanently":"Delete round"}</button>`}</main>`;
@@ -670,15 +788,15 @@ function statsView(){
   const tot=k=>ms.reduce((a,m)=>a+m[k],0);
   const full=rs.filter(r=>r.holes.length===18), ds=rs.map(diffOf).filter(Boolean).map(d=>d.v);
   let out=topBar("Stats")+`<main><section><h2>Filter</h2>
-  <div class="q">Rounds</div><div class="chips">${[5,10,20,"All"].map(v=>chip("sN",v,v==="All"?"All":"Last "+v,st.n===v)).join("")}</div>
-  <div class="q">Type</div><div class="chips">${["All","Casual","Tournament"].map(v=>chip("sT",v,v,st.type===v)).join("")}</div>
-  <div class="q">Source</div><div class="chips">${chip("sS","v4","Paces 4 only",st.src==="v4","wide")}${chip("sS","all","Include v3 rounds",st.src==="all","wide")}</div></section>`;
+  <div class="q">Rounds</div><div class="chips eq">${[5,10,20,"All"].map(v=>chip("sN",v,v==="All"?"All":"Last "+v,st.n===v)).join("")}</div>
+  <div class="q">Type</div><div class="chips eq">${["All","Casual","Tournament"].map(v=>chip("sT",v,v,st.type===v)).join("")}</div>
+  <div class="q">Source</div><div class="chips">${chip("sS","v4","Paces 4 only",st.src==="v4","wide")}${chip("sS","all","With v3 rounds",st.src==="all","wide")}</div></section>`;
   if(!ms.length) return out+`<section>No finished rounds match this filter.</section></main>`;
   const byPar=p=>{ const hs=rs.flatMap(r=>r.holes).filter(h=>h.par===p); return hs.length?f1(hs.reduce((a,h)=>a+h.score-h.par,0)/hs.length):"–"; };
   const R=(a,b)=>`<tr><td class="lab">${a}</td><td class="n">${b}</td></tr>`;
-  out+=`<section><h2>Scoring</h2><div class="kpi"><div><b>${full.length?f1(full.reduce((a,r)=>a+metrics(r).score,0)/full.length):"–"}</b><span>avg 18-hole score</span></div><div><b>${ds.length?f1(ds.reduce((a,b)=>a+b,0)/ds.length):"–"}</b><span>avg differential</span></div><div><b>${rs.length}</b><span>rounds, ${H} holes</span></div></div>
+  out+=`<section><h2>Scoring</h2><div class="kg"><div class="kt"><div class="t">Average score</div><div class="row"><div class="v">${full.length?f1(full.reduce((a,r)=>a+metrics(r).score,0)/full.length):"–"}</div></div><div class="c">18-hole rounds only</div></div><div class="kt"><div class="t">Average differential</div><div class="row"><div class="v">${ds.length?f1(ds.reduce((a,b)=>a+b,0)/ds.length):"–"}</div></div><div class="c">${rs.length} rounds, ${H} holes</div></div></div>
   <table style="margin-top:10px">${R("Par 3 / 4 / 5 vs par",`${byPar(3)} / ${byPar(4)} / ${byPar(5)}`)}${R("Doubles or worse per 18",f1(per18(tot("dbl"),H)))}${R("Strokes over bogey per 18",f1(per18(tot("excess"),H)))}${R("Holes 1–3 vs par per round",f1(ms.reduce((a,m)=>a+m.first3,0)/ms.length))}</table></section>`;
-  out+=`<section><h2>Long game</h2><table>${R("Fairways",pct(tot("fw"),tot("fwN")))}${R("Tee penalties per 18",f1(per18(tot("teePen"),H)))}${R("Penalties: decision / execution",`${tot("decision")} / ${tot("execution")}`)}${R("Way misses: decision / execution",`${tot("wayDec")} / ${tot("wayExe")}`)}${R("Greens in regulation per 18",f1(per18(tot("gir"),H)))}${R("Approach misses short : long",`${tot("short")} : ${tot("long")}`)}${R("Short-sided per 18",f1(per18(tot("ss"),H)))}</table></section>`;
+  out+=`<section><h2>Long game</h2><table>${R("Fairways",pct(tot("fw"),tot("fwN")))}${R("Tee penalties per 18",f1(per18(tot("teePen"),H)))}${R("Lay-up / approach penalties per 18",`${f1(per18(tot("layPen")||0,H))} / ${f1(per18(tot("appPen")||0,H))}`)}${R("Penalties: decision / execution",`${tot("decision")} / ${tot("execution")}`)}${R("Way misses: decision / execution",`${tot("wayDec")} / ${tot("wayExe")}`)}${R("Greens in regulation per 18",f1(per18(tot("gir"),H)))}${R("Approach misses short : long",`${tot("short")} : ${tot("long")}`)}${R("Short-sided per 18",f1(per18(tot("ss"),H)))}</table></section>`;
   out+=`<section><h2>Short game and putting</h2><table>${R("Scrambling (par or better after missed GIR)",pct(tot("saves"),tot("missedN")))}${R("Putts per 18",f1(per18(tot("putts"),H)))}${R("3-putts per 18",f1(per18(tot("threeP"),H)))}</table></section>`;
   // clubs
   const ap=rs.flatMap(r=>r.holes).filter(h=>h.club&&h.adj);
@@ -701,7 +819,7 @@ function csvRounds(){ const head=["id","date","course","tees","cr","slope","hi",
   const rows=DB.rounds.filter(r=>r.finished).map(r=>{ const nr=normRound(r), m=metrics(nr)||{}, d=diffOf(nr);
     return [r.id,r.date,r.course,r.tees,r.cr,r.slope,r.hi,r.type,r.format,r.n,m.n,m.score,m.par,d?d.v:"",m.gir,m.fw,m.fwN,m.putts,m.threeP,m.teePen,m.dbl,r.temp,r.wpct,r.wind?.avg,r.wind?.gust,r.pred?.score,r.pred?.gir,r.pred?.dbl,r.pred?.tp]; });
   return [head,...rows].map(a=>a.map(v=>v==null?"":/[",\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(",")).join("\n"); }
-function csvHoles(){ const keys=["hno","par","score","putts","gir","teeClub","teeDir","teeDepth","teePen","penType","penCause","wayCause","p5","layup","lie","appNo","flag","playTo","wpct","adj","club","notStock","swing","onGreen","miss","depth","fringe","ss","recType","recDist","fp","holedOut","threeP","dbl","cause","contact","mishit","bunker"];
+function csvHoles(){ const keys=["hno","par","score","putts","gir","teeClub","teeDir","teeDepth","teePen","penType","penCause","layPen","layPenType","layPenCause","appPen","appPenType","appPenCause","wayCause","p5","layup","lie","appNo","flag","playTo","wpct","adj","club","notStock","swing","onGreen","miss","depth","fringe","ss","recType","recDist","fp","holedOut","threeP","dbl","cause","conD","conF","appAwk","mishit","teeConD","teeConF","bunker"];
   const rows=[]; DB.rounds.filter(r=>r.finished).forEach(r=>normRound(r).holes.forEach(h=>rows.push([r.id,r.date,r.course,...keys.map(k=>h[k])])));
   return [["round_id","date","course",...keys],...rows].map(a=>a.map(v=>v==null?"":/[",\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(",")).join("\n"); }
 function dataView(){
@@ -717,6 +835,7 @@ ${S.pending?`<div class="rot" style="display:block">Backup from file: ${(S.pendi
 <section><h2>Storage</h2><table><tr><td class="lab">Paces 4 rounds</td><td class="n">${DB.rounds.filter(r=>r.finished).length}</td></tr><tr><td class="lab">Imported v3 rounds</td><td class="n">${DB.legacy.length}</td></tr><tr><td class="lab">Stored in</td><td class="n">${useIdb?"IndexedDB":"localStorage"}</td></tr><tr><td class="lab">Version</td><td class="n">${VERSION}</td></tr></table></section>
 <section><details><summary style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:600;cursor:pointer">Legend</summary><table style="margin-top:8px">
 ${[["Tee result","FW: on the fairway. Left / Right: missed, but a full swing at the green is possible. Way left / right: no full swing at the green (trees, blocked, punch-out). Short / long: finished before or beyond the fairway, combinable with a side."],
+["Penalties","Logged where they happened: off the tee, on a lay-up, or on the approach. Each has a type and a cause (decision or execution). The score adds the stroke automatically; an OB replay is one extra shot on +."],
 ["Bunker / penalty","One or the other, on top of where it finished. A bunker in the middle of the fairway is FW + Bunker and counts as a missed fairway."],
 ["Approach is shot","Shot number of the approach. Pre-set from par, penalties, lay-ups and the par-5 choice."],
 ["Laid up first","Par 4 only. A deliberate lay-up before the approach. Adds one to the approach shot."],
@@ -725,6 +844,9 @@ ${[["Tee result","FW: on the fairway. Left / Right: missed, but a full swing at 
 ["Miss side","Where the ball left the green: short, long, left, right or a corner."],
 ["Short-sided","Missed on the side with little green to work with. Set by you."],
 ["Fringe","Missed onto the fringe. Distance to the pin is not asked."],
+["Contact","Depth: fat or thin. Face: hosel, heel or toe. Only extremes, both optional."],
+["Arrows in the report","Compared with your last 20 rounds. Grey means within half a standard deviation of your average (fixed bands until 8 rounds exist)."],
+["Strokes lost (hole details)","A fixed rule, not strokes gained: penalty strokes, a missed green +1, each extra shot around the green +1, each putt beyond 2 +1."],
 ["Chip / pitch","Chip: ball flies less than half the way to the hole. Pitch: flies more than half."],
 ["First putt","Length in steps. 0 is a tap-in unless you tap Holed out (chip-in or holed approach)."],
 ["GIR","On the green with the approach shot no later than par minus 2."],
@@ -737,7 +859,7 @@ function render(){
   let html;
   if(S.view){ const r=DB.rounds.find(x=>x.id===S.view)||DB.legacy.find(x=>x.id===S.view); html=r?reportView(r):(S.view=null,""); }
   if(!html){
-    if(S.tab==="play"){ const r=active(); html=!r?prologue():S.screen==="close"?closeView():holeView(); }
+    if(S.tab==="play"){ const r=active(); html=!r?prologue():S.screen==="close"?closeView():S.screen==="settings"?settingsView():holeView(); }
     else if(S.tab==="rounds") html=roundsView();
     else if(S.tab==="stats") html=statsView();
     else html=dataView();
@@ -816,39 +938,54 @@ document.addEventListener("click",async e=>{
     case "teeDepth": h.teeDepth=h.teeDepth===v?null:v; h.lie=null; break;
     case "penType": h.penType=v; h.appAdj=0; break;
     case "penCause": h.penCause=v; break;
-    case "mishit": h.mishit=!h.mishit; break;
-    case "p5": h.p5=v; h.lie=null; h.appAdj=0; break;
+    case "mishit": h.mishit=!h.mishit; if(!h.mishit){ h.teeConD=null; h.teeConF=null; } break;
+    case "p5": h.p5=v; h.lie=null; h.appAdj=0; if(v==="Went for it"){ h.layPen=false; h.layPenType=null; h.layPenCause=null; } break;
     case "lie": h.lie=v; break;
-    case "layup": h.layup=!h.layup; break;
+    case "layup": h.layup=!h.layup; if(!h.layup){ h.layPen=false; h.layPenType=null; h.layPenCause=null; } break;
+    case "layPen": h.layPen=!h.layPen; h.appAdj=0; if(!h.layPen){ h.layPenType=null; h.layPenCause=null; } break;
+    case "layPenType": h.layPenType=v; h.appAdj=0; break;
+    case "layPenCause": h.layPenCause=v; break;
+    case "appPen": h.appPen=!h.appPen; h.scoreAdj=0; if(h.appPen){ h.fringe=false; } else { h.appPenType=null; h.appPenCause=null; } break;
+    case "appPenType": h.appPenType=v; break;
+    case "appPenCause": h.appPenCause=v; break;
     case "appNo": h.appAdj+= +v; if(appNo(h)<1) h.appAdj-= +v; break;
     case "pin": h.pin=+v; break;
     case "wpctH": h.wpct=Math.max(-20,Math.min(30,wp(h,r)+ +v)); break;
     case "club": tog(h,"club",v); break;
     case "notStock": h.notStock=!h.notStock; if(!h.notStock) h.swing=null; break;
     case "swing": h.swing=h.swing===v?null:v; break;
-    case "green": h.green=v; h.scoreAdj=0; if(v==="on"){h.miss=null;h.recDist=null;h.ss=false;h.fringe=false;h.recType=null;h.awk=false;} else {h.ball=null;h.aimOff=false;} break;
+    case "green": h.green=v; h.scoreAdj=0; if(v==="on"){h.miss=null;h.recDist=null;h.ss=false;h.fringe=false;h.appPen=false;h.appPenType=null;h.appPenCause=null;h.recType=null;h.awk=false;} else {h.ball=null;h.aimOff=false;} break;
     case "ball": h.ball=+v; break;
     case "aimOff": h.aimOff=!h.aimOff; break;
     case "miss": h.miss=v; break;
     case "ss": h.ss=!h.ss; break;
-    case "fringe": h.fringe=!h.fringe; if(h.fringe){ h.recDist=null; if(!["Chip","Putter"].includes(h.recType)) h.recType=null; } break;
+    case "fringe": h.fringe=!h.fringe; if(h.fringe){ h.appPen=false; h.appPenType=null; h.appPenCause=null; h.recDist=null; if(!["Chip","Putter"].includes(h.recType)) h.recType=null; } break;
     case "recDist": h.recDist=v; break;
-    case "contact": tog(h,"contact",v); break;
+    case "conD": case "conF": case "teeConD": case "teeConF": tog(h,a,v); break;
+    case "appAwk": h.appAwk=!h.appAwk; break;
     case "recType": h.recType=v; break;
     case "awk": h.awk=!h.awk; break;
-    case "holedOut": h.holedOut=!h.holedOut; h.pres=null; h.putts=null; h.scoreAdj=0; break;
+    case "holedOut": if(h.holedOut){ h.holedOut=false; h.fp=null; } else { h.holedOut=true; h.fp=0; } h.pres=null; h.putts=null; h.scoreAdj=0; break;
+    case "tapIn": if(h.fp===0&&!h.holedOut){ h.fp=null; } else { h.fp=0; h.holedOut=false; } h.pres=null; h.putts=null; h.scoreAdj=0; break;
     case "pres": h.pres=+v; h.putts=null; h.scoreAdj=0; break;
     case "putts": { const lo=(h.fp===0||h.pres===4)?1:2, hi=h.pres===4?1:6; h.putts=Math.max(lo,Math.min(hi,putts(h)+ +v)); break; }
     case "score": h.scoreAdj=Math.max(0,h.scoreAdj+ +v); break;
     case "cause": h.cause=(v===causeDefault(h))?null:v; break;
-    case "saveHole": { if(!holeReady(h)) break; h.done=true; const nx=nextOpen(r,r.cur); if(nx<0) S.screen="close"; else r.cur=nx; window.scrollTo(0,0); break; }
+    case "saveHole": { if(!holeReady(h)) break; if(h.wpct==null) h.wpct=r.wpct??0; h.done=true; const nx=nextOpen(r,r.cur); if(nx<0) S.screen="close"; else r.cur=nx; window.scrollTo(0,0); break; }
     case "toClose": S.screen="close"; window.scrollTo(0,0); break;
     case "backToHole": S.screen="hole"; break;
+    case "openSettings": S.back=S.screen; S.screen="settings"; window.scrollTo(0,0); break;
+    case "closeSettings": S.screen=S.back||"hole"; window.scrollTo(0,0); break;
+    case "rsTees": { r.tees=v; const t=COURSES[r.course].tees[v]; r.cr=t[1]; r.slope=t[2]; r.holes.forEach(x=>{ x.par=parOf(r.course,v,x.hno); }); break; }
+    case "rsType": r.type=v; break;
+    case "rsFormat": r.format=v; break;
+    case "rsWarm": { let w=r.warm||[]; if(v==="None") w=w.includes("None")?[]:["None"]; else { w=w.filter(x=>x!=="None"); w=w.includes(v)?w.filter(x=>x!==v):[...w,v]; } r.warm=w; break; }
     case "discard": if(S.arm!=="discard:"){ S.arm="discard:"; persist=false; break; } DB.rounds=DB.rounds.filter(x=>x!==r); S.arm=null; S.screen="hole"; S.newR=null; window.scrollTo(0,0); break;
     case "rtype": r.type=v; break;
-    case "finish": r.holes.forEach(x=>{ if(!x.done) x.out=true; }); r.finished=true; r.finishedAt=new Date().toISOString(); S.view=r.id; S.screen="hole"; window.scrollTo(0,0); break;
+    case "finish": r.holes.forEach(x=>{ if(!x.done) x.out=true; }); r.finished=true; r.finishedAt=new Date().toISOString(); S.view=r.id; S.detail=null; S.screen="hole"; window.scrollTo(0,0); break;
     /* views */
-    case "openRound": S.view=v; window.scrollTo(0,0); persist=false; break;
+    case "openRound": S.view=v; S.detail=null; window.scrollTo(0,0); persist=false; break;
+    case "detail": S.detail=S.detail===+v?null:+v; persist=false; break;
     case "closeView": S.view=null; window.scrollTo(0,0); persist=false; break;
     case "delRound": if(S.arm!=="delRound:"+v){ S.arm="delRound:"+v; persist=false; break; } DB.rounds=DB.rounds.filter(x=>x.id!==v); S.arm=null; S.view=null; break;
     case "doImport": if(S.arm!=="doImport:"){ S.arm="doImport:"; persist=false; break; } DB=S.pending; S.pending=null; S.arm=null; break;
